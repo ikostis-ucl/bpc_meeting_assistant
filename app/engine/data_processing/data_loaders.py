@@ -17,7 +17,7 @@ def load_index(args):
             storage_context = StorageContext.from_defaults(persist_dir=args.storage_dir)
             index = load_index_from_storage(storage_context)
         pprint_console("Loaded index from storage.")
-        return index, storage_context
+        return index
     else:
         pprint_error("Index storage directory not found. Parse and store the index first.")
         exit()

@@ -18,8 +18,8 @@ def config_parser():
                         default='./app/assets/.api_keys/keys.txt')
 
     # I/O params
-    parser.add_argument('--input', type=str,
-                        default="./data/input",
+    parser.add_argument('--input_path', type=str,
+                        default="./data/input/ERA-I_PV21_230420.pdf",
                         help='File/Directory input path.')
     parser.add_argument('--output_path', type=str,
                         default="./data/output/",
@@ -34,5 +34,10 @@ def config_parser():
     # Embeddings
     parser.add_argument('--embeddings_model', type=str, default="OrdalieTech/Solon-embeddings-large-0.1",
                         help='Embedding model.')
+
+    # API Keys
+    parser.add_argument('--llama_parse_key', type=str, help='Your LlamaParse token key (llx-<...>)')
+    parser.add_argument('--openai_api_key', type=str, help='Your OPENAI API token key (sk-<...>)')
+    parser.add_argument('--groq_api_key', type=str, help='Your Groq API token key gsk_<...>)')
 
     return parser
