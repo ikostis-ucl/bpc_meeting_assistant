@@ -14,3 +14,6 @@ Access and revisit project meeting records.
 ## Implementation Details
 
 ### Tentative Design
+
+![alt-text](./resources/tentative_design.jpeg)
+

@@ -1,0 +1,3 @@
+/app/assets/.api_keys/*
+/app/assets/.api_keys/keys.txt
+/app/assets/.api_keys/keys_backup.txt
