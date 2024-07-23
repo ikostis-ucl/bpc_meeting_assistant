@@ -10,3 +10,7 @@ Access and revisit project meeting records.
 * **Tentative start period**: September 2024
 * **Expected duration for the implementation to finish**: 4-5 months
 * **Project owner at BPC**: Natalia SANCHIZ - [natalia.sanchiz@bpcgroup.be](mailto:natalia.sanchiz@bpcgroup.be)
+
+## Implementation Details
+
+### Tentative Design
