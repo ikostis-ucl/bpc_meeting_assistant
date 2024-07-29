@@ -7,10 +7,10 @@ import easyocr
 import fitz
 import nest_asyncio
 import numpy as np
+from llama_index.core import Settings
 from llama_index.core import VectorStoreIndex
 from llama_index.core.node_parser import MarkdownNodeParser
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-from llama_index.llms.groq import Groq
 from llama_parse import LlamaParse
 from tqdm import tqdm
 
@@ -24,25 +24,23 @@ class Storage:
         nest_asyncio.apply()
 
         self.args = args
-        self.transformations = []
 
         # Document parser
         self.doc_parser = LlamaParse(api_key=args.llama_parse_key,
                                      verbose=False,
                                      language='fr')
 
-        # Embeddings
+        # Index
+        self.index = None
+
+        self.args = args
+
         self.embedding_model = HuggingFaceEmbedding(model_name=args.embeddings_model)
 
-        # Text LLM
-        self.llm = Groq(model="llama3-70b-8192", api_key=args.groq_api_key,
-                        model_kwargs={"seed": 42}, temperature=0.0)
+        # self.llm = Groq(model="llama3-groq-70b-8192-tool-use-preview", api_key=args.groq_api_key,
+        #                 model_kwargs={"seed": 42}, temperature=0.0)
 
-        # Node Parser
-        self.node_parser = MarkdownNodeParser(llm=self.llm, num_workers=8)
-
-        # Index
-        self.index = VectorStoreIndex([], embed_model=self.embedding_model, show_progress=True)
+        self.node_parser = MarkdownNodeParser()
 
         os.makedirs(self.args.storage_dir, exist_ok=True)
 
@@ -84,12 +82,16 @@ class Storage:
         else:
             file_paths = [self.args.input_path]
 
+        data = []
+
         for fpath in tqdm(file_paths, desc=f"Parsing documents"):
             fname_no_xt = os.path.basename(fpath).removesuffix(".pdf")
 
             pdf_document = fitz.open(fpath)
 
-            # TODO: From first page, extract the date and the entity index of the document.
+            """
+            From the first page, extract the date and time of the meeting, and the abbreviations of the attendees.
+            """
             first_page = pdf_document.load_page(0)
             first_page_pixmap = first_page.get_pixmap(dpi=450, colorspace='gray')
             first_page_image = np.frombuffer(first_page_pixmap.samples, dtype=np.uint8).reshape(
@@ -115,8 +117,8 @@ class Storage:
             page_height = first_page_image.shape[0]
             y_upper_limit, y_lower_limit = int(page_height * (126 / 1333)), first_page_image.shape[1]
             roi_date_y_upper_limit, roi_date_y_lower_limit, roi_date_x_right_limit = 0, 0, 0
-            roi_entity_y_upper_limit, roi_entity_x_left_limit, roi_entity_x_right_limit = 0, 0, 0
 
+            # Define the Region of Interest (RoI) of the document (general, datetime, abbreviations)
             for bbox in ocr_result:
                 if is_match(text=bbox[4], phrase="intervenant de diffuser", threshold=60):
                     y_lower_limit = bbox[1] - h_error_margin
@@ -130,61 +132,52 @@ class Storage:
                         roi_date_x_right_limit = bbox[0] + bbox[2] + w_error_margin
                         break
 
-            for bbox in ocr_result:
-                if y_lower_limit >= bbox[1] >= y_upper_limit:
-                    if is_match(text=bbox[4], phrase="ABREV", threshold=100):
-                        roi_entity_y_upper_limit = bbox[1] - h_error_margin
-                        roi_entity_x_left_limit = bbox[0] - w_error_margin
-                        roi_entity_x_right_limit = bbox[0] + bbox[2] + w_error_margin
-                        break
-
+            # Save available abbreviations and document date/time
             datetime = []
-            entities = ["TOUS"]
             for bbox in ocr_result:
                 if y_lower_limit >= bbox[1] >= y_upper_limit:
                     if (roi_date_y_lower_limit >= bbox[1] >= roi_date_y_upper_limit and
                             bbox[0] >= roi_date_x_right_limit):
                         datetime.append(bbox[4])
-                    if (bbox[1] >= roi_entity_y_upper_limit and
-                            bbox[0] >= roi_entity_x_left_limit and
-                            bbox[0] + bbox[2] <= roi_entity_x_right_limit):
-                        if bbox[4] == 'MOICOM':
-                            entities.append("MO/COM")  # FIXME: EasyOCR issue, cannot recognize /
-                        else:
-                            entities.append(bbox[4])
 
             datetime_sting = ' '.join(x for x in datetime)
             datetime_sting = datetime_sting.lower().replace("o", "0")
-            pattern = r"(\d{2}/\d{2}/\d{4}), de \d{1,2}h\d{2} à (\d{2})h(\d{2})"
+            pattern = r'(\d{2}/\d{2}/\d{4}), de \d{1,2}h\d{0,2}\w*\s*(?:a|à\s*)?(\d{1,2})h(\d{2})'
             match = re.search(pattern, datetime_sting)
             if match:
                 date = match.group(1)
-                hour = match.group(2)
-                minute = match.group(3)
-                formatted_datetime_string = f"{date} {hour}:{minute}"
+                hour = match.group(2).zfill(2)
+                minute = match.group(3).zfill(2)
+                formatted_datetime = f"{date} {hour}:{minute}"
             else:
-                raise RuntimeError("Unable to extract date from document.")
+                raise ValueError("Unable to extract date from document.")
 
-            # TODO: From the rest of the document, extract the text
-            rest_doc = fitz.open()
-            rest_doc.insert_pdf(pdf_document, from_page=1, to_page=pdf_document.page_count - 1)
-            rest_doc_path = f"{self.args.storage_dir}/pdfs/{fname_no_xt}.pdf"
-            rest_doc.save(rest_doc_path)
-            rest_doc.close()
-            pdf_document.close()
+            documents = self.doc_parser.load_data(fpath)
 
-            documents = self.doc_parser.load_data(rest_doc_path)
-            # TODO: Add entities and graph
+            # Attach document date/time and available abbreviations onto the document as metadata
             for doc in documents:
                 doc.metadata = {
-                    'datetime': formatted_datetime_string,
+                    'meeting_datetime': formatted_datetime,
                     'file_path': fpath,
                     'file_name': os.path.basename(fpath)
                 }
+                doc.excluded_llm_metadata_keys = ["meeting_datetime", "file_path", "file_name", "entities"]
                 doc.id_ = f'{fname_no_xt.lower().replace(" ", "_")}'
-                self.index.update_ref_doc(doc, update_kwargs={"delete_kwargs": {"delete_from_docstore": True}}, )
 
-            os.remove(rest_doc_path)
+            data.extend(documents)
+
+        shutil.rmtree(f"{self.args.storage_dir}/pdfs")
+
+        Settings.embed_model = self.embedding_model
+        if self.index is None:
+            self.index = VectorStoreIndex.from_documents(data,
+                                                         transformations=[self.node_parser],
+                                                         embed_model=self.embedding_model,
+                                                         show_progress=True)
+        else:
+            raise NotImplementedError("Updatable graph index is not yet implemented.")
+            # self.index = index
+            # self.index.insert_nodes(data)
 
     def run(self):
         self.directory_confirmation()

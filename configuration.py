@@ -19,7 +19,7 @@ def config_parser():
 
     # I/O params
     parser.add_argument('--input_path', type=str,
-                        default="./data/input/ERA-I_PV21_230420.pdf",
+                        default="./data/input/tests/ERA-I_PV00-220927.pdf",
                         help='File/Directory input path.')
     parser.add_argument('--output_path', type=str,
                         default="./data/output/",
