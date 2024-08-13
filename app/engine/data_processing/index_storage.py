@@ -17,7 +17,7 @@ from tqdm import tqdm
 from app.engine.data_processing.data_loaders import load_index
 from app.utils.app_utils import pprint_console, simplify_path, empty_dir, fmt_string, Color
 from app.utils.data_processing_utils import is_match
-
+import datetime
 
 class Storage:
     def __init__(self, args):
@@ -133,35 +133,40 @@ class Storage:
                         break
 
             # Save available abbreviations and document date/time
-            datetime = []
+            d_time = []
             for bbox in ocr_result:
                 if y_lower_limit >= bbox[1] >= y_upper_limit:
                     if (roi_date_y_lower_limit >= bbox[1] >= roi_date_y_upper_limit and
                             bbox[0] >= roi_date_x_right_limit):
-                        datetime.append(bbox[4])
+                        d_time.append(bbox[4])
 
-            datetime_sting = ' '.join(x for x in datetime)
+            datetime_sting = ' '.join(x for x in d_time)
             datetime_sting = datetime_sting.lower().replace("o", "0")
             pattern = r'(\d{2}/\d{2}/\d{4}), de \d{1,2}h\d{0,2}\w*\s*(?:a|à\s*)?(\d{1,2})h(\d{2})'
             match = re.search(pattern, datetime_sting)
             if match:
-                date = match.group(1)
+                date = match.group(1).split("/")
                 hour = match.group(2).zfill(2)
                 minute = match.group(3).zfill(2)
-                formatted_datetime = f"{date} {hour}:{minute}"
+                formatted_datetime = datetime.datetime(day=int(date[0]),
+                                                       month=int(date[1]),
+                                                       year=int(date[2]),
+                                                       hour=int(hour),
+                                                       minute=int(minute))
             else:
                 raise ValueError("Unable to extract date from document.")
 
             documents = self.doc_parser.load_data(fpath)
 
-            # Attach document date/time and available abbreviations onto the document as metadata
+            # Attach document date/time onto the document as metadata
             for doc in documents:
                 doc.metadata = {
                     'meeting_datetime': formatted_datetime,
                     'file_path': fpath,
                     'file_name': os.path.basename(fpath)
                 }
-                doc.excluded_llm_metadata_keys = ["meeting_datetime", "file_path", "file_name", "entities"]
+                doc.excluded_embed_metadata_keys = ["meeting_datetime"]
+                doc.excluded_llm_metadata_keys = ["meeting_datetime"]
                 doc.id_ = f'{fname_no_xt.lower().replace(" ", "_")}'
 
             data.extend(documents)
@@ -175,9 +180,12 @@ class Storage:
                                                          embed_model=self.embedding_model,
                                                          show_progress=True)
         else:
-            raise NotImplementedError("Updatable graph index is not yet implemented.")
-            # self.index = index
-            # self.index.insert_nodes(data)
+            # TODO: Test
+            nodes = self.node_parser.get_nodes_from_documents(documents=data,
+                                                              show_progress=True)
+            self.index.refresh_ref_docs(nodes,
+                                        update_kwargs={"delete_kwargs": {"delete_from_docstore": True}}
+                                        )
 
     def run(self):
         self.directory_confirmation()
