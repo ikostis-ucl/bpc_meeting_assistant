@@ -148,11 +148,7 @@ class Storage:
                 date = match.group(1).split("/")
                 hour = match.group(2).zfill(2)
                 minute = match.group(3).zfill(2)
-                formatted_datetime = datetime.datetime(day=int(date[0]),
-                                                       month=int(date[1]),
-                                                       year=int(date[2]),
-                                                       hour=int(hour),
-                                                       minute=int(minute))
+                formatted_datetime = [int(date[0]), int(date[1]), int(date[2]), int(hour), int(minute)]
             else:
                 raise ValueError("Unable to extract date from document.")
 
