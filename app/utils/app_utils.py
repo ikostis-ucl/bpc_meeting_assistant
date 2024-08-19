@@ -53,3 +53,19 @@ def simplify_path(path):
     simplified_path = "./" + "/".join(components[to_index:])
 
     return simplified_path
+
+
+def pprint_qa(question, answer, metadata):
+    f_names = []
+    for node_id, node_values in metadata.items():
+        f_names.append(node_values["file_name"])
+    f_names = list(set(f_names))
+
+    pprint_hline("=")
+    print(f"{Color.GREEN}Question:{Color.END}\n{question}")
+    pprint_hline("-", 3)
+    print(f"{Color.CYAN}Answer:{Color.END}\n{answer}")
+    pprint_hline("-", 3)
+    print(f"{Color.YELLOW}Citation:{Color.END}")
+    print(f"{Color.BOLD}Document name(s):{Color.END} {f_names}")
+

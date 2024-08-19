@@ -30,12 +30,12 @@ class TemporalRetriever(BaseRetriever):
         """
         Run this before querying to set the date.
         """
-        if start_date is None:
+        if start_date is None or start_date == "":
             s_date = datetime.datetime(1970, 1, 1)
         else:
             s_date = parse_datetime(start_date)
 
-        if end_date is None:
+        if end_date is None or end_date == "":
             e_date = datetime.datetime.now()
         else:
             e_date = parse_datetime(end_date)
@@ -93,7 +93,7 @@ class TemporalRetriever(BaseRetriever):
         nodes = []
         for node_id, node_score in nodes_with_scores.items():
             t_score = ((node_score["t_score"] - __mu_t) / __std_t) * __std_s + __mu_s
-            s_score = node_score["s_score"]
+            # s_score = node_score["s_score"]
             n_score = t_score + node_score["s_score"]
             nodes.append(NodeWithScore(node=self._index.docstore.docs[node_id], score=n_score))
 
