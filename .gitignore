@@ -3,4 +3,5 @@
 /app/assets/.api_keys/keys_backup.txt
 /data/input/tests/*
 /.archive/
+/data/vector_db_test/*
 /data/vector_db/*

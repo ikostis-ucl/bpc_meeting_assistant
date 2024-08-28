@@ -19,7 +19,7 @@ def config_parser():
 
     # I/O params
     parser.add_argument('--input_path', type=str,
-                        default="./data/input/tests",
+                        default="./data/input",
                         help='File/Directory input path.')
     parser.add_argument('--output_path', type=str,
                         default="./data/output/",

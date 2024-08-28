@@ -15,9 +15,9 @@ from llama_parse import LlamaParse
 from tqdm import tqdm
 
 from app.engine.data_processing.data_loaders import load_index
-from app.utils.app_utils import pprint_console, simplify_path, empty_dir, fmt_string, Color
+from app.utils.app_utils import pprint_console, simplify_path, empty_dir, fmt_string, Color, pprint_error
 from app.utils.data_processing_utils import is_match
-import datetime
+
 
 class Storage:
     def __init__(self, args):
@@ -37,9 +37,6 @@ class Storage:
 
         self.embedding_model = HuggingFaceEmbedding(model_name=args.embeddings_model)
 
-        # self.llm = Groq(model="llama3-groq-70b-8192-tool-use-preview", api_key=args.groq_api_key,
-        #                 model_kwargs={"seed": 42}, temperature=0.0)
-
         self.node_parser = MarkdownNodeParser()
 
         os.makedirs(self.args.storage_dir, exist_ok=True)
@@ -47,7 +44,7 @@ class Storage:
     def directory_confirmation(self):
         if not empty_dir(self.args.storage_dir):
             while True:
-                user_input = input(fmt_string(Color.GREEN,
+                user_input = input(fmt_string(Color.BLUE,
                                               "An index of your documents already exists. "
                                               "Do you want to (p)urge it, or (l)oad it? (['l']/'p'): ")).strip().lower()
                 if user_input == 'p':
@@ -55,25 +52,24 @@ class Storage:
                     os.makedirs(self.args.storage_dir, exist_ok=True)
                     break
                 elif user_input == 'l' or user_input == '':
-                    self.index = load_index(self.args)
+                    self.index = load_index(args=self.args, transformations=[self.node_parser])
                     break
                 else:
-                    print("Invalid input. Please reply with 'l' for loading the index "
-                          "or 'p' for purging it (default option: 'l').")
+                    pprint_error("Invalid input. Please reply with 'l' for loading the index "
+                                 "or 'p' for purging it (default option: 'l').")
 
-    def parse_documents_omni(self):
-        """
-        This uses gpt-4o. It works way better, and it has integrated multimodal capabilities.
-        It costs!
-        """
-
+    def parse_documents(self):
         self.doc_parser = LlamaParse(api_key=self.args.llama_parse_key,
                                      result_type="markdown",
                                      verbose=False,
                                      language='fr',
-                                     gpt4o_mode=True,
-                                     gpt4o_api_key=self.args.openai_api_key
+                                     max_timeout=60,
+                                     use_vendor_multimodal_model=True,
+                                     vendor_multimodal_model_name='openai-gpt4o',
+                                     vendor_multimodal_api_key=self.args.openai_api_key
                                      )
+
+        Settings.embed_model = self.embedding_model
 
         if os.path.isdir(self.args.input_path):
             file_paths = [simplify_path(os.path.join(self.args.input_path, f))
@@ -82,12 +78,15 @@ class Storage:
         else:
             file_paths = [self.args.input_path]
 
-        data = []
+        if not file_paths:
+            pprint_console("The input folder is empty. Exiting...")
+            exit()
 
-        for fpath in tqdm(file_paths, desc=f"Parsing documents"):
-            fname_no_xt = os.path.basename(fpath).removesuffix(".pdf")
+        for f_path in tqdm(file_paths, desc=f"Parsing documents"):
+            fname_no_xt = os.path.basename(f_path).removesuffix(".pdf")
+            dir_path = os.path.dirname(f_path)
 
-            pdf_document = fitz.open(fpath)
+            pdf_document = fitz.open(f_path)
 
             """
             From the first page, extract the date and time of the meeting, and the abbreviations of the attendees.
@@ -101,7 +100,7 @@ class Storage:
             first_page_image = cv2.fastNlMeansDenoising(src=first_page_image)
             _, first_page_image = cv2.threshold(first_page_image, 170, 255, cv2.THRESH_BINARY)
 
-            ocr_reader = easyocr.Reader(['fr'])
+            ocr_reader = easyocr.Reader(['fr'], verbose=False)
             ocr_result = []
             ocr_res_temp = ocr_reader.readtext(first_page_image, width_ths=0.7)
             for text_box in ocr_res_temp:
@@ -150,47 +149,45 @@ class Storage:
                 minute = match.group(3).zfill(2)
                 formatted_datetime = [int(date[0]), int(date[1]), int(date[2]), int(hour), int(minute)]
             else:
-                raise ValueError("Unable to extract date from document.")
+                pprint_console(f"Could not find date on file {fname_no_xt}.pdf, skipping...")
+                continue
 
-            documents = self.doc_parser.load_data(fpath)
+            documents = self.doc_parser.load_data(f_path)
 
-            # Attach document date/time onto the document as metadata
-            for doc in documents:
-                doc.metadata = {
-                    'meeting_datetime': formatted_datetime,
-                    'file_path': fpath,
-                    'file_name': os.path.basename(fpath)
-                }
-                doc.excluded_embed_metadata_keys = ["meeting_datetime"]
-                doc.excluded_llm_metadata_keys = ["meeting_datetime"]
-                doc.id_ = f'{fname_no_xt.lower().replace(" ", "_")}'
+            if documents:
+                # Attach document date/time onto the document as metadata
+                for doc in documents:
+                    doc.metadata = {
+                        'meeting_datetime': formatted_datetime,
+                        'file_path': f_path,
+                        'file_name': os.path.basename(f_path)
+                    }
+                    doc.excluded_embed_metadata_keys = ["meeting_datetime"]
+                    doc.excluded_llm_metadata_keys = ["meeting_datetime"]
+                    doc.id_ = f'{fname_no_xt.lower().replace(" ", "_")}'
 
-            data.extend(documents)
+                if self.index is None:
+                    self.index = VectorStoreIndex.from_documents(documents=documents,
+                                                                 transformations=[self.node_parser],
+                                                                 embed_model=self.embedding_model,
+                                                                 show_progress=False)
+                else:
+                    # TODO: Test
+                    doc_ref_ids = list(set([doc.ref_doc_id for doc in self.index.docstore.docs.values()]))
+                    for doc in documents:
+                        if doc.id_ in doc_ref_ids:
+                            self.index.delete_ref_doc(ref_doc_id=doc.id_, delete_from_docstore=True)
+                            doc_ref_ids.remove(doc.id_)
+                        self.index.insert(document=doc)
 
-        shutil.rmtree(f"{self.args.storage_dir}/pdfs")
-
-        Settings.embed_model = self.embedding_model
-        if self.index is None:
-            self.index = VectorStoreIndex.from_documents(data,
-                                                         transformations=[self.node_parser],
-                                                         embed_model=self.embedding_model,
-                                                         show_progress=True)
-        else:
-            # TODO: Test
-            nodes = self.node_parser.get_nodes_from_documents(documents=data,
-                                                              show_progress=True)
-            self.index.refresh_ref_docs(nodes,
-                                        update_kwargs={"delete_kwargs": {"delete_from_docstore": True}}
-                                        )
+                shutil.move(src=f_path, dst=f"{dir_path}/_completed/")
 
     def run(self):
         self.directory_confirmation()
 
-        temp_dir = f"{self.args.storage_dir}/pdfs"
-        os.makedirs(temp_dir, exist_ok=True)
+        self.parse_documents()
 
-        self.parse_documents_omni()
-
-        self.index.storage_context.persist(persist_dir=self.args.storage_dir)
+        if self.index is not None:
+            self.index.storage_context.persist(persist_dir=self.args.storage_dir)  # TODO: Move to parse_documents()
 
         pprint_console("Finished storing index.")

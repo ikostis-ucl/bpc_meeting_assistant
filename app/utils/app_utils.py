@@ -31,15 +31,15 @@ def fmt_string(fmt, string):
 
 
 def pprint_console(text_entry):
-    print(f"{Color.BLUE}[CONSOLE] {text_entry}{Color.END}")
+    print(f"\n{Color.BLUE}[CONSOLE] {text_entry}{Color.END}")
 
 
 def pprint_error(text_entry):
-    print(f"{Color.RED}[ERROR] {text_entry}{Color.END}")
+    print(f"{Color.RED}\n[ERROR] {text_entry}{Color.END}")
 
 
 def pprint_debug(text_entry):
-    print(f"{Color.PURPLE}[DEBUG] {text_entry}{Color.END}")
+    print(f"{Color.PURPLE}\n[DEBUG] {text_entry}{Color.END}")
 
 
 def pprint_hline(token, length=shutil.get_terminal_size().columns):
