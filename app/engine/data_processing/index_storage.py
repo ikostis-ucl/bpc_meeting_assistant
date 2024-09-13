@@ -102,7 +102,7 @@ class Storage:
 
             ocr_reader = easyocr.Reader(['fr'], verbose=False)
             ocr_result = []
-            ocr_res_temp = ocr_reader.readtext(first_page_image, width_ths=0.7)
+            ocr_res_temp = ocr_reader.readtext(first_page_image, width_ths=1.5)
             for text_box in ocr_res_temp:
                 [upper_left, upper_right, lower_left, _], text = text_box[0], text_box[1]
                 x, y = int(upper_left[0]), int(upper_left[1])
@@ -141,6 +141,8 @@ class Storage:
 
             datetime_sting = ' '.join(x for x in d_time)
             datetime_sting = datetime_sting.lower().replace("o", "0")
+
+            # FIXME: Ditch the fucking regex
             pattern = r'(\d{2}/\d{2}/\d{4}), de \d{1,2}h\d{0,2}\w*\s*(?:a|à\s*)?(\d{1,2})h(\d{2})'
             match = re.search(pattern, datetime_sting)
             if match:
@@ -172,7 +174,7 @@ class Storage:
                                                                  embed_model=self.embedding_model,
                                                                  show_progress=False)
                 else:
-                    # TODO: Test
+                    # TODO: Move storage to index here and test
                     doc_ref_ids = list(set([doc.ref_doc_id for doc in self.index.docstore.docs.values()]))
                     for doc in documents:
                         if doc.id_ in doc_ref_ids:

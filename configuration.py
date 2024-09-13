@@ -25,7 +25,7 @@ def config_parser():
                         default="./data/output/",
                         help='Output directory path.')
     parser.add_argument('--storage_dir', type=str,
-                        default='./data/vector_db',
+                        default='./data/vector_db_test',
                         help='Vector DB directory path.')
 
     parser.add_argument("--home_path", type=str, default=None,
