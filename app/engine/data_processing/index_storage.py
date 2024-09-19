@@ -183,7 +183,6 @@ class Storage:
                     self.index.storage_context.persist(persist_dir=self.args.storage_dir)
 
                 else:
-                    # TODO: Move storage to index here and test
                     doc_ref_ids = list(set([doc.ref_doc_id for doc in self.index.docstore.docs.values()]))
                     for doc in documents:
                         if doc.id_ in doc_ref_ids:
