@@ -17,7 +17,7 @@ def load_index(args, transformations=None):
         with Halo(text=f"{fmt_string(Color.BLUE, 'Loading index from storage...')}",
                   placement='right', animation='bounce', spinner='moon'):
             storage_context = StorageContext.from_defaults(persist_dir=args.storage_dir)
-            index = load_index_from_storage(storage_context, show_progress=True)
+            index = load_index_from_storage(storage_context, show_progress=False)
         pprint_console("Loaded index from storage.")
         return index
     else:

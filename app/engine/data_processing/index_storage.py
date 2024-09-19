@@ -13,6 +13,7 @@ from llama_index.core.node_parser import MarkdownNodeParser
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_parse import LlamaParse
 from tqdm import tqdm
+from unidecode import unidecode
 
 from app.engine.data_processing.data_loaders import load_index
 from app.utils.app_utils import pprint_console, simplify_path, empty_dir, fmt_string, Color, pprint_error
@@ -41,7 +42,11 @@ class Storage:
 
         os.makedirs(self.args.storage_dir, exist_ok=True)
 
-    def directory_confirmation(self):
+    def directory_confirmation(self, skip=False):
+        if skip:
+            self.index = load_index(args=self.args, transformations=[self.node_parser])
+            return
+
         if not empty_dir(self.args.storage_dir):
             while True:
                 user_input = input(fmt_string(Color.BLUE,
@@ -63,7 +68,7 @@ class Storage:
                                      result_type="markdown",
                                      verbose=False,
                                      language='fr',
-                                     max_timeout=60,
+                                     max_timeout=600,
                                      use_vendor_multimodal_model=True,
                                      vendor_multimodal_model_name='openai-gpt4o',
                                      vendor_multimodal_api_key=self.args.openai_api_key
@@ -82,15 +87,16 @@ class Storage:
             pprint_console("The input folder is empty. Exiting...")
             exit()
 
-        for f_path in tqdm(file_paths, desc=f"Parsing documents"):
+        file_paths = tqdm(file_paths)
+        for f_path in file_paths:
             fname_no_xt = os.path.basename(f_path).removesuffix(".pdf")
+            file_paths.set_description(f"Processing file {fname_no_xt}")
+
             dir_path = os.path.dirname(f_path)
 
             pdf_document = fitz.open(f_path)
 
-            """
-            From the first page, extract the date and time of the meeting, and the abbreviations of the attendees.
-            """
+            # From the first page, extract the date and time of the meeting, and the abbreviations of the attendees.
             first_page = pdf_document.load_page(0)
             first_page_pixmap = first_page.get_pixmap(dpi=450, colorspace='gray')
             first_page_image = np.frombuffer(first_page_pixmap.samples, dtype=np.uint8).reshape(
@@ -100,6 +106,7 @@ class Storage:
             first_page_image = cv2.fastNlMeansDenoising(src=first_page_image)
             _, first_page_image = cv2.threshold(first_page_image, 170, 255, cv2.THRESH_BINARY)
 
+            # Apply OCR on the first page
             ocr_reader = easyocr.Reader(['fr'], verbose=False)
             ocr_result = []
             ocr_res_temp = ocr_reader.readtext(first_page_image, width_ths=1.5)
@@ -117,7 +124,7 @@ class Storage:
             y_upper_limit, y_lower_limit = int(page_height * (126 / 1333)), first_page_image.shape[1]
             roi_date_y_upper_limit, roi_date_y_lower_limit, roi_date_x_right_limit = 0, 0, 0
 
-            # Define the Region of Interest (RoI) of the document (general, datetime, abbreviations)
+            # Define the Region of Interest (RoI) of the document (general & date)
             for bbox in ocr_result:
                 if is_match(text=bbox[4], phrase="intervenant de diffuser", threshold=60):
                     y_lower_limit = bbox[1] - h_error_margin
@@ -131,25 +138,24 @@ class Storage:
                         roi_date_x_right_limit = bbox[0] + bbox[2] + w_error_margin
                         break
 
-            # Save available abbreviations and document date/time
+            # Save available abbreviations and document date
             d_time = []
             for bbox in ocr_result:
                 if y_lower_limit >= bbox[1] >= y_upper_limit:
                     if (roi_date_y_lower_limit >= bbox[1] >= roi_date_y_upper_limit and
                             bbox[0] >= roi_date_x_right_limit):
-                        d_time.append(bbox[4])
+                        d_time.append(bbox)
 
-            datetime_sting = ' '.join(x for x in d_time)
-            datetime_sting = datetime_sting.lower().replace("o", "0")
+            # Format the date of the document
+            d_time = sorted(d_time, key=lambda x: x[0])
+            datetime_sting = ' '.join(x[4] for x in d_time)
+            datetime_sting = unidecode(datetime_sting).lower().replace("o", "0")
 
-            # FIXME: Ditch the fucking regex
-            pattern = r'(\d{2}/\d{2}/\d{4}), de \d{1,2}h\d{0,2}\w*\s*(?:a|à\s*)?(\d{1,2})h(\d{2})'
-            match = re.search(pattern, datetime_sting)
-            if match:
-                date = match.group(1).split("/")
-                hour = match.group(2).zfill(2)
-                minute = match.group(3).zfill(2)
-                formatted_datetime = [int(date[0]), int(date[1]), int(date[2]), int(hour), int(minute)]
+            date_pattern = r'\b\d{2}/\d{2}/\d{4}\b'
+            date_match = re.search(date_pattern, datetime_sting)
+            if date_match:
+                date = date_match.group()
+                formatted_datetime = date.split('/')  # [dd, mm, yyyy]
             else:
                 pprint_console(f"Could not find date on file {fname_no_xt}.pdf, skipping...")
                 continue
@@ -157,7 +163,7 @@ class Storage:
             documents = self.doc_parser.load_data(f_path)
 
             if documents:
-                # Attach document date/time onto the document as metadata
+                # Attach document date onto the document as metadata
                 for doc in documents:
                     doc.metadata = {
                         'meeting_datetime': formatted_datetime,
@@ -173,6 +179,9 @@ class Storage:
                                                                  transformations=[self.node_parser],
                                                                  embed_model=self.embedding_model,
                                                                  show_progress=False)
+
+                    self.index.storage_context.persist(persist_dir=self.args.storage_dir)
+
                 else:
                     # TODO: Move storage to index here and test
                     doc_ref_ids = list(set([doc.ref_doc_id for doc in self.index.docstore.docs.values()]))
@@ -182,14 +191,13 @@ class Storage:
                             doc_ref_ids.remove(doc.id_)
                         self.index.insert(document=doc)
 
+                    self.index.storage_context.persist(persist_dir=self.args.storage_dir)
+
                 shutil.move(src=f_path, dst=f"{dir_path}/_completed/")
 
     def run(self):
         self.directory_confirmation()
 
         self.parse_documents()
-
-        if self.index is not None:
-            self.index.storage_context.persist(persist_dir=self.args.storage_dir)  # TODO: Move to parse_documents()
 
         pprint_console("Finished storing index.")

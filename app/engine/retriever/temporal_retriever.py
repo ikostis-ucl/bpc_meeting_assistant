@@ -48,9 +48,7 @@ class TemporalRetriever(BaseRetriever):
         """
         meeting_datetime = datetime.datetime(day=node.metadata["meeting_datetime"][0],
                                              month=node.metadata["meeting_datetime"][1],
-                                             year=node.metadata["meeting_datetime"][2],
-                                             hour=node.metadata["meeting_datetime"][3],
-                                             minute=node.metadata["meeting_datetime"][4])
+                                             year=node.metadata["meeting_datetime"][2])
         if (self.datetime_span['start_date'].timestamp()
                 <= meeting_datetime.timestamp()
                 <= self.datetime_span['end_date'].timestamp()):
