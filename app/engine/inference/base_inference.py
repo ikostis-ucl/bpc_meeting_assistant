@@ -5,7 +5,7 @@ from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 
 from app.engine.data_processing.data_loaders import load_index
 from app.engine.retriever.temporal_retriever import TemporalRetriever
-from app.utils.app_utils import fmt_string, Color
+from app.utils.app_utils import fmt_string, Color, pprint_debug
 
 
 class BaseInference:
@@ -30,6 +30,7 @@ class BaseInference:
     @Halo(text=fmt_string(Color.CYAN, 'Querying model...'), placement='right', animation='bounce', spinner='moon')
     def query_llm(self, query_string, start_date, end_date):
         self.retriever.set_datetime_span(start_date=start_date, end_date=end_date)
+
         query_engine = RetrieverQueryEngine.from_args(retriever=self.retriever, llm=self.model)
 
         answer = query_engine.query(self.prompt_template.format(query_string=query_string))

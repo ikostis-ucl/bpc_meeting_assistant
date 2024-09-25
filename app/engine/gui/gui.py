@@ -45,7 +45,7 @@ class GUI:
                                                           start_date=self.start_date,
                                                           end_date=self.end_date)
 
-        pprint_qa(question=question, answer=answer, metadata=self.metadata)
+        pprint_qa(question=question, answer=answer, metadata=self.metadata, dates=[self.start_date, self.end_date])
 
         self.chat_history[-1][1] = answer
 

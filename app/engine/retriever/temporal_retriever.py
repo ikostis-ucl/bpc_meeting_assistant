@@ -46,9 +46,9 @@ class TemporalRetriever(BaseRetriever):
         """
         Given a date span, calculate the temporal score for each node.
         """
-        meeting_datetime = datetime.datetime(day=node.metadata["meeting_datetime"][0],
-                                             month=node.metadata["meeting_datetime"][1],
-                                             year=node.metadata["meeting_datetime"][2])
+        meeting_datetime = datetime.datetime(day=int(node.metadata["meeting_datetime"][0]),
+                                             month=int(node.metadata["meeting_datetime"][1]),
+                                             year=int(node.metadata["meeting_datetime"][2]))
         if (self.datetime_span['start_date'].timestamp()
                 <= meeting_datetime.timestamp()
                 <= self.datetime_span['end_date'].timestamp()):
@@ -67,7 +67,7 @@ class TemporalRetriever(BaseRetriever):
 
         vector_store_query = VectorStoreQuery(
             query_embedding=query_embedding,
-            similarity_top_k=100,
+            similarity_top_k=200,
             mode=self._query_mode,
         )
         query_result = self._index.vector_store.query(vector_store_query)
@@ -75,10 +75,10 @@ class TemporalRetriever(BaseRetriever):
         nodes_with_scores = {}
         for result_index, node_id in enumerate(query_result.ids):
             if query_result.similarities is not None:
-                s_score = query_result.similarities[result_index]
                 t_score = self._calculate_temporal_score(self._index.docstore.docs[node_id])
                 if t_score is None:
                     continue
+                s_score = query_result.similarities[result_index]
                 nodes_with_scores[node_id] = {"s_score": s_score, "t_score": t_score}
 
         __s_scores = [s["s_score"] for s in nodes_with_scores.values()]

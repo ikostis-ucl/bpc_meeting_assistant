@@ -14,9 +14,10 @@ if __name__ == "__main__":
 
     agent = InferenceEngine(args=args)
     questions = [
-        "Quelle est la demande de la STAB en ce qui concerne les escaliers? Quand a-t-elle présenté cette demande?"]
-    start_dates = ["2022-09-01"]
-    end_dates = ["2022-11-01"]
+        "Quelle est la demande de la STAB en ce qui concerne les escaliers? Quand a-t-elle présenté cette demande?",
+        "Qu'est-ce qui a été dit au sujet des compteurs d'eau ? Par qui ?"]
+    start_dates = ["2022-09-01", "2022-09-01"]
+    end_dates = ["2022-11-01", "2022-11-01"]
     for question, start_date, end_date in zip(questions, start_dates, end_dates):
         answer, metadata = agent.query_llm(query_string=question, start_date=start_date, end_date=end_date)
-        pprint_qa(question, answer, metadata)
+        pprint_qa(question, answer, metadata, dates=[start_date, end_date])

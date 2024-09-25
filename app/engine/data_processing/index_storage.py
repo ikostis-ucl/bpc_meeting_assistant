@@ -167,7 +167,7 @@ class Storage:
                 for doc in documents:
                     doc.metadata = {
                         'meeting_datetime': formatted_datetime,
-                        'file_path': f_path,
+                        'file_path': f"{self.args.input_path}/files_archive/{os.path.basename(f_path)}",
                         'file_name': os.path.basename(f_path)
                     }
                     doc.excluded_embed_metadata_keys = ["meeting_datetime"]
