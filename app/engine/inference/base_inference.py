@@ -17,7 +17,7 @@ class BaseInference:
 
         self.embedding_model = HuggingFaceEmbedding(model_name=args.embeddings_model)
 
-        self.retriever = TemporalRetriever(embed_model=self.embedding_model, index=self.index)
+        self.retriever = TemporalRetriever(embed_model=self.embedding_model, index=self.index, key=args.cohere_api_key)
 
         self.prompt_template = PromptTemplate(
             "Vous êtes un(e) assistant(e) qui aide un chef de projet à extraire des informations de documents qui "

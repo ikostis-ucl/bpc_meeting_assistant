@@ -14,10 +14,14 @@ if __name__ == "__main__":
 
     agent = InferenceEngine(args=args)
     questions = [
-        "Quelle est la demande de la STAB en ce qui concerne les escaliers? Quand a-t-elle présenté cette demande?",
-        "Qu'est-ce qui a été dit au sujet des compteurs d'eau ? Par qui ?"]
-    start_dates = ["2022-09-01", "2022-09-01"]
-    end_dates = ["2022-11-01", "2022-11-01"]
-    for question, start_date, end_date in zip(questions, start_dates, end_dates):
-        answer, metadata = agent.query_llm(query_string=question, start_date=start_date, end_date=end_date)
-        pprint_qa(question, answer, metadata, dates=[start_date, end_date])
+        "Quelle est la couleur choisie (RAL) pour les châssis ?",
+        "Liste des décisions prises concernant le carrelage des parties communes.",
+        "Quelle est la date de remise des parties communes ?"]
+    start_dates = [None, "2023-01-01", "2023-06-15"]
+    end_dates = [None, "2023-06-15", "2024-06-15"]
+    for question in questions:
+        for start_date, end_date in zip(start_dates, end_dates):
+            answer, metadata = agent.query_llm(query_string=question, start_date=start_date, end_date=end_date)
+            pprint_qa(question, answer, metadata, dates=[agent.retriever.datetime_span['start_date'],
+                                                         agent.retriever.datetime_span['end_date']])
+            break

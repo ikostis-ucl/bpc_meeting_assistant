@@ -39,5 +39,6 @@ def config_parser():
     parser.add_argument('--llama_parse_key', type=str, help='Your LlamaParse token key (llx-<...>)')
     parser.add_argument('--openai_api_key', type=str, help='Your OPENAI API token key (sk-<...>)')
     parser.add_argument('--groq_api_key', type=str, help='Your Groq API token key gsk_<...>)')
+    parser.add_argument('--cohere_api_key', type=str, help='Your Cohere API key <...>)')
 
     return parser

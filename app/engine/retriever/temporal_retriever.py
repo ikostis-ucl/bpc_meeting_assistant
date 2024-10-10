@@ -6,6 +6,7 @@ from llama_index.core import QueryBundle
 from llama_index.core.retrievers import BaseRetriever
 from llama_index.core.schema import NodeWithScore
 from llama_index.core.vector_stores import VectorStoreQuery
+from llama_index.postprocessor.cohere_rerank import CohereRerank
 
 from app.utils.temporal_retriever_utils import parse_datetime
 
@@ -13,17 +14,20 @@ from app.utils.temporal_retriever_utils import parse_datetime
 class TemporalRetriever(BaseRetriever):
     """Custom retriever that performs both semantic search and temporal search."""
 
-    def __init__(self, embed_model, index,
+    def __init__(self, embed_model, index, key,
                  alpha=1,
                  query_mode='default',
-                 similarity_top_n=5):
+                 similarity_top_n=5,
+                 similarity_top_k=200):
 
         self._index = index
         self._embed_model = embed_model
         self._alpha = alpha
         self._query_mode = query_mode
         self._similarity_top_n = similarity_top_n
+        self._similarity_top_k = similarity_top_k
         self.datetime_span = None
+        self.reranker = CohereRerank(api_key=key, top_n=self._similarity_top_k)
         super().__init__()
 
     def set_datetime_span(self, start_date=None, end_date=None):
@@ -53,7 +57,10 @@ class TemporalRetriever(BaseRetriever):
                 <= meeting_datetime.timestamp()
                 <= self.datetime_span['end_date'].timestamp()):
 
-            return self._alpha / (self.datetime_span['end_date'].timestamp() - meeting_datetime.timestamp())
+            try:
+                return self._alpha / (self.datetime_span['end_date'].timestamp() - meeting_datetime.timestamp())
+            except ZeroDivisionError:
+                return self._alpha / 0.99  # timestamp = how many seconds have passed from 01/01/1970 00:00:00
         else:
             return None
 
@@ -67,11 +74,12 @@ class TemporalRetriever(BaseRetriever):
 
         vector_store_query = VectorStoreQuery(
             query_embedding=query_embedding,
-            similarity_top_k=200,
+            similarity_top_k=self._similarity_top_k,
             mode=self._query_mode,
         )
         query_result = self._index.vector_store.query(vector_store_query)
 
+        unranked_nodes = []
         nodes_with_scores = {}
         for result_index, node_id in enumerate(query_result.ids):
             if query_result.similarities is not None:
@@ -79,7 +87,14 @@ class TemporalRetriever(BaseRetriever):
                 if t_score is None:
                     continue
                 s_score = query_result.similarities[result_index]
+                unranked_nodes.append(
+                    NodeWithScore(node=self._index.docstore.docs[node_id], score=s_score))
                 nodes_with_scores[node_id] = {"s_score": s_score, "t_score": t_score}
+
+        self.reranker.top_n = len(unranked_nodes)
+        ranked_nodes = self.reranker._postprocess_nodes(nodes=unranked_nodes, query_bundle=query_bundle)
+        for node in ranked_nodes:
+            nodes_with_scores[node.node_id]['s_score'] = node.score
 
         __s_scores = [s["s_score"] for s in nodes_with_scores.values()]
         __t_scores = [t["t_score"] for t in nodes_with_scores.values()]
@@ -91,10 +106,14 @@ class TemporalRetriever(BaseRetriever):
         nodes = []
         for node_id, node_score in nodes_with_scores.items():
             t_score = ((node_score["t_score"] - __mu_t) / __std_t) * __std_s + __mu_s
-            # s_score = node_score["s_score"]
-            n_score = t_score + node_score["s_score"]
+            s_score = node_score["s_score"]
+            n_score = t_score + s_score
             nodes.append(NodeWithScore(node=self._index.docstore.docs[node_id], score=n_score))
 
-        result_nodes = sorted(nodes, key=lambda obj: obj.score, reverse=True)[:self._similarity_top_n]
+        sorted_nodes = sorted(nodes, key=lambda obj: obj.score, reverse=True)
+        cutoff_index = int(len(sorted_nodes) * 0.05)
+        if cutoff_index < self._similarity_top_n:
+            cutoff_index = self._similarity_top_n
+        result_nodes = sorted_nodes[:cutoff_index]
 
         return result_nodes
