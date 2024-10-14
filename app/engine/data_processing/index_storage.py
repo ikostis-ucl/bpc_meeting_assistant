@@ -1,6 +1,8 @@
 import os
 import re
 import shutil
+import tempfile
+import warnings
 
 import cv2
 import easyocr
@@ -11,11 +13,13 @@ from llama_index.core import Settings
 from llama_index.core import VectorStoreIndex
 from llama_index.core.node_parser import MarkdownNodeParser
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+from llama_index.llms.groq import Groq
 from llama_parse import LlamaParse
 from tqdm import tqdm
 from unidecode import unidecode
 
 from app.engine.data_processing.data_loaders import load_index
+from app.engine.data_processing.metadata_extractors import InvolvedPartiesExtractor, KeywordExtractor
 from app.utils.app_utils import pprint_console, simplify_path, empty_dir, fmt_string, Color, pprint_error
 from app.utils.data_processing_utils import is_match
 
@@ -23,6 +27,7 @@ from app.utils.data_processing_utils import is_match
 class Storage:
     def __init__(self, args):
         nest_asyncio.apply()
+        warnings.filterwarnings("ignore", category=FutureWarning)
 
         self.args = args
 
@@ -34,9 +39,10 @@ class Storage:
         # Index
         self.index = None
 
-        self.args = args
-
+        self.ocr_reader = easyocr.Reader(['fr'], verbose=False)
         self.embedding_model = HuggingFaceEmbedding(model_name=args.embeddings_model)
+        self.llm = Groq(model="llama-3.1-70b-versatile", api_key=args.groq_api_key,
+                        model_kwargs={"seed": 42}, temperature=0.0)
 
         self.node_parser = MarkdownNodeParser()
 
@@ -107,9 +113,9 @@ class Storage:
             _, first_page_image = cv2.threshold(first_page_image, 170, 255, cv2.THRESH_BINARY)
 
             # Apply OCR on the first page
-            ocr_reader = easyocr.Reader(['fr'], verbose=False)
+
             ocr_result = []
-            ocr_res_temp = ocr_reader.readtext(first_page_image, width_ths=1.5)
+            ocr_res_temp = self.ocr_reader.readtext(first_page_image, width_ths=1.5)
             for text_box in ocr_res_temp:
                 [upper_left, upper_right, lower_left, _], text = text_box[0], text_box[1]
                 x, y = int(upper_left[0]), int(upper_left[1])
@@ -123,6 +129,7 @@ class Storage:
             page_height = first_page_image.shape[0]
             y_upper_limit, y_lower_limit = int(page_height * (126 / 1333)), first_page_image.shape[1]
             roi_date_y_upper_limit, roi_date_y_lower_limit, roi_date_x_right_limit = 0, 0, 0
+            roi_poi_y_upper_limit, roi_poi_x_right_limit, roi_poi_x_left_limit = 0, 0, 0
 
             # Define the Region of Interest (RoI) of the document (general & date)
             for bbox in ocr_result:
@@ -138,6 +145,14 @@ class Storage:
                         roi_date_x_right_limit = bbox[0] + bbox[2] + w_error_margin
                         break
 
+            for bbox in ocr_result:
+                if y_lower_limit >= bbox[1] >= y_upper_limit:
+                    if is_match(text=bbox[4], phrase="ABREV"):
+                        roi_poi_y_upper_limit = bbox[1] + bbox[3] + h_error_margin
+                        roi_poi_x_right_limit = bbox[0] + bbox[2] + w_error_margin
+                        roi_poi_x_left_limit = bbox[0] - w_error_margin
+                        break
+
             # Save available abbreviations and document date
             d_time = []
             for bbox in ocr_result:
@@ -145,6 +160,13 @@ class Storage:
                     if (roi_date_y_lower_limit >= bbox[1] >= roi_date_y_upper_limit and
                             bbox[0] >= roi_date_x_right_limit):
                         d_time.append(bbox)
+
+            involved_parties = []
+            for bbox in ocr_result:
+                if y_lower_limit >= bbox[1] >= y_upper_limit:
+                    if (bbox[1] >= roi_poi_y_upper_limit and
+                            roi_poi_x_right_limit - bbox[2] >= bbox[0] >= roi_poi_x_left_limit):
+                        involved_parties.append(bbox[4])
 
             # Format the date of the document
             d_time = sorted(d_time, key=lambda x: x[0])
@@ -160,7 +182,16 @@ class Storage:
                 pprint_console(f"Could not find date on file {fname_no_xt}.pdf, skipping...")
                 continue
 
-            documents = self.doc_parser.load_data(f_path)
+            with tempfile.NamedTemporaryFile(delete=True, suffix=".pdf") as rest_pdf:
+                temp_pdf_path = rest_pdf.name
+                rest_pdf_doc = fitz.open()
+                for page_num in range(1, pdf_document.page_count):
+                    rest_pdf_doc.insert_pdf(pdf_document, from_page=page_num, to_page=page_num)
+                rest_pdf_doc.save(rest_pdf)
+
+                rest_pdf.flush()
+
+                documents = self.doc_parser.load_data(temp_pdf_path)
 
             if documents:
                 # Attach document date onto the document as metadata
@@ -176,7 +207,12 @@ class Storage:
 
                 if self.index is None:
                     self.index = VectorStoreIndex.from_documents(documents=documents,
-                                                                 transformations=[self.node_parser],
+                                                                 transformations=[self.node_parser,
+                                                                                  KeywordExtractor(keywords=3,
+                                                                                                   llm=self.llm,
+                                                                                                   show_progress=False),
+                                                                                  InvolvedPartiesExtractor(
+                                                                                      entities=involved_parties)],
                                                                  embed_model=self.embedding_model,
                                                                  show_progress=False)
 

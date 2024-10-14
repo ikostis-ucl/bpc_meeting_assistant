@@ -18,7 +18,8 @@ class TemporalRetriever(BaseRetriever):
                  alpha=1,
                  query_mode='default',
                  similarity_top_n=5,
-                 similarity_top_k=200):
+                 similarity_top_k=200,
+                 cutoff_percentage=0.05):
 
         self._index = index
         self._embed_model = embed_model
@@ -26,6 +27,7 @@ class TemporalRetriever(BaseRetriever):
         self._query_mode = query_mode
         self._similarity_top_n = similarity_top_n
         self._similarity_top_k = similarity_top_k
+        self._cutoff_percentage = cutoff_percentage if 0 <= cutoff_percentage <= 1 else 0.05
         self.datetime_span = None
         self.reranker = CohereRerank(api_key=key, top_n=self._similarity_top_k)
         super().__init__()
@@ -111,7 +113,7 @@ class TemporalRetriever(BaseRetriever):
             nodes.append(NodeWithScore(node=self._index.docstore.docs[node_id], score=n_score))
 
         sorted_nodes = sorted(nodes, key=lambda obj: obj.score, reverse=True)
-        cutoff_index = int(len(sorted_nodes) * 0.05)
+        cutoff_index = int(len(sorted_nodes) * self._cutoff_percentage)
         if cutoff_index < self._similarity_top_n:
             cutoff_index = self._similarity_top_n
         result_nodes = sorted_nodes[:cutoff_index]

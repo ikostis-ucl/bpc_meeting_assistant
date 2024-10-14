@@ -19,13 +19,13 @@ def config_parser():
 
     # I/O params
     parser.add_argument('--input_path', type=str,
-                        default="./data/input",
+                        default="./data/input/tests",
                         help='File/Directory input path.')
-    parser.add_argument('--output_path', type=str,
-                        default="./data/output/",
-                        help='Output directory path.')
+    parser.add_argument('--temp_path', type=str,
+                        default="./data/temp/",
+                        help='Temporary files directory path.')
     parser.add_argument('--storage_dir', type=str,
-                        default='./data/vector_db',
+                        default='./data/vector_db_test',
                         help='Vector DB directory path.')
 
     parser.add_argument("--home_path", type=str, default=None,
@@ -34,6 +34,10 @@ def config_parser():
     # Embeddings
     parser.add_argument('--embeddings_model', type=str, default="OrdalieTech/Solon-embeddings-large-0.1",
                         help='Embedding model.')
+
+    # Retriever
+    parser.add_argument('--cutoff_percentage', type=float, default=0.05,
+                        help="Percentage of retrieved nodes to contribute as context to the answer.")
 
     # API Keys
     parser.add_argument('--llama_parse_key', type=str, help='Your LlamaParse token key (llx-<...>)')
