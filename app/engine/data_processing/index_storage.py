@@ -113,7 +113,6 @@ class Storage:
             _, first_page_image = cv2.threshold(first_page_image, 170, 255, cv2.THRESH_BINARY)
 
             # Apply OCR on the first page
-
             ocr_result = []
             ocr_res_temp = self.ocr_reader.readtext(first_page_image, width_ths=1.5)
             for text_box in ocr_res_temp:
