@@ -14,15 +14,13 @@ if __name__ == "__main__":
 
     agent = InferenceEngine(args=args)
     questions = [
-        "Liste des décisions prises concernant le carrelage des salle des bains (SDBs).",
+        "Liste des décisions prises concernant le carrelage des salles des bains (SDBs) et les dates (jour/mois/année) auxquelles elles ont été prises.",
         "Quelle est la couleur choisie (RAL) pour les châssis ?",
-
         "Quelle est la date de remise des parties communes ?"]
-    start_dates = [None, "2023-01-01", "2023-06-15"]
-    end_dates = [None, "2023-06-15", "2024-06-15"]
+    start_dates = [None, "2023-01-01", "2023-02-15", "2023-12-31"]
+    end_dates = [None, "2023-02-15", "2023-12-31", None]
     for question in questions:
         for start_date, end_date in zip(start_dates, end_dates):
             answer, metadata = agent.query_llm(query_string=question, start_date=start_date, end_date=end_date)
             pprint_qa(question, answer, metadata, dates=[agent.retriever.datetime_span['start_date'],
                                                          agent.retriever.datetime_span['end_date']])
-            exit()

@@ -38,11 +38,15 @@ class TemporalRetriever(BaseRetriever):
         """
         if start_date is None or start_date == "":
             s_date = datetime.datetime(1970, 1, 1)
+        elif isinstance(start_date, datetime.datetime):
+            s_date = start_date
         else:
             s_date = parse_datetime(start_date)
 
         if end_date is None or end_date == "":
             e_date = datetime.datetime.now()
+        elif isinstance(end_date, datetime.datetime):
+            e_date = end_date
         else:
             e_date = parse_datetime(end_date)
 

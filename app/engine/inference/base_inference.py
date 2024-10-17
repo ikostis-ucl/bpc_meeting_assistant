@@ -17,10 +17,9 @@ class BaseInference:
 
         self.embedding_model = HuggingFaceEmbedding(model_name=args.embeddings_model)
 
-        self.retriever = TemporalRetriever(embed_model=self.embedding_model,
-                                           index=self.index,
-                                           cutoff_percentage=args.cutoff_percentage,
-                                           key=args.cohere_api_key)
+        self.cutoff_percentage = args.cutoff_percentage
+        self.__api_key = args.cohere_api_key
+        self.retriever = None
 
         self.prompt_template = PromptTemplate(
             "Vous êtes un(e) assistant(e) qui aide un chef de projet à extraire des informations de documents qui "
@@ -32,6 +31,11 @@ class BaseInference:
 
     @Halo(text=fmt_string(Color.CYAN, 'Querying model...'), placement='right', animation='bounce', spinner='moon')
     def query_llm(self, query_string, start_date, end_date):
+        self.retriever = TemporalRetriever(embed_model=self.embedding_model,
+                                           index=self.index,
+                                           cutoff_percentage=self.cutoff_percentage,
+                                           key=self.__api_key)
+
         self.retriever.set_datetime_span(start_date=start_date, end_date=end_date)
 
         query_engine = RetrieverQueryEngine.from_args(retriever=self.retriever, llm=self.model)
