@@ -15,7 +15,7 @@ class TemporalRetriever(BaseRetriever):
     """Custom retriever that performs both semantic search and temporal search."""
 
     def __init__(self, embed_model, index, key,
-                 alpha=1,
+                 alpha=0.1,
                  query_mode='default',
                  similarity_top_n=5,
                  similarity_top_k=200,
@@ -113,8 +113,8 @@ class TemporalRetriever(BaseRetriever):
         for node_id, node_score in nodes_with_scores.items():
             t_score = ((node_score["t_score"] - __mu_t) / __std_t) * __std_s + __mu_s
             s_score = node_score["s_score"]
-            n_score = t_score + s_score
-            nodes.append(NodeWithScore(node=self._index.docstore.docs[node_id], score=n_score))
+            z_score = t_score + s_score
+            nodes.append(NodeWithScore(node=self._index.docstore.docs[node_id], score=z_score))
 
         sorted_nodes = sorted(nodes, key=lambda obj: obj.score, reverse=True)
         cutoff_index = int(len(sorted_nodes) * self._cutoff_percentage)

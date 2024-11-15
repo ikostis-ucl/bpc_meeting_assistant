@@ -1,6 +1,5 @@
 import datetime
 import os
-from app.engine.inference.groq_inference import GroqInference as InferenceEngine
 
 import fitz
 import gradio as gr
@@ -35,7 +34,7 @@ class GUI:
     def set_cutoff_percentage(self, value):
         if value > 20.0:
             gr.Warning("Going over 20% might result in performance slowdown, and/or the demo to crash.")
-        self.conv_agent.cutoff_percentage = value/100
+        self.conv_agent.cutoff_percentage = value / 100
 
     def exec_user_query(self, question):
         if question == 'exit' or question == 'quit':
@@ -82,17 +81,22 @@ class GUI:
                 with gr.Column():
                     @gr.render(inputs=None, triggers=[app.load, chatbot.change])
                     def render_context():
-                        pdf_names, pdf_paths = [], []
+                        pdf_info = {}
                         for node_id, node_values in self.metadata.items():
-                            if node_values["file_name"] not in pdf_names:
-                                pdf_names.append(node_values["file_name"])
-                                pdf_paths.append(node_values["file_path"])
+                            file_name = node_values["file_name"]
+                            file_path = node_values["file_path"]
+                            page_number = node_values.get("page_number", 1) - 1
+                            if file_name not in pdf_info:
+                                pdf_info[file_name] = {"file_path": file_path, "page_numbers": [page_number]}
+                            else:
+                                pdf_info[file_name]["page_numbers"].append(page_number)
 
-                        for pdf_path, pdf_name in zip(pdf_paths, pdf_names):
+                        for pdf_name, info in pdf_info.items():
+                            pdf_path = info["file_path"]
+                            page_numbers = list(set(info["page_numbers"]))  # Remove duplicates
                             pdf_pages = []
                             doc = fitz.open(pdf_path)
-                            pg_nums = [int(i) for i in range(doc.page_count)]
-                            for pg_num in pg_nums:
+                            for pg_num in page_numbers:
                                 page = doc[pg_num]
                                 pix = page.get_pixmap(matrix=fitz.Matrix(DPI / 72, DPI / 72))
                                 pdf_pages.append(Image.frombytes('RGB', (pix.width, pix.height), pix.samples))
@@ -104,8 +108,8 @@ class GUI:
                                     preview=True,
                                     selected_index=0,
                                     type='pil',
-                                    interactive=False)
-
+                                    interactive=False
+                                )
             with gr.Row():
                 with gr.Column(scale=5):
                     input_prompt = gr.Textbox(
@@ -131,7 +135,7 @@ class GUI:
                                                min_width=25)
                     with gr.Row():
                         slider = gr.Slider(0, 100, step=0.5,
-                                           value=self.args.cutoff_percentage*100, label="Index Leniency (%)")
+                                           value=self.args.cutoff_percentage * 100, label="Index Leniency (%)")
 
             # backend
             input_prompt.submit(

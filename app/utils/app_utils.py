@@ -1,7 +1,6 @@
 import os
 import shutil
 
-
 class Color:
     PURPLE = '\033[95m'
     CYAN = '\033[96m'
@@ -61,14 +60,20 @@ def pprint_qa(question, answer, metadata, dates=None):
     pprint_hline("-", 3)
     print(f"{Color.CYAN}Answer:{Color.END}\n{answer}")
     if metadata is not None:
-        f_names = []
+        file_pages = {}
         for node_id, node_values in metadata.items():
-            f_names.append(node_values["file_name"])
-        f_names = list(set(f_names))
+            file_name = node_values["file_name"]
+            page_number = node_values["page_number"]
+            if file_name in file_pages:
+                file_pages[file_name].append(page_number)
+            else:
+                file_pages[file_name] = [page_number]
 
         pprint_hline("-", 3)
         print(f"{Color.YELLOW}Citation:{Color.END}")
-        print(f"{Color.BOLD}Document name(s):{Color.END} {f_names}")
+        print(f"{Color.BOLD}Document name(s) and page number(s):{Color.END}")
+        for file_name, page_numbers in file_pages.items():
+            print(f"{file_name}: {list(set(page_numbers))}")
     if dates is not None:
         pprint_hline("-", 3)
         print(f"{Color.PURPLE}Additional Info:{Color.END}")

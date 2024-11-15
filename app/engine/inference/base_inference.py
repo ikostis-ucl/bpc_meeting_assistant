@@ -1,11 +1,12 @@
 from halo import Halo
 from llama_index.core import PromptTemplate
 from llama_index.core.query_engine import RetrieverQueryEngine
+from llama_index.core.vector_stores.types import MetadataFilters, MetadataFilter, FilterOperator
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 
 from app.engine.data_processing.data_loaders import load_index
 from app.engine.retriever.temporal_retriever import TemporalRetriever
-from app.utils.app_utils import fmt_string, Color, pprint_debug
+from app.utils.app_utils import fmt_string, Color
 
 
 class BaseInference:
@@ -39,6 +40,25 @@ class BaseInference:
         self.retriever.set_datetime_span(start_date=start_date, end_date=end_date)
 
         query_engine = RetrieverQueryEngine.from_args(retriever=self.retriever, llm=self.model)
+
+        # TODO: QE swap: with new indexing
+        """
+        TODO: QE swap
+        0) new branch /dev
+        1) Run indexing, converting the formated_datetime into a timestamp (integer)
+        2) Change start_date, end_date to timestamp (integer)
+        3) Fix for GUI
+        4) Compare results.      
+        """
+        query_engine_temp = self.index.as_query_engine(llm=self.model,
+                                                       filters=MetadataFilters(
+                                                           filters=[
+                                                               MetadataFilter(key="meeting_datetime", value=start_date,
+                                                                              operator=FilterOperator.GTE),
+                                                               MetadataFilter(key="meeting_datetime", value=end_date,
+                                                                              operator=FilterOperator.LTE),
+                                                           ]
+                                                       ))
 
         answer = query_engine.query(self.prompt_template.format(query_string=query_string))
 

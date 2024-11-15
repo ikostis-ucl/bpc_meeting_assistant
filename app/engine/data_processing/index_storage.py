@@ -75,7 +75,7 @@ class Storage:
                                      verbose=False,
                                      language='fr',
                                      max_timeout=600,
-                                     use_vendor_multimodal_model=True,
+                                     use_vendor_multimodal_model=False,
                                      vendor_multimodal_model_name='openai-gpt4o',
                                      vendor_multimodal_api_key=self.args.openai_api_key
                                      )
@@ -194,11 +194,12 @@ class Storage:
 
             if documents:
                 # Attach document date onto the document as metadata
-                for doc in documents:
+                for page_num, doc in enumerate(documents, start=1):
                     doc.metadata = {
                         'meeting_datetime': formatted_datetime,
                         'file_path': f"{self.args.input_path}/files_archive/{os.path.basename(f_path)}",
-                        'file_name': os.path.basename(f_path)
+                        'file_name': os.path.basename(f_path),
+                        'page_number': page_num # TODO: Run for test set, fix UI, run for whole set
                     }
                     doc.excluded_embed_metadata_keys = ["meeting_datetime"]
                     doc.excluded_llm_metadata_keys = ["meeting_datetime"]

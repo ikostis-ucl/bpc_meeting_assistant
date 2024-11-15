@@ -21,9 +21,6 @@ def config_parser():
     parser.add_argument('--input_path', type=str,
                         default="./data/input",
                         help='File/Directory input path.')
-    parser.add_argument('--temp_path', type=str,
-                        default="./data/temp/",
-                        help='Temporary files directory path.')
     parser.add_argument('--storage_dir', type=str,
                         default='./data/vector_db',
                         help='Vector DB directory path.')
