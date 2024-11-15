@@ -100,5 +100,5 @@ if __name__ == "__main__":
     warnings.simplefilter(action='ignore', category=FutureWarning)
     os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-    scenario = Test()
+    scenario = Benchmark()
     scenario.run()
