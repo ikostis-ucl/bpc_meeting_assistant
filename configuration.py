@@ -32,9 +32,9 @@ def config_parser():
     parser.add_argument('--embeddings_model', type=str, default="OrdalieTech/Solon-embeddings-large-0.1",
                         help='Embedding model.')
 
-    # Retriever
-    parser.add_argument('--cutoff_percentage', type=float, default=0.05,
-                        help="Percentage of retrieved nodes to contribute as context to the answer.")
+    # # Retriever
+    # parser.add_argument('--cutoff_percentage', type=float, default=0.05,
+    #                     help="Percentage of retrieved nodes to contribute as context to the answer.")
 
     # API Keys
     parser.add_argument('--llama_parse_key', type=str, help='Your LlamaParse token key (llx-<...>)')

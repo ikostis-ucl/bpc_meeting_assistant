@@ -9,8 +9,7 @@ from configuration import config_parser
 class Demo:
     def __init__(self):
         self.questions = []
-        self.start_dates = []
-        self.end_dates = []
+        self.dates = []
         self.agent = None
 
     def inputs(self):
@@ -20,10 +19,10 @@ class Demo:
         self.inputs()
 
         for question in self.questions:
-            for start_date, end_date in zip(self.start_dates, self.end_dates):
-                answer, metadata = self.agent.query_llm(query_string=question, start_date=start_date, end_date=end_date)
-                pprint_qa(question, answer, metadata, dates=[self.agent.retriever.datetime_span['start_date'],
-                                                             self.agent.retriever.datetime_span['end_date']])
+            for start_date, end_date in self.dates:
+                answer, metadata, (s_date, e_date) = self.agent.query_llm(query_string=question, start_date=start_date,
+                                                                          end_date=end_date)
+                pprint_qa(question, answer, metadata, dates=[s_date, e_date])
 
 
 class Test(Demo):
@@ -36,10 +35,9 @@ class Test(Demo):
 
         self.agent = InferenceEngine(args=self.args)
 
-        self.questions = ["Quelles sont les décisions prises en matière de recharge des véhicules électriques ? "
-                          "Indiquez-moi les dates (jj/mm/aaaa) auxquelles ces décisions ont été prises."]
-        self.start_dates = [None, None, "2022-09-01", "2022-10-31"]
-        self.end_dates = [None, "2022-10-01", "2022-10-31", None]
+        self.questions = [
+            "Quelles sont les décisions prises en matière des stations du recharge des véhicules électriques ? Indiquez-moi les dates (jj/mm/aaaa) auxquelles ces décisions ont été prises."]
+        self.dates = [(None, "2022-10-01"), ("2022-09-01", "2022-10-31"), ("2022-10-31", None), (None, None)]
 
 
 class Benchmark(Demo):
@@ -53,13 +51,12 @@ class Benchmark(Demo):
         self.agent = InferenceEngine(args=self.args)
 
         self.questions = [
-            "Quelle est la date de remise des espaces communs ?",
+            "Quelle est la couleur choisie (RAL) pour les châssis ?",
             "Liste des décisions prises concernant le carrelage des salles des bains (SDBs) et les dates (jour/mois/année) auxquelles elles ont été prises.",
-            "Quelle est la couleur choisie (RAL) pour les châssis ?"
+            "Quelle est la date de remise des espaces communs ?"
         ]
 
-        self.start_dates = [None, "2023-01-01", "2023-02-15", "2024-01-01"]
-        self.end_dates = [None, "2023-02-15", "2023-12-31", None]
+        self.dates = [("2023-01-01", "2023-02-01"), ("2023-02-15", "2023-12-31"), ("2024-01-01", None), (None, None)]
 
 
 class InteractiveQuery(Demo):
@@ -73,8 +70,7 @@ class InteractiveQuery(Demo):
         self.agent = InferenceEngine(args=self.args)
 
         self.questions = []
-        self.start_dates = []
-        self.end_dates = []
+        self.dates = []
 
     def inputs(self):
         while True:
@@ -88,8 +84,7 @@ class InteractiveQuery(Demo):
                 end_date = None
 
             self.questions.append(question)
-            self.start_dates.append(start_date)
-            self.end_dates.append(end_date)
+            self.dates.append((start_date, end_date))
 
             response = input("Do you want to ask another question? (y/[n]): ")
             if response == '' or response == 'n':

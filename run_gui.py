@@ -12,6 +12,9 @@ if __name__ == "__main__":
     parser = config_parser()
     args = parser.parse_args()
 
+    # args.input_path = "data/tests"
+    # args.storage_dir = "data/tests/vector_db_test"
+
     agent = InferenceEngine(args=args)
     app = GUI(args=args, conv_agent=agent)
     app.run()

@@ -23,7 +23,9 @@ class GUI:
         self.end_date = datetime.datetime.now()
 
         self.chat_history = []
-        self.metadata = {"default_1": {"file_name": "Home", "file_path": "./app/assets/idle_screen.pdf"}}
+        self.metadata = {"default_1": {"file_name": "Home",
+                                       "file_path": "./app/assets/idle_screen.pdf",
+                                       "page_number": 1}}
 
     def set_start_date(self, value):
         self.start_date = value
@@ -31,10 +33,10 @@ class GUI:
     def set_end_date(self, value):
         self.end_date = value
 
-    def set_cutoff_percentage(self, value):
-        if value > 20.0:
-            gr.Warning("Going over 20% might result in performance slowdown, and/or the demo to crash.")
-        self.conv_agent.cutoff_percentage = value / 100
+    # def set_cutoff_percentage(self, value):
+    #     if value > 20.0:
+    #         gr.Warning("Going over 20% might result in performance slowdown, and/or the demo to crash.")
+    #     self.conv_agent.cutoff_percentage = value / 100
 
     def exec_user_query(self, question):
         if question == 'exit' or question == 'quit':
@@ -46,10 +48,10 @@ class GUI:
 
     def query_conv_agent(self):
         question = self.chat_history[-1][0]
-        answer, self.metadata = self.conv_agent.query_llm(query_string=question,
-                                                          start_date=self.start_date,
-                                                          end_date=self.end_date)
-        pprint_qa(question=question, answer=answer, metadata=self.metadata, dates=[self.start_date, self.end_date])
+        answer, self.metadata, (s_date, e_date) = self.conv_agent.query_llm(query_string=question,
+                                                                            start_date=self.start_date,
+                                                                            end_date=self.end_date)
+        pprint_qa(question=question, answer=answer, metadata=self.metadata, dates=[s_date, e_date])
 
         self.chat_history[-1][1] = answer
 
@@ -85,7 +87,7 @@ class GUI:
                         for node_id, node_values in self.metadata.items():
                             file_name = node_values["file_name"]
                             file_path = node_values["file_path"]
-                            page_number = node_values.get("page_number", 1) - 1
+                            page_number = node_values.get("page_number") - 1
                             if file_name not in pdf_info:
                                 pdf_info[file_name] = {"file_path": file_path, "page_numbers": [page_number]}
                             else:
@@ -133,9 +135,9 @@ class GUI:
                                                scale=8,
                                                container=True,
                                                min_width=25)
-                    with gr.Row():
-                        slider = gr.Slider(0, 100, step=0.5,
-                                           value=self.args.cutoff_percentage * 100, label="Index Leniency (%)")
+                    # with gr.Row():
+                    #     slider = gr.Slider(0, 100, step=1,
+                    #                        value=5, label="Index Range")
 
             # backend
             input_prompt.submit(
@@ -149,7 +151,7 @@ class GUI:
 
             from_calendar.input(fn=self.set_start_date, inputs=[from_calendar])
             to_calendar.input(fn=self.set_end_date, inputs=[to_calendar])
-            slider.release(fn=self.set_cutoff_percentage, inputs=[slider])
+            # slider.release(fn=self.set_cutoff_percentage, inputs=[slider])
 
         app.queue()
         try:

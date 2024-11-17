@@ -20,7 +20,8 @@ from unidecode import unidecode
 
 from app.engine.data_processing.data_loaders import load_index
 from app.engine.data_processing.metadata_extractors import InvolvedPartiesExtractor, KeywordExtractor
-from app.utils.app_utils import pprint_console, simplify_path, empty_dir, fmt_string, Color, pprint_error
+from app.utils.app_utils import pprint_console, simplify_path, empty_dir, fmt_string, Color, pprint_error, \
+    datetime_to_timestamp
 from app.utils.data_processing_utils import is_match
 
 
@@ -41,7 +42,7 @@ class Storage:
 
         self.ocr_reader = easyocr.Reader(['fr'], verbose=False)
         self.embedding_model = HuggingFaceEmbedding(model_name=args.embeddings_model)
-        self.llm = Groq(model="llama-3.1-70b-versatile", api_key=args.groq_api_key,
+        self.llm = Groq(model="llama-3.2-90b-text-preview", api_key=args.groq_api_key,
                         model_kwargs={"seed": 42}, temperature=0.0)
 
         self.node_parser = MarkdownNodeParser()
@@ -194,12 +195,12 @@ class Storage:
 
             if documents:
                 # Attach document date onto the document as metadata
-                for page_num, doc in enumerate(documents, start=1):
+                for page_num, doc in enumerate(documents, start=2):
                     doc.metadata = {
-                        'meeting_datetime': formatted_datetime,
+                        'meeting_datetime': datetime_to_timestamp(formatted_datetime),
                         'file_path': f"{self.args.input_path}/files_archive/{os.path.basename(f_path)}",
                         'file_name': os.path.basename(f_path),
-                        'page_number': page_num # TODO: Run for test set, fix UI, run for whole set
+                        'page_number': page_num
                     }
                     doc.excluded_embed_metadata_keys = ["meeting_datetime"]
                     doc.excluded_llm_metadata_keys = ["meeting_datetime"]
