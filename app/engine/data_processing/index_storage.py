@@ -32,16 +32,22 @@ class Storage:
 
         self.args = args
 
-        # Document parser
-        self.doc_parser = LlamaParse(api_key=args.llama_parse_key,
+        self.doc_parser = LlamaParse(api_key=self.args.llama_parse_key,
+                                     result_type="markdown",
                                      verbose=False,
-                                     language='fr')
+                                     language='fr',
+                                     max_timeout=600,
+                                     # FIXME: change to True, figure out why it's not working, adjust paging
+                                     use_vendor_multimodal_model=False,
+                                     vendor_multimodal_model_name='openai-gpt4o',
+                                     vendor_multimodal_api_key=self.args.openai_api_key
+                                     )
 
-        # Index
         self.index = None
 
         self.ocr_reader = easyocr.Reader(['fr'], verbose=False)
-        self.embedding_model = HuggingFaceEmbedding(model_name=args.embeddings_model)
+        self.embedding_model = HuggingFaceEmbedding(model_name=args.embeddings_model,
+                                                    cache_folder=args.embeddings_cache_dir)
         self.llm = Groq(model="llama-3.2-90b-text-preview", api_key=args.groq_api_key,
                         model_kwargs={"seed": 42}, temperature=0.0)
 
@@ -71,15 +77,6 @@ class Storage:
                                  "or 'p' for purging it (default option: 'l').")
 
     def parse_documents(self):
-        self.doc_parser = LlamaParse(api_key=self.args.llama_parse_key,
-                                     result_type="markdown",
-                                     verbose=False,
-                                     language='fr',
-                                     max_timeout=600,
-                                     use_vendor_multimodal_model=False,
-                                     vendor_multimodal_model_name='openai-gpt4o',
-                                     vendor_multimodal_api_key=self.args.openai_api_key
-                                     )
 
         Settings.embed_model = self.embedding_model
 

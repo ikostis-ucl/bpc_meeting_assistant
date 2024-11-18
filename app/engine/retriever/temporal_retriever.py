@@ -1,4 +1,3 @@
-import datetime
 from typing import List
 
 import numpy as np
@@ -7,8 +6,6 @@ from llama_index.core.retrievers import BaseRetriever
 from llama_index.core.schema import NodeWithScore
 from llama_index.core.vector_stores import VectorStoreQuery
 from llama_index.postprocessor.cohere_rerank import CohereRerank
-
-from app.utils.temporal_retriever_utils import parse_datetime
 
 
 class TemporalRetriever(BaseRetriever):
@@ -25,46 +22,28 @@ class TemporalRetriever(BaseRetriever):
         self._embed_model = embed_model
         self._alpha = alpha
         self._query_mode = query_mode
+
         self._similarity_top_n = similarity_top_n
         self._similarity_top_k = similarity_top_k
+
         self._cutoff_percentage = cutoff_percentage if 0 <= cutoff_percentage <= 1 else 0.05
         self.datetime_span = None
-        self.reranker = CohereRerank(api_key=key, top_n=self._similarity_top_k)
+        self.reranker = CohereRerank(api_key=key, top_n=self._similarity_top_n)
+
+        self.negative_answer = ("Je suis désolé, mais je n'ai pu trouver aucune information relative à votre demande. "
+                                "Veuillez essayer de reformuler votre requête ou d'en modifier la période.")
+
         super().__init__()
-
-    def set_datetime_span(self, start_date=None, end_date=None):
-        """
-        Run this before querying to set the date.
-        """
-        if start_date is None or start_date == "":
-            s_date = datetime.datetime(1970, 1, 1)
-        elif isinstance(start_date, datetime.datetime):
-            s_date = start_date
-        else:
-            s_date = parse_datetime(start_date)
-
-        if end_date is None or end_date == "":
-            e_date = datetime.datetime.now()
-        elif isinstance(end_date, datetime.datetime):
-            e_date = end_date
-        else:
-            e_date = parse_datetime(end_date)
-
-        self.datetime_span = {"start_date": s_date, "end_date": e_date}
 
     def _calculate_temporal_score(self, node):
         """
         Given a date span, calculate the temporal score for each node.
         """
-        meeting_datetime = datetime.datetime(day=int(node.metadata["meeting_datetime"][0]),
-                                             month=int(node.metadata["meeting_datetime"][1]),
-                                             year=int(node.metadata["meeting_datetime"][2]))
-        if (self.datetime_span['start_date'].timestamp()
-                <= meeting_datetime.timestamp()
-                <= self.datetime_span['end_date'].timestamp()):
+        meeting_datetime = node.metadata.get('meeting_datetime')
 
+        if self.datetime_span['start_date'] <= meeting_datetime <= self.datetime_span['end_date']:
             try:
-                return self._alpha / (self.datetime_span['end_date'].timestamp() - meeting_datetime.timestamp())
+                return self._alpha / (self.datetime_span['end_date'] - meeting_datetime)
             except ZeroDivisionError:
                 return self._alpha / 0.99  # timestamp = how many seconds have passed from 01/01/1970 00:00:00
         else:
@@ -104,10 +83,16 @@ class TemporalRetriever(BaseRetriever):
 
         __s_scores = [s["s_score"] for s in nodes_with_scores.values()]
         __t_scores = [t["t_score"] for t in nodes_with_scores.values()]
-        __mu_s = np.mean(__s_scores)
-        __std_s = np.std(__s_scores)
-        __mu_t = np.mean(__t_scores)
-        __std_t = np.std(__t_scores)
+        if __s_scores and __t_scores:
+            __mu_s = np.mean(__s_scores)
+            __std_s = np.std(__s_scores)
+            __mu_t = np.mean(__t_scores)
+            __std_t = np.std(__t_scores)
+        else:
+            __mu_s = 0
+            __std_s = 1
+            __mu_t = 0
+            __std_t = 1
 
         nodes = []
         for node_id, node_score in nodes_with_scores.items():
@@ -116,10 +101,13 @@ class TemporalRetriever(BaseRetriever):
             z_score = t_score + s_score
             nodes.append(NodeWithScore(node=self._index.docstore.docs[node_id], score=z_score))
 
-        sorted_nodes = sorted(nodes, key=lambda obj: obj.score, reverse=True)
-        cutoff_index = int(len(sorted_nodes) * self._cutoff_percentage)
-        if cutoff_index < self._similarity_top_n:
-            cutoff_index = self._similarity_top_n
-        result_nodes = sorted_nodes[:cutoff_index]
+        if nodes:
+            sorted_nodes = sorted(nodes, key=lambda obj: obj.score, reverse=True)
+            cutoff_index = int(len(sorted_nodes) * self._cutoff_percentage)
+            if cutoff_index < self._similarity_top_n:
+                cutoff_index = self._similarity_top_n
+            result_nodes = sorted_nodes[:cutoff_index]
+        else:
+            result_nodes = []
 
         return result_nodes
