@@ -31,6 +31,8 @@ def config_parser():
     # Embeddings
     parser.add_argument('--embeddings_model', type=str, default="OrdalieTech/Solon-embeddings-large-0.1",
                         help='Embedding model.')
+    parser.add_argument('--embeddings_cache_dir', type=str, default="./resources/.emb_models",
+                        help='Embeddings cache directory path.')
 
     # Retriever
     parser.add_argument('--cutoff_percentage', type=float, default=0.05,

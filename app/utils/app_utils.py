@@ -1,5 +1,6 @@
 import os
 import shutil
+import datetime
 
 class Color:
     PURPLE = '\033[95m'
@@ -52,6 +53,25 @@ def simplify_path(path):
     simplified_path = "./" + "/".join(components[to_index:])
 
     return simplified_path
+
+def datetime_to_timestamp(dt):
+    if isinstance(dt, datetime.datetime):
+        return int(dt.timestamp())
+    elif isinstance(dt, list) and len(dt) == 3:
+        try:
+            day, month, year = map(int, dt)
+            dt_obj = datetime.datetime(year, month, day)
+            return int(dt_obj.timestamp())
+        except ValueError:
+            raise ValueError("List elements must be integers representing [dd, mm, yyyy]")
+    elif isinstance(dt, str):
+        try:
+            dt_obj = datetime.datetime.strptime(dt, "%Y-%m-%d")
+            return int(dt_obj.timestamp())
+        except ValueError:
+            raise ValueError("String must be in the format yyyy-mm-dd")
+    else:
+        raise ValueError("Input must be a datetime.datetime object, a list [dd, mm, yyyy], or a string yyyy-mm-dd")
 
 
 def pprint_qa(question, answer, metadata, dates=None):
