@@ -5,9 +5,9 @@ ioannis.kostis@uclouvain.be | ioannis.aris.kostis@gmail.com
 Config object that handles the various parameters and configurations of the system.
 """
 
-# TODO: Add docstrings and comments to all of the project.
-# TODO: Remove unused functions and classes.
-# TODO: Clean up the github repo.
+# Handover TODO: Add docstrings and comments to all of the project.
+# Handover TODO: Remove unused functions and classes.
+# Handover TODO: Clean up the github repo.
 
 import configargparse
 
