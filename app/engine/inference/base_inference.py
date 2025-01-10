@@ -7,7 +7,7 @@ from app.engine.data_processing.data_loaders import load_index
 
 class BaseInference:
     def __init__(self, args):
-        self.model = Groq(model="llama-3.1-70b-versatile", api_key=args.groq_api_key,
+        self.model = Groq(model="llama-3.3-70b-versatile", api_key=args.groq_api_key,
                           model_kwargs={"seed": 42}, temperature=0.0)
         self.index = load_index(args)
         self.embedding_model = HuggingFaceEmbedding(model_name=args.embeddings_model,

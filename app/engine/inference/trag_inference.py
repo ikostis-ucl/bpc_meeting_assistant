@@ -13,7 +13,7 @@ class TRAGInference(BaseInference):
         super().__init__(args)
 
         self.cutoff_percentage = args.cutoff_percentage
-        self.__api_key = args.cohere_api_key
+        self.cohere_api_key = args.cohere_api_key
         self.retriever = None
 
     @Halo(text=fmt_string(Color.CYAN, 'Querying model...'), placement='right', animation='bounce', spinner='moon')
@@ -26,7 +26,7 @@ class TRAGInference(BaseInference):
         self.retriever = TemporalRetriever(embed_model=self.embedding_model,
                                            index=self.index,
                                            cutoff_percentage=self.cutoff_percentage,
-                                           key=self.__api_key)
+                                           key=self.cohere_api_key)
 
         self.retriever.datetime_span = {"start_date": datetime_to_timestamp(start_date),
                                         "end_date": datetime_to_timestamp(end_date)}
