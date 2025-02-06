@@ -56,7 +56,7 @@ class Storage:
 
     def directory_confirmation(self, skip=False):
         if skip:
-            self.index = load_index(args=self.args, transformations=[self.node_parser])
+            self.index, _ = load_index(args=self.args, transformations=[self.node_parser])
             return
 
         if not empty_dir(self.args.storage_dir):
@@ -69,7 +69,7 @@ class Storage:
                     os.makedirs(self.args.storage_dir, exist_ok=True)
                     break
                 elif user_input == 'l' or user_input == '':
-                    self.index = load_index(args=self.args, transformations=[self.node_parser])
+                    self.index, _ = load_index(args=self.args, transformations=[self.node_parser])
                     break
                 else:
                     pprint_error("Invalid input. Please reply with 'l' for loading the index "
