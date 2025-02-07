@@ -47,7 +47,7 @@ class Storage:
         self.ocr_reader = easyocr.Reader(['fr'], verbose=False)
         self.embedding_model = HuggingFaceEmbedding(model_name=args.embeddings_model,
                                                     cache_folder=args.embeddings_cache_dir)
-        self.llm = Groq(model="llama-3.3-70b-versatile", api_key=args.groq_api_key,
+        self.llm = Groq(model="gemma2-9b-it", api_key=args.groq_api_key,
                         model_kwargs={"seed": 42}, temperature=0.0)
 
         self.node_parser = MarkdownNodeParser()

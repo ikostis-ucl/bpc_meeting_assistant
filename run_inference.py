@@ -23,12 +23,12 @@ class Demo:
 
         for question in self.questions:
             start_time = time.time()
-            for start_date, end_date in self.dates:
-                answer, metadata, (s_date, e_date) = self.agent.query_llm(query_string=question)
-                pprint_qa(question, answer, metadata, dates=[s_date, e_date])
-                elapsed_time = time.time() - start_time
-                if elapsed_time < 20:
-                    time.sleep(20 - elapsed_time)  # Failsafe for the Cohere API rate limit
+
+            results = self.agent.query_llm(query_string=question)
+            pprint_qa(question, results)
+            elapsed_time = time.time() - start_time
+            if elapsed_time < 20:
+                time.sleep(20 - elapsed_time)  # Failsafe for the Cohere API rate limit
 
 
 class Test(Demo):

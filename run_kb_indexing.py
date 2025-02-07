@@ -27,4 +27,4 @@ class IndexingTest:
 
 
 if __name__ == "__main__":
-    indexing_run = IndexingFull()
+    indexing_run = IndexingTest()
