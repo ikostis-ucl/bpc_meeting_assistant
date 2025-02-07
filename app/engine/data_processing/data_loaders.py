@@ -15,7 +15,7 @@ def load_index(args, transformations=None):
     Settings.show_progress = False
 
     if os.path.exists(args.storage_dir):
-        with Halo(text=f"{fmt_string(Color.YELLOW, '[CONSOLE] Loading index from storage...')}",
+        with Halo(text=f"{fmt_string(Color.CYAN, '[CONSOLE] Loading index from storage...')}",
                   placement='right', animation='bounce', spinner='moon'):
             storage_context = StorageContext.from_defaults(persist_dir=args.storage_dir)
             index = load_index_from_storage(storage_context, show_progress=False)

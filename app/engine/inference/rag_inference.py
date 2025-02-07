@@ -6,8 +6,9 @@ from llama_index.core.callbacks import TokenCountingHandler, CallbackManager
 from llama_index.core.vector_stores.types import MetadataFilters, MetadataFilter, FilterOperator
 from llama_index.postprocessor.colbert_rerank import ColbertRerank
 
+from app.engine.inference.Judge import Judge
 from app.engine.inference.base_inference import BaseInference
-from app.utils.app_utils import fmt_string, Color, pprint_debug
+from app.utils.app_utils import fmt_string, Color
 
 
 class RAGInference(BaseInference):
@@ -20,8 +21,9 @@ class RAGInference(BaseInference):
         self.model.callback_manager = Settings.callback_manager
 
         self.reranker = ColbertRerank(top_n=5)
+        self.judge = Judge(args)  # Initialize the Judge
 
-    @Halo(text=fmt_string(Color.YELLOW, '[CONSOLE] Querying model...'),
+    @Halo(text=fmt_string(Color.CYAN, '[CONSOLE] Querying model...'),
           placement='right', animation='bounce', spinner='moon')
     def query_llm(self, query_string):
         results = []
@@ -56,5 +58,21 @@ class RAGInference(BaseInference):
                 self.token_counter.reset_counts()
                 start_time = time.time()
 
-        pprint_debug("Checkpoint: Querying model... Done.")
-        return results
+        # Clean up results based on judgements
+        cleaned_results = [results[0]]
+        for i in range(1, len(results)):
+            answer_prev = cleaned_results[-1][0]
+            answer_next = results[i][0]
+            judgement = self.judge.run(query_string, answer_prev, answer_next)
+            if judgement:
+                # Merge metadata and extend timespan
+                if cleaned_results[-1][1] is None:
+                    cleaned_results[-1] = (cleaned_results[-1][0], {}, cleaned_results[-1][2])
+                if results[i][1] is not None:
+                    cleaned_results[-1][1].update(results[i][1])
+                cleaned_results[-1] = (cleaned_results[-1][0], cleaned_results[-1][1], (cleaned_results[-1][2][0], results[i][2][1]))
+            else:
+                cleaned_results.append(results[i])
+
+        print("Checkpoint: Querying model... Done.")
+        return cleaned_results
