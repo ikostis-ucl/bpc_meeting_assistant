@@ -1,5 +1,3 @@
-import time
-
 from halo import Halo
 from llama_index.core import Settings
 from llama_index.core.callbacks import TokenCountingHandler, CallbackManager
@@ -9,6 +7,7 @@ from llama_index.postprocessor.colbert_rerank import ColbertRerank
 from app.engine.inference.Judge import Judge
 from app.engine.inference.base_inference import BaseInference
 from app.utils.app_utils import fmt_string, Color
+from app.utils.inference_utils import throttle_requests
 
 
 class RAGInference(BaseInference):
@@ -25,9 +24,9 @@ class RAGInference(BaseInference):
 
     @Halo(text=fmt_string(Color.CYAN, '[CONSOLE] Querying model...'),
           placement='right', animation='bounce', spinner='moon')
+    @throttle_requests()
     def query_llm(self, query_string):
         results = []
-        start_time = time.time()
 
         for start_date, end_date in self.timespans:
             query_engine = self.index.as_query_engine(llm=self.model,
@@ -48,16 +47,6 @@ class RAGInference(BaseInference):
             answer = query_engine.query(self.prompt_template.format(query_string=query_string))
             results.append((answer.response, answer.metadata, (start_date, end_date)))
 
-            elapsed_time = time.time() - start_time
-            if self.token_counter.total_llm_token_count >= self.model_limiters["tokens_per_minute"]:
-                sleep_time = 60 - elapsed_time
-                if sleep_time > 0:
-                    with Halo(text=fmt_string(Color.YELLOW, '[CONSOLE] API rate limit reached, waiting...'),
-                              placement='right', animation='bounce', spinner='dots'):
-                        time.sleep(sleep_time)
-                self.token_counter.reset_counts()
-                start_time = time.time()
-
         # Clean up results based on judgements
         cleaned_results = [results[0]]
         for i in range(1, len(results)):
@@ -70,7 +59,8 @@ class RAGInference(BaseInference):
                     cleaned_results[-1] = (cleaned_results[-1][0], {}, cleaned_results[-1][2])
                 if results[i][1] is not None:
                     cleaned_results[-1][1].update(results[i][1])
-                cleaned_results[-1] = (cleaned_results[-1][0], cleaned_results[-1][1], (cleaned_results[-1][2][0], results[i][2][1]))
+                cleaned_results[-1] = (
+                    cleaned_results[-1][0], cleaned_results[-1][1], (cleaned_results[-1][2][0], results[i][2][1]))
             else:
                 cleaned_results.append(results[i])
 

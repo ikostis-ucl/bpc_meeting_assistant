@@ -20,9 +20,8 @@ from unidecode import unidecode
 
 from app.engine.data_processing.data_loaders import load_index
 from app.engine.data_processing.metadata_extractors import InvolvedPartiesExtractor, KeywordExtractor
-from app.utils.app_utils import pprint_console, simplify_path, empty_dir, fmt_string, Color, pprint_error, \
-    datetime_to_timestamp
-from app.utils.data_processing_utils import is_match
+from app.utils.app_utils import pprint_console, simplify_path, empty_dir, fmt_string, Color, pprint_error
+from app.utils.data_processing_utils import is_match, datetime_to_timestamp
 
 
 class Storage:

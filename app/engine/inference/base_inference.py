@@ -12,7 +12,7 @@ class BaseInference:
     def __init__(self, args):
         self.model = Groq(model="llama3-70b-8192", api_key=args.groq_api_key,
                           model_kwargs={"seed": 42}, temperature=0.0)
-        self.model_limiters = {"tokens_per_minute": 6000}
+        self.model_tpm = 6000
 
         self.index, (_start_date, _end_date) = load_index(args)
         self.timespans = None
