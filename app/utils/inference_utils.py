@@ -1,6 +1,6 @@
 import time
 from functools import wraps
-
+import sys
 from halo import Halo
 
 from app.utils.app_utils import fmt_string, Color
@@ -25,3 +25,20 @@ def throttle_requests():
         return wrapper
 
     return decorator
+
+def throttle_cross_query_requests(func):
+    def wrapper(self, *args, **kwargs):
+        start_time = time.time()
+        result = func(self, *args, **kwargs)
+        elapsed_time = time.time() - start_time
+        remainder = elapsed_time % 60
+        sleep_time = 60 - remainder
+        if sleep_time > 0:
+            for remaining in range(int(sleep_time), 0, -1):
+                sys.stdout.write("\r")
+                sys.stdout.write(f"Waiting for {remaining} seconds...")
+                sys.stdout.flush()
+                time.sleep(1)
+            sys.stdout.write("\rWaiting complete!                \n")
+        return result
+    return wrapper
