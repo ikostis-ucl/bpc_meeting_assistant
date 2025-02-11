@@ -14,9 +14,9 @@ class BaseInference:
                           model_kwargs={"seed": 42}, temperature=0.0)
         self.model_tpm = 6000
 
-        self.index, (_start_date, _end_date) = load_index(args)
+        self.index, (self.start_date, self.end_date) = load_index(args)
         self.timespans = None
-        self._generate_timespans(_start_date, _end_date, args.time_freq)
+        self.generate_timespans(self.start_date, self.end_date, args.time_freq)
 
         self.embedding_model = HuggingFaceEmbedding(model_name=args.embeddings_model,
                                                     cache_folder=args.embeddings_cache_dir)
@@ -28,7 +28,7 @@ class BaseInference:
             "Répondez de manière aussi cohérente que possible. Votre réponse doit être rédigée en français."
         )
 
-    def _generate_timespans(self, starting_month_timestamp, ending_month_timestamp, time_freq):
+    def generate_timespans(self, starting_month_timestamp, ending_month_timestamp, time_freq):
         def add_months(source_date, months):
             month = source_date.month - 1 + months
             year = source_date.year + month // 12

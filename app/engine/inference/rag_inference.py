@@ -64,5 +64,4 @@ class RAGInference(BaseInference):
             else:
                 cleaned_results.append(results[i])
 
-        print("Checkpoint: Querying model... Done.")
         return cleaned_results
