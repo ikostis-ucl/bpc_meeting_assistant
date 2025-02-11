@@ -1,6 +1,7 @@
+import datetime
 import os
 import shutil
-import datetime
+
 
 class Color:
     PURPLE = '\033[95m'
@@ -62,8 +63,8 @@ def pprint_qa(question, results):
     print(f"{Color.CYAN}Answers:{Color.END}")
 
     for response, metadata, (start_date, end_date) in results:
-        start_date_str = datetime.datetime.fromtimestamp(start_date).strftime('%Y-%m-%d')
-        end_date_str = datetime.datetime.fromtimestamp(end_date).strftime('%Y-%m-%d')
+        start_date_str = datetime.datetime.fromtimestamp(start_date).strftime('%d/%m/%Y')
+        end_date_str = datetime.datetime.fromtimestamp(end_date).strftime('%d/%m/%Y')
         print(f"{Color.DARKCYAN}{start_date_str} - {end_date_str}:{Color.END} {response}")
 
         if metadata:

@@ -71,8 +71,8 @@ class GUI:
         self.metadata = {}
 
         for answer, metadata, (_s_date, _e_date) in results:
-            start_date_str = datetime.datetime.fromtimestamp(_s_date).strftime('%Y-%m-%d')
-            end_date_str = datetime.datetime.fromtimestamp(_e_date).strftime('%Y-%m-%d')
+            start_date_str = datetime.datetime.fromtimestamp(_s_date).strftime('%d/%m/%Y')
+            end_date_str = datetime.datetime.fromtimestamp(_e_date).strftime('%d/%m/%Y')
             timespan_key = f"{start_date_str} to {end_date_str}"
 
             if timespan_key not in self.metadata:
@@ -195,8 +195,8 @@ class GUI:
                     )
                 with gr.Column(scale=2):
                     with gr.Row():
-                        slider = gr.Slider(1, self.total_duration, step=1,
-                                           value=4, label="Time step (months)")
+                        slider = gr.Slider(minimum=1, maximum=self.total_duration, step=1,
+                                           value=self.args.time_freq, label="Time step (months)")
             with gr.Row():
                 _examples = gr.Examples(examples=self.examples, inputs=[input_prompt])
 
