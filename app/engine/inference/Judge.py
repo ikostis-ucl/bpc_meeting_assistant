@@ -1,7 +1,7 @@
 from llama_index.core.program import LLMTextCompletionProgram
 from llama_index.llms.groq import Groq
-from pydantic import BaseModel
-
+from pydantic import BaseModel, ValidationError
+from app.utils.app_utils import pprint_error
 
 class Response(BaseModel):
     judgement: bool
@@ -26,8 +26,9 @@ class Judge:
         Réponse 2 : {answer_next} \
         ------ \
         En prenant tout en considération, si les deux réponses sont essentiellement les mêmes, \ 
-        j'aimerais que vous me répondiez True. S'il y a même de petites différences dans les détails \
-        fournis dans les réponses qui différencient le sens de la réponse, j'aimerais que vous me répondiez False."
+        j'aimerais que vous me répondiez "True". S'il y a même de petites différences dans les détails \
+        fournis dans les réponses qui différencient le sens de la réponse, j'aimerais que vous me répondiez "False".\ 
+        Me répondre en n'utilisant que les mots "True" ou "False".
         """
 
         self.program = LLMTextCompletionProgram.from_defaults(
@@ -38,7 +39,11 @@ class Judge:
         )
 
     def run(self, query_string, answer_prev, answer_next):
-        output = self.program(query_string=query_string,
-                              answer_prev=answer_prev,
-                              answer_next=answer_next)
+        try:
+            output = self.program(query_string=query_string,
+                                  answer_prev=answer_prev,
+                                  answer_next=answer_next)
+        except ValidationError as exc:
+            pprint_error(f"{exc}")
+            return False
         return output.judgement

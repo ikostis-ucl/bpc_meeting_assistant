@@ -8,7 +8,7 @@ class Test(Demo):
         self.args.input_path = "./data/input"
         self.args.storage_dir = "./data/vector_db"
         self.questions = [
-            "Quelles sont les décisions prises en matière des stations du recharge des véhicules électriques ? Indiquez-moi les dates (jj/mm/aaaa) auxquelles ces décisions ont été prises."]
+            "Quelles finitions pour les halls d'entrée ?"]
 
 class TestRAG(Test):
     def __init__(self):
