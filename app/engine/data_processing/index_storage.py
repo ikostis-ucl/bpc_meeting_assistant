@@ -20,9 +20,8 @@ from unidecode import unidecode
 
 from app.engine.data_processing.data_loaders import load_index
 from app.engine.data_processing.metadata_extractors import InvolvedPartiesExtractor, KeywordExtractor
-from app.utils.app_utils import pprint_console, simplify_path, empty_dir, fmt_string, Color, pprint_error, \
-    datetime_to_timestamp
-from app.utils.data_processing_utils import is_match
+from app.utils.app_utils import pprint_console, simplify_path, empty_dir, fmt_string, Color, pprint_error
+from app.utils.data_processing_utils import is_match, datetime_to_timestamp
 
 
 class Storage:
@@ -47,7 +46,7 @@ class Storage:
         self.ocr_reader = easyocr.Reader(['fr'], verbose=False)
         self.embedding_model = HuggingFaceEmbedding(model_name=args.embeddings_model,
                                                     cache_folder=args.embeddings_cache_dir)
-        self.llm = Groq(model="llama-3.3-70b-versatile", api_key=args.groq_api_key,
+        self.llm = Groq(model="gemma2-9b-it", api_key=args.groq_api_key,
                         model_kwargs={"seed": 42}, temperature=0.0)
 
         self.node_parser = MarkdownNodeParser()
@@ -56,7 +55,7 @@ class Storage:
 
     def directory_confirmation(self, skip=False):
         if skip:
-            self.index = load_index(args=self.args, transformations=[self.node_parser])
+            self.index, _ = load_index(args=self.args, transformations=[self.node_parser])
             return
 
         if not empty_dir(self.args.storage_dir):
@@ -69,7 +68,7 @@ class Storage:
                     os.makedirs(self.args.storage_dir, exist_ok=True)
                     break
                 elif user_input == 'l' or user_input == '':
-                    self.index = load_index(args=self.args, transformations=[self.node_parser])
+                    self.index, _ = load_index(args=self.args, transformations=[self.node_parser])
                     break
                 else:
                     pprint_error("Invalid input. Please reply with 'l' for loading the index "

@@ -39,6 +39,8 @@ def config_parser():
                         help='Embeddings cache directory path.')
 
     # Retriever
+    parser.add_argument('--time_freq', type=int, default=5,
+                        help='Duration of timespans, counted in months.')
     parser.add_argument('--cutoff_percentage', type=float, default=0.05,
                         help="Percentage of retrieved nodes to contribute as context to the answer.")
 

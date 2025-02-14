@@ -1,6 +1,7 @@
+import datetime
 import os
 import shutil
-import datetime
+
 
 class Color:
     PURPLE = '\033[95m'
@@ -54,47 +55,30 @@ def simplify_path(path):
 
     return simplified_path
 
-def datetime_to_timestamp(dt):
-    if isinstance(dt, datetime.datetime):
-        return int(dt.timestamp())
-    elif isinstance(dt, list) and len(dt) == 3:
-        try:
-            day, month, year = map(int, dt)
-            dt_obj = datetime.datetime(year, month, day)
-            return int(dt_obj.timestamp())
-        except ValueError:
-            raise ValueError("List elements must be integers representing [dd, mm, yyyy]")
-    elif isinstance(dt, str):
-        try:
-            dt_obj = datetime.datetime.strptime(dt, "%Y-%m-%d")
-            return int(dt_obj.timestamp())
-        except ValueError:
-            raise ValueError("String must be in the format yyyy-mm-dd")
-    else:
-        raise ValueError("Input must be a datetime.datetime object, a list [dd, mm, yyyy], or a string yyyy-mm-dd")
 
-
-def pprint_qa(question, answer, metadata, dates=None):
+def pprint_qa(question, results):
     pprint_hline("=")
     print(f"{Color.GREEN}Question:{Color.END}\n{question}")
     pprint_hline("-", 3)
-    print(f"{Color.CYAN}Answer:{Color.END}\n{answer}")
-    if metadata is not None:
-        file_pages = {}
-        for node_id, node_values in metadata.items():
-            file_name = node_values["file_name"]
-            page_number = node_values["page_number"]
-            if file_name in file_pages:
-                file_pages[file_name].append(page_number)
-            else:
-                file_pages[file_name] = [page_number]
+    print(f"{Color.CYAN}Answers:{Color.END}")
 
+    for response, metadata, (start_date, end_date) in results:
+        start_date_str = datetime.datetime.fromtimestamp(start_date).strftime('%d/%m/%Y')
+        end_date_str = datetime.datetime.fromtimestamp(end_date).strftime('%d/%m/%Y')
+        print(f"{Color.DARKCYAN}{start_date_str} - {end_date_str}:{Color.END} {response}")
+
+        if metadata:
+            file_pages = {}
+            for node_id, node_values in metadata.items():
+                file_name = node_values["file_name"]
+                page_number = node_values["page_number"]
+                if file_name in file_pages:
+                    file_pages[file_name].append(page_number)
+                else:
+                    file_pages[file_name] = [page_number]
+
+            print(f"{Color.YELLOW}Citations:{Color.END}")
+            print(f"{Color.BOLD}Document name(s) and page number(s):{Color.END}")
+            for file_name, page_numbers in file_pages.items():
+                print(f"{file_name}: {list(set(page_numbers))}")
         pprint_hline("-", 3)
-        print(f"{Color.YELLOW}Citation:{Color.END}")
-        print(f"{Color.BOLD}Document name(s) and page number(s):{Color.END}")
-        for file_name, page_numbers in file_pages.items():
-            print(f"{file_name}: {list(set(page_numbers))}")
-    if dates is not None:
-        pprint_hline("-", 3)
-        print(f"{Color.PURPLE}Additional Info:{Color.END}")
-        print(f"{Color.BOLD}Query Temporal Range:{Color.END} {dates[0]} - {dates[1]}")
