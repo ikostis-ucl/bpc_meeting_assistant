@@ -2,7 +2,7 @@ from halo import Halo
 from llama_index.core import Settings
 from llama_index.core.callbacks import TokenCountingHandler, CallbackManager
 from llama_index.core.vector_stores.types import MetadataFilters, MetadataFilter, FilterOperator
-# from llama_index.postprocessor.colbert_rerank import ColbertRerank
+from llama_index.postprocessor.colbert_rerank import ColbertRerank
 
 from app.engine.inference.Judge import Judge
 from app.engine.inference.base_inference import BaseInference
@@ -19,7 +19,7 @@ class RAGInference(BaseInference):
         Settings.callback_manager = self.callback_manager
         self.model.callback_manager = Settings.callback_manager
 
-        # self.reranker = ColbertRerank(top_n=5)
+        self.reranker = ColbertRerank(top_n=5)
         self.judge = Judge(args)  # Initialize the Judge
 
     @Halo(text=fmt_string(Color.CYAN, '[CONSOLE] Querying model...'),
@@ -41,7 +41,7 @@ class RAGInference(BaseInference):
                                                           ]
                                                       ),
                                                       similarity_top_k=50,
-                                                      # node_postprocessors=[self.reranker],
+                                                      node_postprocessors=[self.reranker],
                                                       )
 
             answer = query_engine.query(self.prompt_template.format(query_string=query_string))
