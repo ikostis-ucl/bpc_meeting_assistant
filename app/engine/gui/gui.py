@@ -212,10 +212,11 @@ class GUI:
 
             slider.release(fn=self.set_timestep, inputs=[slider])
 
-        app.queue()
+        app.queue(max_size=4)
         try:
-            app.launch(share=False,
-                       inbrowser=True,
+            app.launch(share=True,
+                       inbrowser=False,
+                       max_threads=16,
                        favicon_path="./app/assets/bpc_logo.png",
                        server_port=7862)
         except (KeyboardInterrupt, SystemExit):
