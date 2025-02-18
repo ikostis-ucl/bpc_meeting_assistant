@@ -214,10 +214,16 @@ class GUI:
 
         app.queue(max_size=4)
         try:
-            app.launch(share=True,
-                       inbrowser=False,
-                       max_threads=16,
-                       favicon_path="./app/assets/bpc_logo.png",
-                       server_port=7862)
+            # app.launch(share=True,
+            #            inbrowser=False,
+            #            max_threads=16,
+            #            favicon_path="./app/assets/bpc_logo.png",
+            #            server_port=7862)
+            app.launch(server_name="gradio.info.ucl.ac.be", server_port=443,
+                        ssl_keyfile="/opt/gradio/gradio.info.ucl.ac.be.key",
+                        ssl_certfile="/opt/gradio/gradio.info.ucl.ac.be.cer",
+                        auth=[("admin", "admin"), ("user", "user")],
+                       max_threads=16, favicon_path="./app/assets/bpc_logo.png")
+
         except (KeyboardInterrupt, SystemExit):
             app.close()
