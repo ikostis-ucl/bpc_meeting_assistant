@@ -44,6 +44,9 @@ def config_parser():
     parser.add_argument('--cutoff_percentage', type=float, default=0.05,
                         help="Percentage of retrieved nodes to contribute as context to the answer.")
 
+    # Deployment
+    parser.add_argument('--prod', action='store_true', help='Run in production mode')
+
     # API Keys
     parser.add_argument('--llama_parse_key', type=str, help='Your LlamaParse token key (llx-<...>)')
     parser.add_argument('--openai_api_key', type=str, help='Your OPENAI API token key (sk-<...>)')

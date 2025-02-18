@@ -16,6 +16,8 @@ DPI = 150
 class GUI:
     def __init__(self, args, conv_agent):
         self.args = args
+        self.is_production = args.prod
+
         self.conv_agent = conv_agent
 
         self.total_duration = self._get_months()
@@ -212,18 +214,28 @@ class GUI:
 
             slider.release(fn=self.set_timestep, inputs=[slider])
 
-        app.queue(max_size=4)
+
         try:
-            # app.launch(share=True,
-            #            inbrowser=False,
-            #            max_threads=16,
-            #            favicon_path="./app/assets/bpc_logo.png",
-            #            server_port=7862)
-            app.launch(server_name="gradio.info.ucl.ac.be", server_port=443,
-                        ssl_keyfile="/opt/gradio/gradio.info.ucl.ac.be.key",
-                        ssl_certfile="/opt/gradio/gradio.info.ucl.ac.be.cer",
-                        auth=[("admin", "admin"), ("user", "user")],
-                       max_threads=16, favicon_path="./app/assets/bpc_logo.png")
+            if self.is_production:
+                app.queue(max_size=4)
+                app.launch(
+                    server_name="gradio.info.ucl.ac.be",
+                    server_port=443,
+                    ssl_keyfile="/opt/certs/gradio.info.ucl.ac.be.key",
+                    ssl_certfile="/opt/certs/gradio.info.ucl.ac.be.cer",
+                    auth=[("admin", "admin"), ("user", "user")],
+                    max_threads=16,
+                    favicon_path="./app/assets/bpc_logo.png"
+                )
+            else:
+                app.queue(max_size=2)
+                app.launch(
+                    share=False,
+                    inbrowser=False,
+                    max_threads=8,
+                    favicon_path="./app/assets/bpc_logo.png",
+                    server_port=7862
+                )
 
         except (KeyboardInterrupt, SystemExit):
             app.close()
