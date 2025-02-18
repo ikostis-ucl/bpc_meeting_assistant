@@ -1,0 +1,17 @@
+ConfigArgParse
+easyocr
+pymupdf
+fuzzywuzzy
+gradio
+halo
+langchain
+llama_index
+llama_parse
+nest_asyncio
+numpy
+opencv_python
+opencv_python_headless
+Pillow
+pydantic
+tqdm
+Unidecode
