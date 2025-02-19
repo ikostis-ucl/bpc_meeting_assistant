@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from app.engine.gui.gui import GUI
-from app.engine.inference.rag_inference import RAGInference as InferenceEngine
+from app.engine.inference.groq_inference import GroqInference as InferenceEngine
 from app.utils.app_utils import pprint_hline, pprint_console
 from configuration import config_parser
 

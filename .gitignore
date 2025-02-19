@@ -1,6 +1,6 @@
-/app/assets/.api_keys/*
-/app/assets/.api_keys/keys.txt
-/app/assets/.api_keys/keys_backup.txt
+/app/assets/.env/*
+/app/assets/.env/keys.txt
+/app/assets/.env/keys_backup.txt
 /data/tests/*
 /.archive/
 /data/tests/vector_db_test/*

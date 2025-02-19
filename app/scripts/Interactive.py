@@ -1,4 +1,4 @@
-from app.engine.inference.rag_inference import RAGInference
+from app.engine.inference.groq_inference import GroqInference
 from app.scripts.Demo import Demo
 
 
@@ -8,7 +8,7 @@ class InteractiveQueryRAG(Demo):
         self.args.input_path = "./data/input"
         self.args.storage_dir = "./data/vector_db"
 
-        self.agent = RAGInference(args=self.args)
+        self.agent = GroqInference(args=self.args)
 
         self.questions = []
 

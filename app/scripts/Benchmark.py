@@ -1,4 +1,4 @@
-from app.engine.inference.rag_inference import RAGInference
+from app.engine.inference.groq_inference import GroqInference
 from app.scripts.Demo import Demo
 
 
@@ -24,4 +24,4 @@ class Benchmark(Demo):
 class BenchmarkRAG(Benchmark):
     def __init__(self):
         super().__init__()
-        self.agent = RAGInference(args=self.args)
+        self.agent = GroqInference(args=self.args)

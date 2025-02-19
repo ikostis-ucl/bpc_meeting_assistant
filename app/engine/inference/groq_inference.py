@@ -2,6 +2,7 @@ from halo import Halo
 from llama_index.core import Settings
 from llama_index.core.callbacks import TokenCountingHandler, CallbackManager
 from llama_index.core.vector_stores.types import MetadataFilters, MetadataFilter, FilterOperator
+from llama_index.llms.groq import Groq
 from llama_index.postprocessor.colbert_rerank import ColbertRerank
 
 from app.engine.inference.Judge import Judge
@@ -10,9 +11,21 @@ from app.utils.app_utils import fmt_string, Color
 from app.utils.inference_utils import throttle_requests
 
 
-class RAGInference(BaseInference):
+class GroqInference(BaseInference):
+    """
+    Dev Note:
+
+    To scale this class, one has to figure out how to instantiate the Groq model and the ColbertRerank postprocessor.
+    Multiple API keys, or a single API key with a high rate limit, are required to handle the number of queries.
+
+    Implementing a local Inference is viable through Ollama, if scaling through the API is not an option.
+    https://docs.llamaindex.ai/en/stable/api_reference/llms/ollama/
+    """
     def __init__(self, args):
         super().__init__(args)
+        self.model = Groq(model="llama3-70b-8192", api_key=args.groq_api_key,
+                          model_kwargs={"seed": 42}, temperature=0.0)
+        self.model_tpm = 6000
 
         self.token_counter = TokenCountingHandler()
         self.callback_manager = CallbackManager([self.token_counter])

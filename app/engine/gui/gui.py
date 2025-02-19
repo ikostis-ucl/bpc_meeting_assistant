@@ -15,6 +15,19 @@ DPI = 150
 
 
 class GUI:
+    """
+    Dev Note:
+    At its current version, the app shares values between users (e.g., chat history, metadata, etc.).
+    This is not intended and should be fixed if the app is to be deployed in a non-demo production environment.
+
+    Gradio does support multi-user functionality, however the class should be restructured with gr.State() definitions
+    for the conv_agent, total_duration, chat_history, metadata, and render_state class variables.
+
+    When gr.State() is used, gradio generates a deepcopy of the state for each user, thus preventing shared values. This
+    requires A LOT of RAM.
+
+    """
+
     def __init__(self, args, conv_agent):
         self.args = args
         self.is_production = args.prod
@@ -41,7 +54,7 @@ class GUI:
             "Peux-je avoir une liste remarques SECO ?"
         ]
 
-        self.state = True
+        self.render_state = True
 
     def _get_months(self):
         start_date = datetime.datetime.fromtimestamp(self.conv_agent.start_date)
@@ -97,7 +110,7 @@ class GUI:
             self.chat_history.append([None, f"{answer}"])
             self.chat_history.append([None, f"-------"])
 
-        self.state = False
+        self.render_state = False
         return self.chat_history
 
     def run(self):
@@ -131,7 +144,7 @@ class GUI:
                 with gr.Column():
                     @gr.render(triggers=[app.load, chatbot.change])
                     def render_context():
-                        if self.state:
+                        if self.render_state:
                             pdf_info = {}
                             for node_id, node_values in self.metadata.items():
                                 file_name = node_values["file_name"]
@@ -215,17 +228,19 @@ class GUI:
 
             slider.release(fn=self.set_timestep, inputs=[slider])
 
-
         try:
             if self.is_production:
-                app.queue(max_size=4)
+                auth_pairs = os.getenv("GRADIO_AUTH_PAIRS").split(',')
+                auth_users = [tuple(pair.split(':')) for pair in auth_pairs]
+
+                app.queue(max_size=1)
                 app.launch(
-                    server_name="gradio.info.ucl.ac.be",
+                    server_name=os.getenv("SERVER_NAME"),
                     server_port=443,
-                    ssl_keyfile="/opt/certs/gradio.info.ucl.ac.be.key",
-                    ssl_certfile="/opt/certs/gradio.info.ucl.ac.be.cer",
-                    auth=[("admin", "admin"), ("user", "user")],
-                    max_threads=16,
+                    ssl_keyfile=os.getenv("SSL_KEYFILE"),
+                    ssl_certfile=os.getenv("SSL_CERTFILE"),
+                    auth=auth_users,
+                    max_threads=64,
                     favicon_path="./app/assets/bpc_logo.png"
                 )
             else:

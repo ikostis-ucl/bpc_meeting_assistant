@@ -9,7 +9,12 @@ Config object that handles the various parameters and configurations of the syst
 # Handover TODO: Remove unused functions and classes.
 # Handover TODO: Clean up the github repo.
 
+import os
+
 import configargparse
+from dotenv import load_dotenv
+
+load_dotenv(dotenv_path='./app/assets/.env/.env')
 
 
 def config_parser():
@@ -19,7 +24,7 @@ def config_parser():
                         help='config file path')
     parser.add_argument("--keys", is_config_file=True, required=False,
                         help='Path to the API keys file.',
-                        default='./app/assets/.api_keys/keys.txt')
+                        default='./app/assets/.env/keys.txt')
 
     # I/O params
     parser.add_argument('--input_path', type=str,
@@ -48,9 +53,13 @@ def config_parser():
     parser.add_argument('--prod', action='store_true', help='Run in production mode')
 
     # API Keys
-    parser.add_argument('--llama_parse_key', type=str, help='Your LlamaParse token key (llx-<...>)')
-    parser.add_argument('--openai_api_key', type=str, help='Your OPENAI API token key (sk-<...>)')
-    parser.add_argument('--groq_api_key', type=str, help='Your Groq API token key gsk_<...>)')
-    parser.add_argument('--cohere_api_key', type=str, help='Your Cohere API key <...>)')
+    parser.add_argument('--llama_parse_key', type=str, default=os.getenv('LLAMA_PARSE_KEY'),
+                        help='Your LlamaParse token key (llx-<...>)')
+    parser.add_argument('--openai_api_key', type=str, default=os.getenv('OPENAI_API_KEY'),
+                        help='Your OPENAI API token key (sk-<...>)')
+    parser.add_argument('--groq_api_key', type=str, default=os.getenv('GROQ_API_KEY'),
+                        help='Your Groq API token key gsk_<...>)')
+    parser.add_argument('--cohere_api_key', type=str, default=os.getenv('COHERE_API_KEY'),
+                        help='Your Cohere API key <...>)')
 
     return parser
