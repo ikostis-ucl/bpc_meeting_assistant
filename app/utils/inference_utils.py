@@ -1,13 +1,21 @@
 import datetime
+import sys
 import time
 from functools import wraps
-import sys
+
 from halo import Halo
 
 from app.utils.app_utils import fmt_string, Color, pprint_hline
 
 
 def throttle_requests():
+    """
+    Decorator to throttle requests based on token usage.
+
+    Returns:
+        function: Wrapped function with throttling.
+    """
+
     def decorator(func):
         @wraps(func)
         def wrapper(self, *args, **kwargs):
@@ -27,7 +35,19 @@ def throttle_requests():
 
     return decorator
 
+
 def throttle_cross_query_requests(func):
+    """
+    Decorator to throttle cross-query requests.
+    To be used in app.scripts.Demo.Demo.run() if you run into an issue with the API's rate limiters.
+
+    Args:
+        func (function): Function to wrap.
+
+    Returns:
+        function: Wrapped function with throttling.
+    """
+
     def wrapper(self, *args, **kwargs):
         start_time = time.time()
         result = func(self, *args, **kwargs)
@@ -40,12 +60,19 @@ def throttle_cross_query_requests(func):
                 sys.stdout.write(f"Waiting for {remaining} seconds...")
                 sys.stdout.flush()
                 time.sleep(1)
-            sys.stdout.write("\rWaiting complete!                \n")
         return result
+
     return wrapper
 
 
 def pprint_qa(question, results):
+    """
+    Pretty print a question and its answers.
+
+    Args:
+        question (str): The question asked.
+        results (list): List of tuples containing (response, metadata, timespan).
+    """
     pprint_hline("=")
     print(f"{Color.GREEN}Question:{Color.END}\n{question}")
     pprint_hline("-", 3)

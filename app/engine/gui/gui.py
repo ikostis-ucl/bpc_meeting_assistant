@@ -9,13 +9,20 @@ from app.utils.app_utils import pprint_console
 from app.utils.inference_utils import pprint_qa
 
 HOME_PATH = os.path.expanduser("~")
-# BIG_WIN_H, SMALL_WIN_H = 1120, 950  # 3440x1440
-BIG_WIN_H, SMALL_WIN_H = 740, 665  # 1920x1080
+
+# Screen height constants for different resolutions
+BIG_WIN_1440, SMALL_WIN_1440 = 1120, 950  # 3440x1440
+BIG_WIN_1080, SMALL_WIN_1080 = 740, 665  # 1920x1080
 DPI = 150
 
 
 class GUI:
     """
+    Graphical User Interface for the Meeting Minutes Assistant.
+
+    This class handles the frontend interface and backend logic for the chatbot application.
+    It manages user interactions, document display, and conversation flow.
+
     Dev Note:
     At its current version, the app shares values between users (e.g., chat history, metadata, etc.).
     This is not intended and should be fixed if the app is to be deployed in a non-demo production environment.
@@ -25,22 +32,28 @@ class GUI:
 
     When gr.State() is used, gradio generates a deepcopy of the state for each user, thus preventing shared values. This
     requires A LOT of RAM.
-
     """
 
     def __init__(self, args, conv_agent):
+        """
+        Initialize the GUI with configuration and conversation agent.
+
+        Args:
+            args: Configuration arguments for the application.
+            conv_agent: Conversation agent for handling queries.
+        """
         self.args = args
         self.is_production = args.prod
-
         self.conv_agent = conv_agent
-
         self.total_duration = self._get_months()
 
+        # Initialize chat and display state
         self.chat_history = []
         self.metadata = {"default_1": {"file_name": "Home",
                                        "file_path": "./app/assets/idle_screen.pdf",
                                        "page_number": 1}}
 
+        # Example questions for the user interface
         self.examples = [
             "Quelle est la couleur choisie (RAL) pour les châssis ?",
             "Liste des décisions prises concernant le carrelage des salles des bains (SDBs) et les dates (jour/mois/année) auxquelles elles ont été prises.",
@@ -57,21 +70,47 @@ class GUI:
         self.render_state = True
 
     def _get_months(self):
+        """
+        Calculate the total number of months between start and end dates.
+
+        Returns:
+            int: Total number of months in the conversation timespan.
+        """
         start_date = datetime.datetime.fromtimestamp(self.conv_agent.start_date)
         end_date = datetime.datetime.fromtimestamp(self.conv_agent.end_date)
         return (end_date.year - start_date.year) * 12 + end_date.month - start_date.month
 
     def set_timestep(self, value):
+        """
+        Set the time step for conversation analysis and warn about performance implications.
+
+        Args:
+            value: Number of months for each time step.
+        """
+        # Warn user about performance implications of their chosen timestep
         if value >= self.total_duration * 0.5:
             gr.Warning("The execution might be faster, but the result might be inaccurate.")
         elif value <= self.total_duration * 0.1:
             gr.Warning("The results will be more precise, but the execution will be slower.")
 
+        # Update conversation agent timespans
         self.conv_agent.generate_timespans(starting_month_timestamp=self.conv_agent.start_date,
                                            ending_month_timestamp=self.conv_agent.end_date,
                                            time_freq=value)
 
     def exec_user_query(self, question):
+        """
+        Execute the user's query and update chat history.
+
+        Args:
+            question: User's input question.
+
+        Returns:
+            tuple: Empty string and updated chat history.
+
+        Raises:
+            SystemExit: If user enters 'exit' or 'quit'.
+        """
         if question == 'exit' or question == 'quit':
             pprint_console("Exiting chatbot...")
             raise SystemExit
@@ -80,20 +119,30 @@ class GUI:
         return "", self.chat_history
 
     def query_conv_agent(self):
+        """
+        Process the query through the conversation agent and update the interface.
+
+        Returns:
+            list: Updated chat history with agent's responses.
+        """
         question = self.chat_history[-1][0]
         results = self.conv_agent.query_llm(query_string=question)
         pprint_qa(question=question, results=results)
 
         self.metadata = {}
 
+        # Process each result and update metadata and chat history
         for answer, metadata, (_s_date, _e_date) in results:
+            # Format dates for display
             start_date_str = datetime.datetime.fromtimestamp(_s_date).strftime('%d/%m/%Y')
             end_date_str = datetime.datetime.fromtimestamp(_e_date).strftime('%d/%m/%Y')
             timespan_key = f"{start_date_str} to {end_date_str}"
 
+            # Organize metadata by timespan
             if timespan_key not in self.metadata:
                 self.metadata[timespan_key] = {}
 
+            # Process metadata for each node
             for node_id, node_values in metadata.items():
                 file_name = node_values["file_name"]
                 file_path = node_values["file_path"]
@@ -106,6 +155,7 @@ class GUI:
                         "page_numbers": [page_number]
                     }
 
+            # Update chat history with response
             self.chat_history.append([None, f"From {start_date_str} to {end_date_str}:"])
             self.chat_history.append([None, f"{answer}"])
             self.chat_history.append([None, f"-------"])
@@ -114,7 +164,13 @@ class GUI:
         return self.chat_history
 
     def run(self):
+        """
+        Launch the GUI application.
 
+        Creates and configures the Gradio interface, sets up the layout,
+        and handles the application lifecycle.
+        """
+        # CSS styling for container width
         head_style = """
             <style>
             @media (min-width: 1900px) {
@@ -126,12 +182,13 @@ class GUI:
             </style>
             """
 
-        # frontend
+        # Create Gradio interface
         with gr.Blocks(title="Meeting Minutes Assistant",
                        fill_height=True,
                        head=head_style,
                        theme=gr.themes.Default(primary_hue=gr.themes.colors.blue)) as app:
 
+            # Layout definition with chat and document display
             with gr.Row():
                 with gr.Column():
                     chatbot = gr.Chatbot(
@@ -139,12 +196,17 @@ class GUI:
                         elem_id="chatbot",
                         label='Chat History',
                         placeholder="👤 🤖️",
-                        height=BIG_WIN_H,
+                        height=BIG_WIN_1080,
                     )
                 with gr.Column():
                     @gr.render(triggers=[app.load, chatbot.change])
                     def render_context():
+                        """
+                        Render PDF context based on conversation state.
+                        Displays relevant PDF pages in the interface.
+                        """
                         if self.render_state:
+                            # Initial render state handling
                             pdf_info = {}
                             for node_id, node_values in self.metadata.items():
                                 file_name = node_values["file_name"]
@@ -155,9 +217,10 @@ class GUI:
                                 else:
                                     pdf_info[file_name]["page_numbers"].append(page_number)
 
+                            # Display PDFs in tabs
                             for pdf_name, info in pdf_info.items():
                                 pdf_path = info["file_path"]
-                                page_numbers = list(set(info["page_numbers"]))  # Remove duplicates
+                                page_numbers = list(set(info["page_numbers"]))
                                 pdf_pages = []
                                 doc = fitz.open(pdf_path)
                                 for pg_num in page_numbers:
@@ -173,15 +236,16 @@ class GUI:
                                         selected_index=0,
                                         type='pil',
                                         interactive=False,
-                                        height=SMALL_WIN_H,
+                                        height=SMALL_WIN_1080,
                                     )
                         else:
+                            # Conversation state handling
                             for timespan, files in self.metadata.items():
                                 with gr.Tab(label=timespan):
                                     for file_name, file_info in files.items():
                                         with gr.Tab(label=file_name):
                                             pdf_path = file_info["file_path"]
-                                            page_numbers = list(set(file_info["page_numbers"]))  # Remove duplicates
+                                            page_numbers = list(set(file_info["page_numbers"]))
                                             pdf_pages = []
                                             doc = fitz.open(pdf_path)
                                             for pg_num in page_numbers:
@@ -197,9 +261,10 @@ class GUI:
                                                 selected_index=0,
                                                 type='pil',
                                                 interactive=False,
-                                                height=int(SMALL_WIN_H * 0.9),
+                                                height=int(SMALL_WIN_1080 * 0.9),
                                             )
 
+            # Input components
             with gr.Row():
                 with gr.Column(scale=5):
                     input_prompt = gr.Textbox(
@@ -216,7 +281,7 @@ class GUI:
             with gr.Row():
                 _examples = gr.Examples(examples=self.examples, inputs=[input_prompt])
 
-            # backend
+            # Event handlers
             input_prompt.submit(
                 fn=self.exec_user_query,
                 inputs=[input_prompt],
@@ -228,6 +293,7 @@ class GUI:
 
             slider.release(fn=self.set_timestep, inputs=[slider])
 
+        # Launch application with appropriate configuration
         try:
             if self.is_production:
                 auth_pairs = os.getenv("GRADIO_AUTH_PAIRS").split(',')

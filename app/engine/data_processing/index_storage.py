@@ -25,12 +25,28 @@ from app.utils.data_processing_utils import is_match, datetime_to_timestamp
 
 
 class Storage:
+    """
+    A class for handling document storage, parsing, and indexing operations.
+
+    This class manages PDF document processing, OCR, metadata extraction, and vector storage indexing.
+    It handles document parsing, date extraction, and storage of processed documents.
+    """
+
     def __init__(self, args):
+        """
+        Initialize the Storage instance with necessary components.
+
+        Args:
+            args: Configuration arguments containing API keys, model paths, and other settings.
+        """
+
+        # Apply async support and suppress warnings
         nest_asyncio.apply()
         warnings.filterwarnings("ignore", category=FutureWarning)
 
         self.args = args
 
+        # Initialize document parser with LlamaParse
         self.doc_parser = LlamaParse(api_key=self.args.llama_parse_key,
                                      result_type="markdown",
                                      verbose=False,
@@ -43,6 +59,7 @@ class Storage:
 
         self.index = None
 
+        # Initialize OCR, embedding model, and language model
         self.ocr_reader = easyocr.Reader(['fr'], verbose=False)
         self.embedding_model = HuggingFaceEmbedding(model_name=args.embeddings_model,
                                                     cache_folder=args.embeddings_cache_dir)
@@ -51,13 +68,21 @@ class Storage:
 
         self.node_parser = MarkdownNodeParser()
 
+        # Ensure storage directory exists
         os.makedirs(self.args.storage_dir, exist_ok=True)
 
     def directory_confirmation(self, skip=False):
+        """
+        Handle storage directory confirmation and loading existing index if present.
+
+        Args:
+            skip (bool): If True, skip confirmation and load existing index.
+        """
         if skip:
             self.index, _ = load_index(args=self.args, transformations=[self.node_parser])
             return
 
+        # Check if directory is not empty and handle user choice
         if not empty_dir(self.args.storage_dir):
             while True:
                 user_input = input(fmt_string(Color.BLUE,
@@ -75,9 +100,18 @@ class Storage:
                                  "or 'p' for purging it (default option: 'l').")
 
     def parse_documents(self):
+        """
+        Parse and process PDF documents, extracting metadata and storing in the index.
 
+        This method handles:
+        - Document loading and preprocessing
+        - OCR text extraction
+        - Date and participant extraction
+        - Document indexing and storage
+        """
         Settings.embed_model = self.embedding_model
 
+        # Get list of files to process
         if os.path.isdir(self.args.input_path):
             file_paths = [simplify_path(os.path.join(self.args.input_path, f))
                           for f in os.listdir(self.args.input_path)
@@ -89,6 +123,7 @@ class Storage:
             pprint_console("The input folder is empty. Exiting...")
             exit()
 
+        # Process each file
         file_paths = tqdm(file_paths)
         for f_path in file_paths:
             fname_no_xt = os.path.basename(f_path).removesuffix(".pdf")
@@ -96,10 +131,13 @@ class Storage:
 
             dir_path = os.path.dirname(f_path)
 
+            # Open PDF and process first page
             pdf_document = fitz.open(f_path)
 
             # From the first page, extract the date and time of the meeting, and the abbreviations of the attendees.
             first_page = pdf_document.load_page(0)
+
+            # Prepare first page image for OCR
             first_page_pixmap = first_page.get_pixmap(dpi=450, colorspace='gray')
             first_page_image = np.frombuffer(first_page_pixmap.samples, dtype=np.uint8).reshape(
                 first_page_pixmap.height,
@@ -108,7 +146,7 @@ class Storage:
             first_page_image = cv2.fastNlMeansDenoising(src=first_page_image)
             _, first_page_image = cv2.threshold(first_page_image, 170, 255, cv2.THRESH_BINARY)
 
-            # Apply OCR on the first page
+            # Extract text using OCR
             ocr_result = []
             ocr_res_temp = self.ocr_reader.readtext(first_page_image, width_ths=1.5)
             for text_box in ocr_res_temp:
@@ -117,14 +155,18 @@ class Storage:
                 w, h = int(upper_right[0]) - x, int(lower_left[1]) - y
                 ocr_result.append([x, y, w, h, text])
 
+            # Sort OCR results and calculate margins
             ocr_result = sorted(ocr_result, key=lambda x: x[1])
-
             h_error_margin = int(np.mean([line[3] for line in ocr_result]) * 0.2)
             w_error_margin = int(np.mean([line[2] for line in ocr_result]) * 0.2)
             page_height = first_page_image.shape[0]
+
+            # Define regions of interest
             y_upper_limit, y_lower_limit = int(page_height * (126 / 1333)), first_page_image.shape[1]
             roi_date_y_upper_limit, roi_date_y_lower_limit, roi_date_x_right_limit = 0, 0, 0
             roi_poi_y_upper_limit, roi_poi_x_right_limit, roi_poi_x_left_limit = 0, 0, 0
+
+            # Process and index documents
 
             # Define the Region of Interest (RoI) of the document (general & date)
             for bbox in ocr_result:
@@ -227,6 +269,12 @@ class Storage:
                 shutil.move(src=f_path, dst=f"{dir_path}/_completed/")
 
     def run(self):
+        """
+        Execute the main storage workflow.
+
+        This method coordinates the directory confirmation and document parsing process.
+        """
+
         self.directory_confirmation()
 
         self.parse_documents()

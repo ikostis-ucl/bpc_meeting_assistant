@@ -3,10 +3,17 @@ from app.scripts.Demo import Demo
 
 
 class Benchmark(Demo):
+    """
+    Benchmark class for evaluating the system with predefined questions.
+    Inherits from Demo class and provides a standard set of test questions.
+    """
+
     def __init__(self):
+        """Initialize benchmark configuration with predefined questions and paths."""
         super().__init__()
         self.args.input_path = "./data/input"
         self.args.storage_dir = "./data/vector_db"
+        # Standard set of benchmark questions covering different aspects
         self.questions = [
             "Quelle est la couleur choisie (RAL) pour les châssis ?",
             "Liste des décisions prises concernant le carrelage des salles des bains (SDBs) et les dates (jour/mois/année) auxquelles elles ont été prises.",
@@ -22,6 +29,12 @@ class Benchmark(Demo):
 
 
 class BenchmarkRAG(Benchmark):
+    """
+    RAG-specific implementation of the benchmark system.
+    Uses GroqInference for query processing.
+    """
+
     def __init__(self):
+        """Initialize benchmark with Groq inference agent."""
         super().__init__()
         self.agent = GroqInference(args=self.args)
