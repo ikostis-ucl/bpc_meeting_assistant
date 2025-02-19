@@ -22,9 +22,6 @@ def config_parser():
         description="BPC_Group_meeting_assistant.")
     parser.add_argument('--config', is_config_file=True,
                         help='config file path')
-    parser.add_argument("--keys", is_config_file=True, required=False,
-                        help='Path to the API keys file.',
-                        default='./app/assets/.env/keys.txt')
 
     # I/O params
     parser.add_argument('--input_path', type=str,
