@@ -233,7 +233,7 @@ class GUI:
                 auth_pairs = os.getenv("GRADIO_AUTH_PAIRS").split(',')
                 auth_users = [tuple(pair.split(':')) for pair in auth_pairs]
 
-                app.queue(max_size=1)
+                app.queue(max_size=2)
                 app.launch(
                     server_name=os.getenv("SERVER_NAME"),
                     server_port=443,
