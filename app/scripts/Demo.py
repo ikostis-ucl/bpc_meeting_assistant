@@ -1,4 +1,5 @@
-from app.utils.app_utils import pprint_qa, pprint_hline
+from app.utils.app_utils import pprint_hline
+from app.utils.inference_utils import pprint_qa
 # from app.utils.inference_utils import throttle_cross_query_requests
 from configuration import config_parser
 

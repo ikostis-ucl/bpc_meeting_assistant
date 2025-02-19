@@ -5,7 +5,8 @@ import fitz
 import gradio as gr
 from PIL import Image
 
-from app.utils.app_utils import pprint_console, pprint_qa
+from app.utils.app_utils import pprint_console
+from app.utils.inference_utils import pprint_qa
 
 HOME_PATH = os.path.expanduser("~")
 # BIG_WIN_H, SMALL_WIN_H = 1120, 950  # 3440x1440

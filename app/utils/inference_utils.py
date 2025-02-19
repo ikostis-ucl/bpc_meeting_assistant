@@ -1,9 +1,10 @@
+import datetime
 import time
 from functools import wraps
 import sys
 from halo import Halo
 
-from app.utils.app_utils import fmt_string, Color
+from app.utils.app_utils import fmt_string, Color, pprint_hline
 
 
 def throttle_requests():
@@ -42,3 +43,31 @@ def throttle_cross_query_requests(func):
             sys.stdout.write("\rWaiting complete!                \n")
         return result
     return wrapper
+
+
+def pprint_qa(question, results):
+    pprint_hline("=")
+    print(f"{Color.GREEN}Question:{Color.END}\n{question}")
+    pprint_hline("-", 3)
+    print(f"{Color.CYAN}Answers:{Color.END}")
+
+    for response, metadata, (start_date, end_date) in results:
+        start_date_str = datetime.datetime.fromtimestamp(start_date).strftime('%d/%m/%Y')
+        end_date_str = datetime.datetime.fromtimestamp(end_date).strftime('%d/%m/%Y')
+        print(f"{Color.DARKCYAN}{start_date_str} - {end_date_str}:{Color.END} {response}")
+
+        if metadata:
+            file_pages = {}
+            for node_id, node_values in metadata.items():
+                file_name = node_values["file_name"]
+                page_number = node_values["page_number"]
+                if file_name in file_pages:
+                    file_pages[file_name].append(page_number)
+                else:
+                    file_pages[file_name] = [page_number]
+
+            print(f"{Color.YELLOW}Citations:{Color.END}")
+            print(f"{Color.BOLD}Document name(s) and page number(s):{Color.END}")
+            for file_name, page_numbers in file_pages.items():
+                print(f"{file_name}: {list(set(page_numbers))}")
+        pprint_hline("-", 3)
