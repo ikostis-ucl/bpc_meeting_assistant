@@ -156,7 +156,7 @@ class GUI:
                     }
 
             # Update chat history with response
-            self.chat_history.append([None, f"From {start_date_str} to {end_date_str}:"])
+            self.chat_history.append([None, f"Du {start_date_str} au {end_date_str}:"])
             self.chat_history.append([None, f"{answer}"])
             self.chat_history.append([None, f"-------"])
 
