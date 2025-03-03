@@ -267,7 +267,7 @@ class GUI:
             # Input components
             with gr.Row():
                 with gr.Column(scale=5):
-                    input_prompt = gr.Textbox(
+                    input_textbox = gr.Textbox(
                         placeholder="Pose-moi une question sur le projet!",
                         scale=40,
                         show_label=False,
@@ -279,13 +279,13 @@ class GUI:
                         slider = gr.Slider(minimum=1, maximum=self.total_duration, step=1,
                                            value=self.args.time_freq, label="Time step (months)")
             with gr.Row():
-                _examples = gr.Examples(examples=self.examples, inputs=[input_prompt])
+                _examples = gr.Examples(examples=self.examples, inputs=[input_textbox])
 
             # Event handlers
-            input_prompt.submit(
+            input_textbox.submit(
                 fn=self.exec_user_query,
-                inputs=[input_prompt],
-                outputs=[input_prompt, chatbot]
+                inputs=[input_textbox],
+                outputs=[input_textbox, chatbot]
             ).success(
                 fn=self.query_conv_agent,
                 outputs=[chatbot]
@@ -306,7 +306,7 @@ class GUI:
                     ssl_keyfile=os.getenv("SSL_KEYFILE"),
                     ssl_certfile=os.getenv("SSL_CERTFILE"),
                     auth=auth_users,
-                    max_threads=64,
+                    max_threads=32,
                     favicon_path="./app/assets/bpc_logo.png"
                 )
             else:
