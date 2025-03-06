@@ -47,12 +47,6 @@ class GUI:
         self.conv_agent = conv_agent
         self.total_duration = self._get_months()
 
-        # Initialize chat and display state
-        self.chat_history = []
-        self.metadata = {"default_1": {"file_name": "Home",
-                                       "file_path": "./app/assets/idle_screen.pdf",
-                                       "page_number": 1}}
-
         # Example questions for the user interface
         self.examples = [
             "Quelle est la couleur choisie (RAL) pour les châssis ?",
@@ -67,7 +61,11 @@ class GUI:
             "Peux-je avoir une liste remarques SECO ?"
         ]
 
-        self.render_state = True
+        # self.chat_history = []
+        # self.metadata = {"default_1": {"file_name": "Home",
+        #                                "file_path": "./app/assets/idle_screen.pdf",
+        #                                "page_number": 1}}
+        # self.render_state = True
 
     def _get_months(self):
         """
@@ -98,38 +96,40 @@ class GUI:
                                            ending_month_timestamp=self.conv_agent.end_date,
                                            time_freq=value)
 
-    def exec_user_query(self, question):
+    @staticmethod
+    def exec_user_query(question, chat_history):
         """
         Execute the user's query and update chat history.
 
         Args:
             question: User's input question.
-
+            chat_history: The current chat history.
         Returns:
             tuple: Empty string and updated chat history.
 
         Raises:
             SystemExit: If user enters 'exit' or 'quit'.
+
         """
         if question == 'exit' or question == 'quit':
             pprint_console("Exiting chatbot...")
             raise SystemExit
 
-        self.chat_history.append([question, None])
-        return "", self.chat_history
+        chat_history.append([question, None])
+        return "", chat_history
 
-    def query_conv_agent(self):
+    def query_conv_agent(self, chat_history, render_state):
         """
         Process the query through the conversation agent and update the interface.
 
         Returns:
             list: Updated chat history with agent's responses.
         """
-        question = self.chat_history[-1][0]
+        question = chat_history[-1][0]
         results = self.conv_agent.query_llm(query_string=question)
         pprint_qa(question=question, results=results)
 
-        self.metadata = {}
+        response_metadata = {}
 
         # Process each result and update metadata and chat history
         for answer, metadata, (_s_date, _e_date) in results:
@@ -139,29 +139,31 @@ class GUI:
             timespan_key = f"{start_date_str} to {end_date_str}"
 
             # Organize metadata by timespan
-            if timespan_key not in self.metadata:
-                self.metadata[timespan_key] = {}
+            if timespan_key not in response_metadata:
+                response_metadata[timespan_key] = {}
 
             # Process metadata for each node
             for node_id, node_values in metadata.items():
                 file_name = node_values["file_name"]
                 file_path = node_values["file_path"]
                 page_number = node_values["page_number"]
-                if file_name in self.metadata[timespan_key]:
-                    self.metadata[timespan_key][file_name]["page_numbers"].append(page_number)
+                if file_name in response_metadata[timespan_key]:
+                    response_metadata[timespan_key][file_name]["page_numbers"].append(page_number)
                 else:
-                    self.metadata[timespan_key][file_name] = {
+                    response_metadata[timespan_key][file_name] = {
                         "file_path": file_path,
                         "page_numbers": [page_number]
                     }
 
             # Update chat history with response
-            self.chat_history.append([None, f"Du {start_date_str} au {end_date_str}:"])
-            self.chat_history.append([None, f"{answer}"])
-            self.chat_history.append([None, f"-------"])
+            chat_history.append([None, f"Du {start_date_str} au {end_date_str}:"])
+            chat_history.append([None, f"{answer}"])
+            chat_history.append([None, f"-------"])
 
-        self.render_state = False
-        return self.chat_history
+        if render_state:
+            render_state = not render_state
+
+        return chat_history, response_metadata, render_state
 
     def run(self):
         """
@@ -188,27 +190,36 @@ class GUI:
                        head=head_style,
                        theme=gr.themes.Default(primary_hue=gr.themes.colors.blue)) as app:
 
+            chat_history = gr.State([])
+            metadata = gr.State(
+                {"default_1": {"file_name": "Home",
+                               "file_path": "./app/assets/idle_screen.pdf",
+                               "page_number": 1}}
+            )
+            render_state = gr.State(True)
+
             # Layout definition with chat and document display
             with gr.Row():
                 with gr.Column():
                     chatbot = gr.Chatbot(
-                        value=self.chat_history,
+                        value=chat_history.value,
                         elem_id="chatbot",
                         label='Chat History',
                         placeholder="👤 🤖️",
                         height=BIG_WIN_1080,
                     )
                 with gr.Column():
-                    @gr.render(triggers=[app.load, chatbot.change])
-                    def render_context():
+                    @gr.render(inputs=[render_state, metadata],
+                               triggers=[app.load, chatbot.change])
+                    def render_context(render_state, metadata):
                         """
                         Render PDF context based on conversation state.
                         Displays relevant PDF pages in the interface.
                         """
-                        if self.render_state:
+                        if render_state:
                             # Initial render state handling
                             pdf_info = {}
-                            for node_id, node_values in self.metadata.items():
+                            for node_id, node_values in metadata.items():
                                 file_name = node_values["file_name"]
                                 file_path = node_values["file_path"]
                                 page_number = node_values.get("page_number") - 1
@@ -240,7 +251,7 @@ class GUI:
                                     )
                         else:
                             # Conversation state handling
-                            for timespan, files in self.metadata.items():
+                            for timespan, files in metadata.items():
                                 with gr.Tab(label=timespan):
                                     for file_name, file_info in files.items():
                                         with gr.Tab(label=file_name):
@@ -284,11 +295,12 @@ class GUI:
             # Event handlers
             input_textbox.submit(
                 fn=self.exec_user_query,
-                inputs=[input_textbox],
+                inputs=[input_textbox, chatbot],
                 outputs=[input_textbox, chatbot]
             ).success(
                 fn=self.query_conv_agent,
-                outputs=[chatbot]
+                inputs=[chatbot, render_state],
+                outputs=[chatbot, metadata, render_state]
             )
 
             slider.release(fn=self.set_timestep, inputs=[slider])
@@ -310,9 +322,9 @@ class GUI:
                     favicon_path="./app/assets/bpc_logo.png"
                 )
             else:
-                app.queue(max_size=2)
+                app.queue(max_size=2) # ~3GB RAM foor mother, 12GB for children
                 app.launch(
-                    share=False,
+                    share=True,
                     inbrowser=False,
                     max_threads=8,
                     favicon_path="./app/assets/bpc_logo.png",
