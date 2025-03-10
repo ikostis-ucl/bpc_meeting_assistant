@@ -1,4 +1,5 @@
 import calendar
+import heapq
 from datetime import datetime
 
 from halo import Halo
@@ -56,7 +57,7 @@ class BaseInference:
         Settings.callback_manager = self.callback_manager
 
         # Initialize reranker and judge components
-        self.reranker = ColbertRerank(top_n=5)  # TODO: try to reduce top_k, to eliminate over-citing
+        self.reranker = ColbertRerank(top_n=5)
         self.judge = Judge(args)
 
     def generate_timespans(self, starting_month_timestamp, ending_month_timestamp, time_freq):
@@ -138,7 +139,14 @@ class BaseInference:
 
             # Execute query and store results
             answer = query_engine.query(self.prompt_template.format(query_string=query_string))
-            results.append((answer.response, answer.metadata, (start_date, end_date))) # TODO: add answer.source_nodes
+
+            # Attach node.score to each corresponding node in the metadata
+            if answer.metadata:
+                for node in answer.source_nodes:
+                    if node.id_ in answer.metadata:
+                        answer.metadata[node.id_]['score'] = node.score
+
+            results.append((answer.response, answer.metadata, (start_date, end_date)))
 
         # Clean and merge similar results using the judge
         cleaned_results = [results[0]]
@@ -147,7 +155,6 @@ class BaseInference:
             answer_next = results[i][0]
             judgement = self.judge.run(query_string, answer_prev, answer_next)
 
-            # TODO: keep top 2-3 source nodes to reduce visual over-citing.
             if judgement:
                 # Merge metadata and extend timespans for similar answers
                 if cleaned_results[-1][1] is None:
@@ -162,5 +169,11 @@ class BaseInference:
             else:
                 cleaned_results.append(results[i])
 
+        # Keep metadata of top 3 nodes based on their scores
+        for i in range(len(cleaned_results)):
+            metadata = cleaned_results[i][1]
+            top_nodes = heapq.nlargest(3, metadata.items(), key=lambda item: item[1]['score'])
+            top_metadata = {node_id: data for node_id, data in top_nodes}
+            cleaned_results[i] = (cleaned_results[i][0], top_metadata, cleaned_results[i][2])
 
         return cleaned_results
