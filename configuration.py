@@ -5,10 +5,6 @@ ioannis.kostis@uclouvain.be | ioannis.aris.kostis@gmail.com
 Config object that handles the various parameters and configurations of the system.
 """
 
-# Handover TODO: Add docstrings and comments to all of the project.
-# Handover TODO: Remove unused functions and classes.
-# Handover TODO: Clean up the github repo.
-
 import os
 
 import configargparse
@@ -56,7 +52,6 @@ def config_parser():
                         help='Your OPENAI API token key (sk-<...>)')
     parser.add_argument('--groq_api_key', type=str, default=os.getenv('GROQ_API_KEY'),
                         help='Your Groq API token key gsk_<...>)')
-    parser.add_argument('--cohere_api_key', type=str, default=os.getenv('COHERE_API_KEY'),
-                        help='Your Cohere API key <...>)')
+
 
     return parser

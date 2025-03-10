@@ -61,12 +61,6 @@ class GUI:
             "Peux-je avoir une liste remarques SECO ?"
         ]
 
-        # self.chat_history = []
-        # self.metadata = {"default_1": {"file_name": "Home",
-        #                                "file_path": "./app/assets/idle_screen.pdf",
-        #                                "page_number": 1}}
-        # self.render_state = True
-
     def _get_months(self):
         """
         Calculate the total number of months between start and end dates.
@@ -322,7 +316,7 @@ class GUI:
                     favicon_path="./app/assets/bpc_logo.png"
                 )
             else:
-                app.queue(max_size=2) # ~3GB RAM foor mother, 12GB for children
+                app.queue(max_size=2) # ~3GB RAM for mother, 12GB for children
                 app.launch(
                     share=True,
                     inbrowser=False,

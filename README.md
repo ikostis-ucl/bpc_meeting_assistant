@@ -4,7 +4,9 @@ A Python-based question answering system that processes and analyzes meeting min
 
 ## Problem Statement
 
-[To be filled in]
+In large-scale construction projects, decisions evolve, details are revised, and older decisions are replaced. All these changes are documented in the meeting minutes held throughout the project's duration. Tracking and storing this evolving information can be a tedious task for project managers and other professionals who need to consult these documents.
+
+To address this challenge, we propose an application designed to streamline access to this knowledge for a specific project. The solution is a conversational agent (or chatbot) based on Large Language Models and Retrieval-Augmented Generation. Its purpose is to preserve the timeline of information and retrieve relevant pieces of it at specific points in time. This is achieved using a custom information retrieval algorithm that considers both the semantic similarity of a user's question and the date when the decision was made.
 
 ## Features
 
@@ -72,8 +74,8 @@ A Python-based question answering system that processes and analyzes meeting min
 
 1. Clone the repository
 ```bash
-git clone [repository-url]
-cd meeting-minutes-assistant
+git clone https://github.com/ikostis-ucl/bpc_meeting_assistant.git
+cd bpc_meeting_assistant
 ```
 
 2. Install dependencies
@@ -87,7 +89,6 @@ Create `app/assets/.env/.env` with the following API keys:
 LLAMA_PARSE_KEY=llx-...
 OPENAI_API_KEY=sk-...
 GROQ_API_KEY=gsk_...
-COHERE_API_KEY=...
 ```
 
 ### Usage
