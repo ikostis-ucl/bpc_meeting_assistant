@@ -1,67 +1,17 @@
 from time import sleep
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Optional, Any, Dict, Sequence, List
 
+from llama_index.core import Settings, PromptTemplate
 from llama_index.core.async_utils import run_jobs
-from llama_index.core.bridge.pydantic import (
-    Field,
-    SerializeAsAny,
-)
-from llama_index.core.extractors.interface import BaseExtractor
-from llama_index.core.llms.llm import LLM
-from llama_index.core.prompts import PromptTemplate
+from llama_index.core.extractors import BaseExtractor
+from llama_index.core.llms import LLM
 from llama_index.core.schema import BaseNode, TextNode
-from llama_index.core.settings import Settings
+from pydantic import SerializeAsAny, Field
 
 # Template for keyword extraction in French
 DEFAULT_KEYWORD_EXTRACT_TEMPLATE = """\
 {context_str}. En français uniquement, donnez à {keywords} des mots-clés uniques pour ce document. \
 Formulez-les en les séparant par des virgules. Mots-clés : """
-
-
-class InvolvedPartiesExtractor(BaseExtractor):
-    """
-    Extractor for identifying involved parties in a document.
-    Searches for specific entity names within the document text.
-    """
-
-    entities: List[str] = Field(
-        default=None,
-        description="A list of the names of the parties contained within the first page of the document.",
-    )
-
-    def __init__(self, entities, **kwargs: Any):
-        """
-        Initialize the InvolvedPartiesExtractor.
-
-        Args:
-            entities (List[str]): List of entity names to search for in the document.
-            **kwargs: Additional keyword arguments passed to the parent class.
-        """
-        super().__init__(**kwargs)
-        self.entities = entities
-
-    async def aextract(self, nodes) -> List[Dict]:
-        """
-        Asynchronously extract involved parties from document nodes.
-
-        Args:
-            nodes: Collection of document nodes to process.
-
-        Returns:
-            List[Dict]: List of dictionaries containing involved parties for each node.
-        """
-        metadata_list = []
-        # Process each node to find matching entities
-        for node in nodes:
-            _inv_parties = []
-            _text = node.text.split()
-            # Check each entity against the node text
-            for ent in self.entities:
-                if ent in _text:
-                    _inv_parties.append(ent)
-            metadata_list.append({"involved_parties": _inv_parties})
-
-        return metadata_list
 
 
 class KeywordExtractor(BaseExtractor):

@@ -1,14 +1,10 @@
 import os
-import re
 import shutil
 import tempfile
 import warnings
 
-import cv2
-import easyocr
 import fitz
 import nest_asyncio
-import numpy as np
 from llama_index.core import Settings
 from llama_index.core import VectorStoreIndex
 from llama_index.core.node_parser import MarkdownNodeParser
@@ -16,12 +12,13 @@ from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.llms.groq import Groq
 from llama_parse import LlamaParse
 from tqdm import tqdm
-from unidecode import unidecode
 
 from app.engine.data_processing.data_loaders import load_index
-from app.engine.data_processing.metadata_extractors import InvolvedPartiesExtractor, KeywordExtractor
+from app.engine.data_processing.metadata_extraction.InvolvedPartiesExtractor import InvolvedPartiesExtractor
+from app.engine.data_processing.metadata_extraction.KeywordExtractor import KeywordExtractor
+from app.engine.data_processing.metadata_extraction.parse_first_page_llm import parse_first_page
 from app.utils.app_utils import pprint_console, simplify_path, empty_dir, fmt_string, Color, pprint_error
-from app.utils.data_processing_utils import is_match, datetime_to_timestamp
+from app.utils.data_processing_utils import datetime_to_timestamp
 
 
 class Storage:
@@ -52,15 +49,14 @@ class Storage:
                                      verbose=False,
                                      language='fr',
                                      max_timeout=600,
-                                     use_vendor_multimodal_model=False, # Change this to True to use a VLM/MMLM
+                                     use_vendor_multimodal_model=False,  # Change this to True to use a VLM/MMLM
                                      vendor_multimodal_model_name='openai-gpt4o',
                                      vendor_multimodal_api_key=self.args.openai_api_key
                                      )
 
         self.index = None
 
-        # Initialize OCR, embedding model, and language model
-        self.ocr_reader = easyocr.Reader(['fr'], verbose=False)
+        # Initialize embedding model and language model
         self.embedding_model = HuggingFaceEmbedding(model_name=args.embeddings_model,
                                                     cache_folder=args.embeddings_cache_dir)
         self.llm = Groq(model="gemma2-9b-it", api_key=args.groq_api_key,
@@ -105,9 +101,9 @@ class Storage:
 
         This method handles:
         - Document loading and preprocessing
-        - OCR text extraction
-        - Date and participant extraction
+        - Date and participant extraction using LLM
         - Document indexing and storage
+        - Skipping already indexed documents
         """
         Settings.embed_model = self.embedding_model
 
@@ -115,7 +111,7 @@ class Storage:
         if os.path.isdir(self.args.input_path):
             file_paths = [simplify_path(os.path.join(self.args.input_path, f))
                           for f in os.listdir(self.args.input_path)
-                          if os.path.isfile(os.path.join(self.args.input_path, f))]
+                          if os.path.isfile(os.path.join(self.args.input_path, f)) and f.lower().endswith('.pdf')]
         else:
             file_paths = [self.args.input_path]
 
@@ -123,102 +119,40 @@ class Storage:
             pprint_console("The input folder is empty. Exiting...")
             exit()
 
+        # Get already indexed document IDs if index exists
+        already_indexed_files = set()
+        doc_ref_ids = []  # Initialize this regardless of index status
+        if self.index is not None:
+            doc_ref_ids = list(set([doc.ref_doc_id for doc in self.index.docstore.docs.values()]))
+            # Extract file names from document IDs
+            for doc_id in doc_ref_ids:
+                # Convert doc_id back to filename (reverse of fname_no_xt.lower().replace(" ", "_"))
+                already_indexed_files.add(f"{doc_id}.pdf")
+
         # Process each file
         file_paths = tqdm(file_paths)
         for f_path in file_paths:
-            fname_no_xt = os.path.basename(f_path).removesuffix(".pdf")
+            fname = os.path.basename(f_path)
+            fname_no_xt = fname.removesuffix(".pdf")
             file_paths.set_description(f"Processing file {fname_no_xt}")
+            doc_id = fname_no_xt.lower().replace(" ", "_")
 
-            dir_path = os.path.dirname(f_path)
+            # Check if the file is already indexed
+            if fname.lower() in already_indexed_files or doc_id in doc_ref_ids:
+                pprint_console(f"File {fname} already indexed, skipping...")
+                continue
 
-            # Open PDF and process first page
-            pdf_document = fitz.open(f_path)
+            # Process first page to extract date and involved parties
+            formatted_datetime, involved_parties = parse_first_page(file_path=f_path,
+                                                                    llm_key=self.args.groq_api_key,
+                                                                    doc_parser=self.doc_parser)
 
-            # From the first page, extract the date and time of the meeting, and the abbreviations of the attendees.
-            first_page = pdf_document.load_page(0)
-
-            # Prepare first page image for OCR
-            first_page_pixmap = first_page.get_pixmap(dpi=450, colorspace='gray')
-            first_page_image = np.frombuffer(first_page_pixmap.samples, dtype=np.uint8).reshape(
-                first_page_pixmap.height,
-                first_page_pixmap.width,
-                first_page_pixmap.n)
-            first_page_image = cv2.fastNlMeansDenoising(src=first_page_image)
-            _, first_page_image = cv2.threshold(first_page_image, 170, 255, cv2.THRESH_BINARY)
-
-            # Extract text using OCR
-            ocr_result = []
-            ocr_res_temp = self.ocr_reader.readtext(first_page_image, width_ths=1.5)
-            for text_box in ocr_res_temp:
-                [upper_left, upper_right, lower_left, _], text = text_box[0], text_box[1]
-                x, y = int(upper_left[0]), int(upper_left[1])
-                w, h = int(upper_right[0]) - x, int(lower_left[1]) - y
-                ocr_result.append([x, y, w, h, text])
-
-            # Sort OCR results and calculate margins
-            ocr_result = sorted(ocr_result, key=lambda x: x[1])
-            h_error_margin = int(np.mean([line[3] for line in ocr_result]) * 0.2)
-            w_error_margin = int(np.mean([line[2] for line in ocr_result]) * 0.2)
-            page_height = first_page_image.shape[0]
-
-            # Define regions of interest
-            y_upper_limit, y_lower_limit = int(page_height * (126 / 1333)), first_page_image.shape[1]
-            roi_date_y_upper_limit, roi_date_y_lower_limit, roi_date_x_right_limit = 0, 0, 0
-            roi_poi_y_upper_limit, roi_poi_x_right_limit, roi_poi_x_left_limit = 0, 0, 0
-
-            # Process and index documents
-
-            # Define the Region of Interest (RoI) of the document (general & date)
-            for bbox in ocr_result:
-                if is_match(text=bbox[4], phrase="intervenant de diffuser", threshold=60):
-                    y_lower_limit = bbox[1] - h_error_margin
-                    break
-
-            for bbox in ocr_result:
-                if y_lower_limit >= bbox[1] >= y_upper_limit:
-                    if is_match(text=bbox[4], phrase="Place, Date, Heure", threshold=60):
-                        roi_date_y_upper_limit = bbox[1] - h_error_margin
-                        roi_date_y_lower_limit = bbox[1] + bbox[3] + h_error_margin
-                        roi_date_x_right_limit = bbox[0] + bbox[2] + w_error_margin
-                        break
-
-            for bbox in ocr_result:
-                if y_lower_limit >= bbox[1] >= y_upper_limit:
-                    if is_match(text=bbox[4], phrase="ABREV"):
-                        roi_poi_y_upper_limit = bbox[1] + bbox[3] + h_error_margin
-                        roi_poi_x_right_limit = bbox[0] + bbox[2] + w_error_margin
-                        roi_poi_x_left_limit = bbox[0] - w_error_margin
-                        break
-
-            # Save available abbreviations and document date
-            d_time = []
-            for bbox in ocr_result:
-                if y_lower_limit >= bbox[1] >= y_upper_limit:
-                    if (roi_date_y_lower_limit >= bbox[1] >= roi_date_y_upper_limit and
-                            bbox[0] >= roi_date_x_right_limit):
-                        d_time.append(bbox)
-
-            involved_parties = []
-            for bbox in ocr_result:
-                if y_lower_limit >= bbox[1] >= y_upper_limit:
-                    if (bbox[1] >= roi_poi_y_upper_limit and
-                            roi_poi_x_right_limit - bbox[2] >= bbox[0] >= roi_poi_x_left_limit):
-                        involved_parties.append(bbox[4])
-
-            # Format the date of the document
-            d_time = sorted(d_time, key=lambda x: x[0])
-            datetime_sting = ' '.join(x[4] for x in d_time)
-            datetime_sting = unidecode(datetime_sting).lower().replace("o", "0")
-
-            date_pattern = r'\b\d{2}/\d{2}/\d{4}\b'
-            date_match = re.search(date_pattern, datetime_sting)
-            if date_match:
-                date = date_match.group()
-                formatted_datetime = date.split('/')  # [dd, mm, yyyy]
-            else:
+            if formatted_datetime is None:
                 pprint_console(f"Could not find date on file {fname_no_xt}.pdf, skipping...")
                 continue
 
+            # Process rest of document
+            pdf_document = fitz.open(f_path)
             with tempfile.NamedTemporaryFile(delete=True, suffix=".pdf") as rest_pdf:
                 temp_pdf_path = rest_pdf.name
                 rest_pdf_doc = fitz.open()
@@ -235,13 +169,13 @@ class Storage:
                 for page_num, doc in enumerate(documents, start=2):
                     doc.metadata = {
                         'meeting_datetime': datetime_to_timestamp(formatted_datetime),
-                        'file_path': f"{self.args.input_path}/files_archive/{os.path.basename(f_path)}",
-                        'file_name': os.path.basename(f_path),
+                        'file_path': f"{self.args.input_path}/{fname}",
+                        'file_name': fname,
                         'page_number': page_num
                     }
                     doc.excluded_embed_metadata_keys = ["meeting_datetime"]
                     doc.excluded_llm_metadata_keys = ["meeting_datetime"]
-                    doc.id_ = f'{fname_no_xt.lower().replace(" ", "_")}'
+                    doc.id_ = doc_id
 
                 if self.index is None:
                     self.index = VectorStoreIndex.from_documents(documents=documents,
@@ -255,18 +189,19 @@ class Storage:
                                                                  show_progress=False)
 
                     self.index.storage_context.persist(persist_dir=self.args.storage_dir)
+                    # Update tracking information
+                    doc_ref_ids.append(doc_id)
+                    already_indexed_files.add(fname.lower())
 
                 else:
-                    doc_ref_ids = list(set([doc.ref_doc_id for doc in self.index.docstore.docs.values()]))
                     for doc in documents:
-                        if doc.id_ in doc_ref_ids:
-                            self.index.delete_ref_doc(ref_doc_id=doc.id_, delete_from_docstore=True)
-                            doc_ref_ids.remove(doc.id_)
                         self.index.insert(document=doc)
 
                     self.index.storage_context.persist(persist_dir=self.args.storage_dir)
+                    doc_ref_ids.append(doc_id)
+                    already_indexed_files.add(fname.lower())
 
-                shutil.move(src=f_path, dst=f"{dir_path}/_completed/")
+        pprint_console("All documents processed and indexed.")
 
     def run(self):
         """

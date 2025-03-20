@@ -1,5 +1,7 @@
 import os
 import shutil
+import sys
+from functools import wraps
 
 
 class Color:
@@ -60,6 +62,20 @@ def pprint_console(text_entry):
     print(f"\n{Color.BLUE}[CONSOLE] {text_entry}{Color.END}")
 
 
+@wraps(pprint_console)
+def tqdm_aware_pprint_console(text_entry):
+    from tqdm import tqdm
+    message = f"{Color.BLUE}[CONSOLE] {text_entry}{Color.END}"
+    # Check if we're in a tqdm context by examining the output stream
+    if hasattr(sys.stdout, 'name') and 'tqdm' in sys.stdout.name:
+        tqdm.write(message)
+    else:
+        print(message)
+
+
+pprint_console = tqdm_aware_pprint_console
+
+
 def pprint_error(text_entry):
     """
     Print an error message to the console with a red prefix.
@@ -70,6 +86,19 @@ def pprint_error(text_entry):
     print(f"{Color.RED}\n[ERROR] {text_entry}{Color.END}")
 
 
+@wraps(pprint_error)
+def tqdm_aware_pprint_error(text_entry):
+    from tqdm import tqdm
+    message = f"{Color.RED}[ERROR] {text_entry}{Color.END}"
+    if hasattr(sys.stdout, 'name') and 'tqdm' in sys.stdout.name:
+        tqdm.write(message)
+    else:
+        print(message)
+
+
+pprint_error = tqdm_aware_pprint_error
+
+
 def pprint_debug(text_entry):
     """
     Print a debug message to the console with a purple prefix.
@@ -78,6 +107,19 @@ def pprint_debug(text_entry):
         text_entry (str): Debug message to print.
     """
     print(f"{Color.PURPLE}\n[DEBUG] {text_entry}{Color.END}")
+
+
+@wraps(pprint_debug)
+def tqdm_aware_pprint_debug(text_entry):
+    from tqdm import tqdm
+    message = f"{Color.PURPLE}[DEBUG] {text_entry}{Color.END}"
+    if hasattr(sys.stdout, 'name') and 'tqdm' in sys.stdout.name:
+        tqdm.write(message)
+    else:
+        print(message)
+
+
+pprint_debug = tqdm_aware_pprint_debug
 
 
 def pprint_hline(token, length=shutil.get_terminal_size().columns):

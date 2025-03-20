@@ -14,10 +14,11 @@ class Test(Demo):
         Sets up paths and defines single test question.
         """
         super().__init__()
-        self.args.input_path = "./data/input"
-        self.args.storage_dir = "./data/vector_db"
+        self.args.input_path = "data/tests"
+        self.args.storage_dir = "data/tests/vector_db_test"
         self.questions = [
-            "Quelles finitions pour les halls d'entrée ?"]
+            "Peux-je avoir une liste remarques SECO ?"
+        ]
 
 
 class TestRAG(Test):
