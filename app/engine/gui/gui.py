@@ -307,10 +307,7 @@ class GUI:
 
                 app.queue(max_size=2)
                 app.launch(
-                    server_name=os.getenv("SERVER_NAME"),
                     server_port=9000,
-                    ssl_keyfile=os.getenv("SSL_KEYFILE"),
-                    ssl_certfile=os.getenv("SSL_CERTFILE"),
                     auth=auth_users,
                     max_threads=32,
                     favicon_path="./app/assets/bpc_logo.png"
