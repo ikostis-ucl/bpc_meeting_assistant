@@ -302,7 +302,7 @@ class GUI:
                     favicon_path="./app/assets/bpc_logo.png"
                 )
             else:
-                app.queue(max_size=2) # ~3GB RAM for mother, 12GB for children
+                app.queue(max_size=2)
                 app.launch(
                     share=False,
                     inbrowser=False,
