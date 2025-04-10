@@ -12,6 +12,8 @@ from dotenv import load_dotenv
 
 load_dotenv(dotenv_path='./app/assets/.env/.env')
 
+# TODO: Before merging, re-index main knowledge base
+# TODO: Before-deploying, move all ./data/ to online.
 
 def config_parser():
     parser = configargparse.ArgumentParser(
