@@ -59,7 +59,7 @@ class Storage:
         # Initialize embedding model and language model
         self.embedding_model = HuggingFaceEmbedding(model_name=args.embeddings_model,
                                                     cache_folder=args.embeddings_cache_dir)
-        self.llm = Groq(model="gemma2-9b-it", api_key=args.groq_api_key,
+        self.llm = Groq(model="llama3-8b-8192", api_key=args.groq_api_key,
                         model_kwargs={"seed": 42}, temperature=0.0)
 
         self.node_parser = MarkdownNodeParser()

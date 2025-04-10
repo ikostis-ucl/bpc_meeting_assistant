@@ -61,7 +61,7 @@ To address this challenge, we propose an application designed to streamline acce
   - Groq API for answer generation
   - LlamaParse for document parsing
   - HuggingFace for embeddings (Solon)
-  - ColBERT for answer reranking
+  - ColbertRerank for answer reranking
 
 ## Setup
 
@@ -140,9 +140,6 @@ Key parameters in `configuration.py`:
 
 For production deployment, set the following environment variables:
 - `GRADIO_AUTH_PAIRS`: Comma-separated user:password pairs
-- `SERVER_NAME`: Server hostname
-- `SSL_KEYFILE`: Path to SSL key
-- `SSL_CERTFILE`: Path to SSL certificate
 
 Run with production flag:
 ```bash

@@ -1,5 +1,6 @@
 import datetime
 import os
+import gc
 
 import fitz
 import gradio as gr
@@ -11,8 +12,7 @@ from app.utils.inference_utils import pprint_qa
 HOME_PATH = os.path.expanduser("~")
 
 # Screen height constants for different resolutions
-BIG_WIN_1440, SMALL_WIN_1440 = 1120, 950  # 3440x1440
-BIG_WIN_1080, SMALL_WIN_1080 = 740, 665  # 1920x1080
+BIG_WIN, SMALL_WIN = 740, 665  # -> 1920x1080
 DPI = 150
 
 
@@ -22,16 +22,6 @@ class GUI:
 
     This class handles the frontend interface and backend logic for the chatbot application.
     It manages user interactions, document display, and conversation flow.
-
-    Dev Note:
-    At its current version, the app shares values between users (e.g., chat history, metadata, etc.).
-    This is not intended and should be fixed if the app is to be deployed in a non-demo production environment.
-
-    Gradio does support multi-user functionality, however the class should be restructured with gr.State() definitions
-    for the conv_agent, total_duration, chat_history, metadata, and render_state class variables.
-
-    When gr.State() is used, gradio generates a deepcopy of the state for each user, thus preventing shared values. This
-    requires A LOT of RAM.
     """
 
     def __init__(self, args, conv_agent):
@@ -105,10 +95,6 @@ class GUI:
             SystemExit: If user enters 'exit' or 'quit'.
 
         """
-        if question == 'exit' or question == 'quit':
-            pprint_console("Exiting chatbot...")
-            raise SystemExit
-
         chat_history.append([question, None])
         return "", chat_history
 
@@ -157,6 +143,9 @@ class GUI:
         if render_state:
             render_state = not render_state
 
+        # Force garbage collection after processing query
+        gc.collect()
+
         return chat_history, response_metadata, render_state
 
     def run(self):
@@ -200,7 +189,7 @@ class GUI:
                         elem_id="chatbot",
                         label='Chat History',
                         placeholder="👤 🤖️",
-                        height=BIG_WIN_1080,
+                        height=BIG_WIN,
                     )
                 with gr.Column():
                     @gr.render(inputs=[render_state, metadata],
@@ -241,7 +230,7 @@ class GUI:
                                         selected_index=0,
                                         type='pil',
                                         interactive=False,
-                                        height=SMALL_WIN_1080,
+                                        height=SMALL_WIN,
                                     )
                         else:
                             # Conversation state handling
@@ -266,7 +255,7 @@ class GUI:
                                                 selected_index=0,
                                                 type='pil',
                                                 interactive=False,
-                                                height=int(SMALL_WIN_1080 * 0.9),
+                                                height=int(SMALL_WIN * 0.9),
                                             )
 
             # Input components
@@ -315,7 +304,7 @@ class GUI:
             else:
                 app.queue(max_size=2) # ~3GB RAM for mother, 12GB for children
                 app.launch(
-                    share=True,
+                    share=False,
                     inbrowser=False,
                     max_threads=8,
                     favicon_path="./app/assets/bpc_logo.png",

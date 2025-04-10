@@ -4,4 +4,4 @@
 /resources/.emb_models/*
 /.gradio/
 /.gradio/*
-/data/
+/data/*

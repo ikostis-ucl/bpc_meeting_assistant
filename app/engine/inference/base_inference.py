@@ -1,5 +1,6 @@
 import calendar
 import heapq
+import gc
 from datetime import datetime
 
 from halo import Halo
@@ -56,9 +57,35 @@ class BaseInference:
         self.callback_manager = CallbackManager([self.token_counter])
         Settings.callback_manager = self.callback_manager
 
-        # Initialize reranker and judge components
-        self.reranker = ColbertRerank(top_n=5)
+        # Initialize judge component
         self.judge = Judge(args)
+        
+        # Don't initialize reranker until needed
+        self.reranker = None
+
+    def _get_reranker(self):
+        """
+        Get a ColbertRerank instance, creating it if necessary.
+        
+        Returns:
+            ColbertRerank: A reranker instance
+        """
+        if self.reranker is None:
+            self.reranker = ColbertRerank(top_n=5)
+        return self.reranker
+        
+    def _cleanup_resources(self):
+        """
+        Clean up memory-intensive resources to prevent memory leaks.
+        Called after processing queries to free up memory.
+        """
+        # Release reranker resources
+        if self.reranker is not None:
+            del self.reranker
+            self.reranker = None
+        
+        # Force garbage collection to reclaim memory
+        gc.collect()
 
     def generate_timespans(self, starting_month_timestamp, ending_month_timestamp, time_freq):
         """
@@ -117,6 +144,9 @@ class BaseInference:
             list: List of tuples containing (answer, metadata, timespan) for each processed result.
         """
         results = []
+        
+        # Get fresh reranker instance for this query
+        reranker = self._get_reranker()
 
         # Process query for each timespan
         for start_date, end_date in self.timespans:
@@ -134,7 +164,7 @@ class BaseInference:
                     ]
                 ),
                 similarity_top_k=50,
-                node_postprocessors=[self.reranker],
+                node_postprocessors=[reranker],
             )
 
             # Execute query and store results
@@ -175,5 +205,9 @@ class BaseInference:
             top_nodes = heapq.nlargest(3, metadata.items(), key=lambda item: item[1]['score'])
             top_metadata = {node_id: data for node_id, data in top_nodes}
             cleaned_results[i] = (cleaned_results[i][0], top_metadata, cleaned_results[i][2])
+        
+        # Clean up resources after query is complete
+        self._cleanup_resources()
 
         return cleaned_results
+
