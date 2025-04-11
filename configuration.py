@@ -53,10 +53,4 @@ def config_parser():
     parser.add_argument('--groq_api_key', type=str, default=os.getenv('GROQ_API_KEY'),
                         help='Your Groq API token key gsk_<...>)')
 
-    # Memory management
-    parser.add_argument('--memory_monitor', action='store_true',
-                        help='Enable memory monitoring')
-    parser.add_argument('--cache_clear_interval', type=int, default=60,
-                        help='Interval in seconds for clearing Gradio cache')
-
     return parser
