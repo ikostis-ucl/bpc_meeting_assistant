@@ -1,6 +1,6 @@
 import calendar
-import heapq
 import gc
+import heapq
 from datetime import datetime
 
 from halo import Halo
@@ -59,7 +59,7 @@ class BaseInference:
 
         # Initialize judge component
         self.judge = Judge(args)
-        
+
         # Don't initialize reranker until needed
         self.reranker = None
 
@@ -73,7 +73,7 @@ class BaseInference:
         if self.reranker is None:
             self.reranker = ColbertRerank(top_n=5)
         return self.reranker
-        
+
     def _cleanup_resources(self):
         """
         Clean up memory-intensive resources to prevent memory leaks.
@@ -83,7 +83,7 @@ class BaseInference:
         if self.reranker is not None:
             del self.reranker
             self.reranker = None
-        
+
         # Force garbage collection to reclaim memory
         gc.collect()
 
@@ -144,7 +144,7 @@ class BaseInference:
             list: List of tuples containing (answer, metadata, timespan) for each processed result.
         """
         results = []
-        
+
         # Get fresh reranker instance for this query
         reranker = self._get_reranker()
 
@@ -205,9 +205,8 @@ class BaseInference:
             top_nodes = heapq.nlargest(3, metadata.items(), key=lambda item: item[1]['score'])
             top_metadata = {node_id: data for node_id, data in top_nodes}
             cleaned_results[i] = (cleaned_results[i][0], top_metadata, cleaned_results[i][2])
-        
+
         # Clean up resources after query is complete
         self._cleanup_resources()
 
         return cleaned_results
-

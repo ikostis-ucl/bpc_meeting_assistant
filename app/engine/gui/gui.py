@@ -1,12 +1,11 @@
 import datetime
-import os
 import gc
+import os
 
 import fitz
 import gradio as gr
 from PIL import Image
 
-from app.utils.app_utils import pprint_console
 from app.utils.inference_utils import pprint_qa
 
 HOME_PATH = os.path.expanduser("~")
@@ -35,7 +34,11 @@ class GUI:
         self.args = args
         self.is_production = args.prod
         self.conv_agent = conv_agent
-        self.total_duration = self._get_months()
+
+        # Set the timespans using the configured time_freq value
+        self.conv_agent.generate_timespans(starting_month_timestamp=self.conv_agent.start_date,
+                                           ending_month_timestamp=self.conv_agent.end_date,
+                                           time_freq=args.time_freq)
 
         # Example questions for the user interface
         self.examples = [
@@ -50,35 +53,6 @@ class GUI:
             "Quelle isolation a été choisi pour les plafonds du sous-sols -1 ?",
             "Peux-je avoir une liste remarques SECO ?"
         ]
-
-    def _get_months(self):
-        """
-        Calculate the total number of months between start and end dates.
-
-        Returns:
-            int: Total number of months in the conversation timespan.
-        """
-        start_date = datetime.datetime.fromtimestamp(self.conv_agent.start_date)
-        end_date = datetime.datetime.fromtimestamp(self.conv_agent.end_date)
-        return (end_date.year - start_date.year) * 12 + end_date.month - start_date.month
-
-    def set_timestep(self, value):
-        """
-        Set the time step for conversation analysis and warn about performance implications.
-
-        Args:
-            value: Number of months for each time step.
-        """
-        # Warn user about performance implications of their chosen timestep
-        if value >= self.total_duration * 0.5:
-            gr.Warning("The execution might be faster, but the result might be inaccurate.")
-        elif value <= self.total_duration * 0.1:
-            gr.Warning("The results will be more precise, but the execution will be slower.")
-
-        # Update conversation agent timespans
-        self.conv_agent.generate_timespans(starting_month_timestamp=self.conv_agent.start_date,
-                                           ending_month_timestamp=self.conv_agent.end_date,
-                                           time_freq=value)
 
     @staticmethod
     def exec_user_query(question, chat_history):
@@ -216,11 +190,19 @@ class GUI:
                                 pdf_path = info["file_path"]
                                 page_numbers = list(set(info["page_numbers"]))
                                 pdf_pages = []
+
                                 doc = fitz.open(pdf_path)
                                 for pg_num in page_numbers:
                                     page = doc[pg_num]
                                     pix = page.get_pixmap(matrix=fitz.Matrix(DPI / 72, DPI / 72))
-                                    pdf_pages.append(Image.frombytes('RGB', (pix.width, pix.height), pix.samples))
+                                    img = Image.frombytes('RGB', (pix.width, pix.height), pix.samples)
+                                    pdf_pages.append(img)
+                                    # Clean up pixmap resources
+                                    pix = None
+
+                                # Always close the document to prevent memory leaks
+                                if 'doc' in locals():
+                                    doc.close()
 
                                 with gr.Tab(label=pdf_name):
                                     gr.Gallery(
@@ -241,12 +223,19 @@ class GUI:
                                             pdf_path = file_info["file_path"]
                                             page_numbers = list(set(file_info["page_numbers"]))
                                             pdf_pages = []
-                                            doc = fitz.open(pdf_path)
-                                            for pg_num in page_numbers:
-                                                page = doc[pg_num - 1]
-                                                pix = page.get_pixmap(matrix=fitz.Matrix(DPI / 72, DPI / 72))
-                                                pdf_pages.append(
-                                                    Image.frombytes('RGB', (pix.width, pix.height), pix.samples))
+                                            try:
+                                                doc = fitz.open(pdf_path)
+                                                for pg_num in page_numbers:
+                                                    page = doc[pg_num - 1]
+                                                    pix = page.get_pixmap(matrix=fitz.Matrix(DPI / 72, DPI / 72))
+                                                    img = Image.frombytes('RGB', (pix.width, pix.height), pix.samples)
+                                                    pdf_pages.append(img)
+                                                    # Clean up pixmap resources
+                                                    pix = None
+                                            finally:
+                                                # Always close the document to prevent memory leaks
+                                                if 'doc' in locals():
+                                                    doc.close()
 
                                             gr.Gallery(
                                                 value=pdf_pages,
@@ -258,20 +247,19 @@ class GUI:
                                                 height=int(SMALL_WIN * 0.9),
                                             )
 
+                        # Force garbage collection after rendering
+                        gc.collect()
+
             # Input components
             with gr.Row():
-                with gr.Column(scale=5):
-                    input_textbox = gr.Textbox(
-                        placeholder="Pose-moi une question sur le projet!",
-                        scale=40,
-                        show_label=False,
-                        interactive=True,
-                        container=False
-                    )
-                with gr.Column(scale=2):
-                    with gr.Row():
-                        slider = gr.Slider(minimum=1, maximum=self.total_duration, step=1,
-                                           value=self.args.time_freq, label="Time step (months)")
+                input_textbox = gr.Textbox(
+                    placeholder="Pose-moi une question sur le projet!",
+                    scale=1,
+                    show_label=False,
+                    interactive=True,
+                    container=False
+                )
+
             with gr.Row():
                 _examples = gr.Examples(examples=self.examples, inputs=[input_textbox])
 
@@ -285,8 +273,6 @@ class GUI:
                 inputs=[chatbot, render_state],
                 outputs=[chatbot, metadata, render_state]
             )
-
-            slider.release(fn=self.set_timestep, inputs=[slider])
 
         # Launch application with appropriate configuration
         try:
