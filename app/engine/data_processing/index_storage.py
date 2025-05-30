@@ -50,8 +50,8 @@ class Storage:
                                      language='fr',
                                      max_timeout=600,
                                      use_vendor_multimodal_model=False,  # Change this to True to use a VLM/MMLM
-                                     vendor_multimodal_model_name='openai-gpt4o',
-                                     vendor_multimodal_api_key=self.args.openai_api_key
+                                     # vendor_multimodal_model_name='openai-gpt4o',
+                                     # vendor_multimodal_api_key=self.args.openai_api_key
                                      )
 
         self.index = None
