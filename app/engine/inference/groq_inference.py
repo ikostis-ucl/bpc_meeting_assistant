@@ -31,9 +31,10 @@ class GroqInference(BaseInference):
         """
         super().__init__(args)
         # Initialize Groq model with specific settings
-        self.model = Groq(model="llama3-70b-8192", api_key=args.groq_api_key,
+        self.model = Groq(model=args.groq_model_inference,
+                          api_key=args.groq_api_key,
                           model_kwargs={"seed": 42}, temperature=0.0)
-        self.model_tpm = 6000
+        self.model_tpm = args.groq_model_inference_tpm
 
         # Set up token counting and callbacks
         self.model.callback_manager = Settings.callback_manager

@@ -59,7 +59,8 @@ class Storage:
         # Initialize embedding model and language model
         self.embedding_model = HuggingFaceEmbedding(model_name=args.embeddings_model,
                                                     cache_folder=args.embeddings_cache_dir)
-        self.llm = Groq(model="llama3-8b-8192", api_key=args.groq_api_key,
+        self.llm = Groq(model=args.groq_model_indexing_kw,
+                        api_key=args.groq_api_key,
                         model_kwargs={"seed": 42}, temperature=0.0)
 
         self.node_parser = MarkdownNodeParser()
@@ -144,6 +145,7 @@ class Storage:
 
             # Process first page to extract date and involved parties
             formatted_datetime, involved_parties = parse_first_page(file_path=f_path,
+                                                                    llm_name=self.args.groq_model_indexing_extraction,
                                                                     llm_key=self.args.groq_api_key,
                                                                     doc_parser=self.doc_parser)
 

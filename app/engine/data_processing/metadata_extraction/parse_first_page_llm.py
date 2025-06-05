@@ -7,7 +7,7 @@ from llama_index.llms.groq import Groq
 from pydantic import BaseModel, Field
 
 
-def parse_first_page(file_path, llm_key, doc_parser):
+def parse_first_page(file_path, llm_name, llm_key, doc_parser):
     """
     Process the first page of a PDF document to extract datetime and involved parties using LLM.
 
@@ -15,6 +15,7 @@ def parse_first_page(file_path, llm_key, doc_parser):
 
     Args:
         file_path (str): Path to the PDF file
+        llm_name (str): Name of the Groq LLM model to use
         llm_key (str): API key for Groq LLM
         doc_parser: LlamaParse document parser instance
 
@@ -24,7 +25,8 @@ def parse_first_page(file_path, llm_key, doc_parser):
             - involved_parties (list): List of abbreviations of involved parties
     """
 
-    extraction_llm = Groq(model="llama3-70b-8192", api_key=llm_key,
+    extraction_llm = Groq(model=llm_name,
+                          api_key=llm_key,
                           model_kwargs={"seed": 42}, temperature=0.0)
 
     # Open PDF and extract just the first page to a temporary file

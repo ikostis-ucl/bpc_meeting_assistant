@@ -43,11 +43,16 @@ def config_parser():
     parser.add_argument('--groq_model_inference_tpm', type=int, default=12000,
                         help='Tokens per minute for Groq model.')
 
-    parser.add_argument('--groq_model_indexing', type=str,
+    parser.add_argument('--groq_model_inference_judge', type=str,
                         default="llama-3.1-8b-instant",
-                        help='Model name for Groq indexing.')
-    parser.add_argument('--groq_model_indexing_rpm', type=int, default=25,
-                        help='Requests per minute for Groq model.')
+                        help='Groq model name used in assessing similarity between consecutive answers.')
+
+    parser.add_argument('--groq_model_indexing_extraction', type=str,
+                        default="llama-3.3-70b-versatile",
+                        help='Groq model name used in information extraction while indexing.')
+    parser.add_argument('--groq_model_indexing_kw', type=str,
+                        default="llama-3.1-8b-instant",
+                        help='Groq model name used in information extraction while indexing.')
 
     # Retriever
     parser.add_argument('--time_freq', type=int, default=5,

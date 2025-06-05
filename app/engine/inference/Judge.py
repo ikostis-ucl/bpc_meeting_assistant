@@ -1,4 +1,3 @@
-# Judge.py
 from llama_index.core.program import LLMTextCompletionProgram
 from llama_index.llms.groq import Groq
 from pydantic import BaseModel, ValidationError
@@ -33,7 +32,8 @@ class Judge:
         """
         self.args = args
         # Initialize Groq model for similarity judgement
-        self.model = Groq(model="llama-3.3-70b-versatile", api_key=args.groq_api_key,
+        self.model = Groq(model=args.groq_model_inference_judge,
+                          api_key=args.groq_api_key,
                           model_kwargs={"seed": 42}, temperature=0.0)
 
         # Define prompt template for comparison
