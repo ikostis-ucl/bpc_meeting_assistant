@@ -44,8 +44,8 @@ def config_parser():
                         help='Tokens per minute for Groq model.')
 
     parser.add_argument('--groq_model_inference_judge', type=str,
-                        default="llama-3.1-8b-instant",
-                        help='Groq model name used in assessing similarity between consecutive answers.')
+                        default="llama-3.3-70b-versatile",
+                        help="Groq model name used in assessing similarity between consecutive answers.")
 
     parser.add_argument('--groq_model_indexing_extraction', type=str,
                         default="llama-3.3-70b-versatile",
