@@ -36,7 +36,7 @@ class IndexingTest:
         """
         self.parser = config_parser()
         self.args = self.parser.parse_args()
-        self.args.input_path = "data/tests"
+        self.args.input_path = "data/tests/ERA-I_PV01_221006_redacted.pdf"
         self.args.storage_dir = "data/tests/vector_db_test"
 
         # Initialize storage agent and run indexing

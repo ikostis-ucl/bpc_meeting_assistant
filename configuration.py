@@ -36,6 +36,19 @@ def config_parser():
     parser.add_argument('--embeddings_cache_dir', type=str, default="./resources/.emb_models",
                         help='Embeddings cache directory path.')
 
+    # Groq LLM API
+    parser.add_argument('--groq_model_inference', type=str,
+                        default="llama-3.3-70b-versatile",
+                        help='Model name for Groq inference.')
+    parser.add_argument('--groq_model_inference_tpm', type=int, default=12000,
+                        help='Tokens per minute for Groq model.')
+
+    parser.add_argument('--groq_model_indexing', type=str,
+                        default="llama-3.1-8b-instant",
+                        help='Model name for Groq indexing.')
+    parser.add_argument('--groq_model_indexing_rpm', type=int, default=25,
+                        help='Requests per minute for Groq model.')
+
     # Retriever
     parser.add_argument('--time_freq', type=int, default=5,
                         help='Duration of timespans, counted in months.')
