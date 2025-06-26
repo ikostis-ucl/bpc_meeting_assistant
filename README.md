@@ -11,57 +11,57 @@ To address this challenge, we propose an application designed to streamline acce
 ## Features
 
 - **Document Processing & Indexing**
-  - PDF document parsing with OCR capabilities using EasyOCR
-  - Automated metadata extraction (dates, participants)
-  - Vector storage using LlamaIndex
-  - Support for temporal document organization
-  - French language support
+  - PDF document parsing via LlamaParse.
+  - Automated metadata extraction (dates, participants).
+  - Vector storage using LlamaIndex.
+  - Support for temporal document organization.
+  - French language support.
 
 - **Query Processing**
-  - Natural language query understanding in French
-  - Time-aware document retrieval with customizable time steps
-  - Context-sensitive answer generation using Groq LLM
-  - Document source citations with page references
-  - Answer similarity detection to prevent redundancy
+  - Natural language query understanding in French.
+  - Time-aware document retrieval with customizable time steps.
+  - Context-sensitive answer generation using Groq LLM.
+  - Document source citations with page references.
+  - Answer similarity detection to prevent redundancy.
 
 - **User Interface**
-  - Interactive Gradio-based GUI with chat interface
-  - PDF document preview with source highlighting
-  - Temporal navigation of responses
-  - Predefined example queries
-  - Support for both interactive and benchmark modes
+  - Interactive Gradio-based GUI with chat interface.
+  - PDF document preview with source highlighting.
+  - Temporal navigation of responses.
+  - Predefined example queries.
+  - Support for both interactive and benchmark modes.
 
 ## Architecture
 
 ### Core Components
 
 1. **Data Processing (`app/engine/data_processing/`)**
-   - `Storage`: Handles document parsing, OCR, and vector storage
-   - `DataLoaders`: Manages index loading and timestamp tracking
-   - `MetadataExtractors`: Extracts keywords and involved parties
+   - `Storage`: Handles document parsing, metadata extraction, and vector storage.
+   - `DataLoaders`: Manages index loading and timestamp tracking.
+   - `MetadataExtractors`: Extracts keywords and involved parties.
 
 2. **Inference Engine (`app/engine/inference/`)**
-   - `BaseInference`: Core temporal query functionality
-   - `GroqInference`: Implementation using Groq's LLM
-   - `Judge`: Answer similarity evaluation system
+   - `BaseInference`: Core temporal query functionality.
+   - `GroqInference`: Implementation using Groq's LLM.
+   - `Judge`: Answer similarity evaluation system.
 
 3. **User Interface (`app/engine/gui/`)**
-   - `GUI`: Gradio interface with chat and document preview
-   - Support for multiple users in production mode
-   - Terminal output formatting and progress indicators
+   - `GUI`: Gradio interface with chat and document preview.
+   - Support for multiple users in production mode.
+   - Terminal output formatting and progress indicators.
 
 4. **Utilities (`app/utils/`)**
-   - Console output formatting
-   - Data processing helpers
-   - Inference utilities
+   - Console output formatting.
+   - Data processing helpers.
+   - Inference utilities.
 
 ### External Dependencies
 
 - **LLM Services**
-  - Groq API for answer generation
-  - LlamaParse for document parsing
-  - HuggingFace for embeddings (Solon)
-  - ColbertRerank for answer reranking
+  - Groq API for answer generation.
+  - LlamaParse for document parsing.
+  - HuggingFace for embeddings.
+  - ColbertRerank for answer reranking.
 
 ## Setup
 
