@@ -66,47 +66,54 @@ To address this challenge, we propose an application designed to streamline acce
 ## Setup
 
 ### Prerequisites
-- Python 3.x
-- Git
-- pip package manager
+- Python 3.10 or higher
+- [Poetry](https://python-poetry.org/) for dependency management
 
 ### Installation
 
-1. Clone the repository
-```bash
-git clone https://github.com/ikostis-ucl/bpc_meeting_assistant.git
-cd bpc_meeting_assistant
-```
+1. **Clone the repository:**
+   ```bash
+   git clone <repository-url>
+   cd bpc-meeting-assistant
+   ```
 
-2. Install dependencies
-```bash
-pip install -r requirements.txt
-```
+2. **Install dependencies using Poetry:**
+   ```bash
+   poetry install
+   poetry lock
+   ```
 
-3. Create environment file
-Create `app/assets/.env/.env` with the following API keys:
-```
-LLAMA_PARSE_KEY=llx-...
-OPENAI_API_KEY=sk-...
-GROQ_API_KEY=gsk_...
-```
+3. **Activate the virtual environment:**
+   ```bash
+   poetry shell
+   ```
+
+
+4. **Create environment file:**
+
+    Create `app/assets/.env/.env` with the following API keys:
+    ```
+    LLAMA_PARSE_KEY=llx-...
+    OPENAI_API_KEY=sk-...
+    GROQ_API_KEY=gsk_...
+    ```
 
 ### Usage
 
 1. **Index Documents**
-```bash
-python run_kb_indexing.py
-```
+    ```bash
+    python run_kb_indexing.py
+    ```
 
 2. **Run Interactive GUI**
-```bash
-python run_gui.py
-```
+    ```bash
+    python run_gui.py
+    ```
 
 3. **Run Benchmark Tests**
-```bash
-python run_inference.py
-```
+    ```bash
+    python run_inference.py
+    ```
 
 ## Directory Structure
 
@@ -130,11 +137,25 @@ meeting-minutes-assistant/
 ## Configuration
 
 Key parameters in `configuration.py`:
-- `input_path`: Path to input documents
-- `storage_dir`: Vector database location
-- `embeddings_model`: HuggingFace embedding model
-- `time_freq`: Time step for analysis (months)
-- API credentials and paths
+
+### Data Processing
+- `input_path`: Path to input documents (default: `./data/input`)
+- `storage_dir`: Vector database location (default: `./data/vector_db`)
+
+### Embeddings
+- `embeddings_model`: HuggingFace embedding model (default: `OrdalieTech/Solon-embeddings-large-0.1`)
+- `embeddings_cache_dir`: Embeddings cache directory (default: `./resources/.emb_models`)
+
+### LLM Models (Groq)
+- `groq_model_inference`: Main inference model (default: `llama-3.3-70b-versatile`)
+- `groq_model_inference_judge`: Model for answer similarity assessment (default: `llama-3.3-70b-versatile`)
+- `groq_model_indexing_extraction`: Model for information extraction during indexing (default: `llama-3.3-70b-versatile`)
+- `groq_model_indexing_kw`: Model for keyword extraction (default: `llama-3.1-8b-instant`)
+- `groq_model_inference_tpm`: Tokens per minute limit (default: 12000)
+
+### Retrieval Settings
+- `time_freq`: Time step duration in months for temporal analysis (default: 5)
+- `cutoff_percentage`: Percentage of retrieved nodes for context (default: 0.05)
 
 ## Production Deployment
 
