@@ -6,6 +6,7 @@ import fitz
 import gradio as gr
 from PIL import Image
 
+from app.utils.gui_utils import ANON_PATH, ANON_INDEX
 from app.utils.inference_utils import pprint_qa
 
 HOME_PATH = os.path.expanduser("~")
@@ -32,8 +33,12 @@ class GUI:
             conv_agent: Conversation agent for handling queries.
         """
         self.args = args
-        self.is_production = args.prod
         self.conv_agent = conv_agent
+
+        if self.args.anon:
+            self.idle_screen = "./app/assets/idle_screen_anon.pdf"
+        else:
+            self.idle_screen = "./app/assets/idle_screen.pdf"
 
         # Set the timespans using the configured time_freq value
         self.conv_agent.generate_timespans(starting_month_timestamp=self.conv_agent.start_date,
@@ -51,7 +56,7 @@ class GUI:
             "Informations concernant les faux-plafonds ?",
             "Quelles finitions pour les halls d'entrée ?",
             "Quelle isolation a été choisi pour les plafonds du sous-sols -1 ?",
-            "Peux-je avoir une liste remarques SECO ?"
+            "Pourrais-je avoir une liste des remarques faite par le SECO ?"
         ]
 
     @staticmethod
@@ -150,7 +155,7 @@ class GUI:
             chat_history = gr.State([])
             metadata = gr.State(
                 {"default_1": {"file_name": "Home",
-                               "file_path": "./app/assets/idle_screen.pdf",
+                               "file_path": self.idle_screen,
                                "page_number": 1}}
             )
             render_state = gr.State(True)
@@ -180,10 +185,19 @@ class GUI:
                                 file_name = node_values["file_name"]
                                 file_path = node_values["file_path"]
                                 page_number = node_values.get("page_number") - 1
-                                if file_name not in pdf_info:
-                                    pdf_info[file_name] = {"file_path": file_path, "page_numbers": [page_number]}
+
+                                # Handle anonymization if in anon mode
+                                if self.args.anon and file_name in ANON_INDEX:
+                                    anon_file_name = ANON_INDEX[file_name]
+                                    file_path = os.path.join(ANON_PATH, anon_file_name)
+                                    display_name = anon_file_name
                                 else:
-                                    pdf_info[file_name]["page_numbers"].append(page_number)
+                                    display_name = file_name
+
+                                if display_name not in pdf_info:
+                                    pdf_info[display_name] = {"file_path": file_path, "page_numbers": [page_number]}
+                                else:
+                                    pdf_info[display_name]["page_numbers"].append(page_number)
 
                             # Display PDFs in tabs
                             for pdf_name, info in pdf_info.items():
@@ -197,7 +211,6 @@ class GUI:
                                     pix = page.get_pixmap(matrix=fitz.Matrix(DPI / 72, DPI / 72))
                                     img = Image.frombytes('RGB', (pix.width, pix.height), pix.samples)
                                     pdf_pages.append(img)
-                                    # Clean up pixmap resources
                                     pix = None
 
                                 # Always close the document to prevent memory leaks
@@ -219,8 +232,15 @@ class GUI:
                             for timespan, files in metadata.items():
                                 with gr.Tab(label=timespan):
                                     for file_name, file_info in files.items():
-                                        with gr.Tab(label=file_name):
+                                        if self.args.anon and file_name in ANON_INDEX:
+                                            anon_file_name = ANON_INDEX[file_name]
+                                            pdf_path = os.path.join(ANON_PATH, anon_file_name)
+                                            display_name = anon_file_name
+                                        else:
                                             pdf_path = file_info["file_path"]
+                                            display_name = file_name
+
+                                        with gr.Tab(label=display_name):
                                             page_numbers = list(set(file_info["page_numbers"]))
                                             pdf_pages = []
                                             try:
@@ -230,10 +250,8 @@ class GUI:
                                                     pix = page.get_pixmap(matrix=fitz.Matrix(DPI / 72, DPI / 72))
                                                     img = Image.frombytes('RGB', (pix.width, pix.height), pix.samples)
                                                     pdf_pages.append(img)
-                                                    # Clean up pixmap resources
                                                     pix = None
                                             finally:
-                                                # Always close the document to prevent memory leaks
                                                 if 'doc' in locals():
                                                     doc.close()
 
@@ -276,7 +294,7 @@ class GUI:
 
         # Launch application with appropriate configuration
         try:
-            if self.is_production:
+            if self.args.prod:
                 auth_pairs = os.getenv("GRADIO_AUTH_PAIRS").split(',')
                 auth_users = [tuple(pair.split(':')) for pair in auth_pairs]
 
@@ -290,11 +308,12 @@ class GUI:
             else:
                 app.queue(max_size=2)
                 app.launch(
-                    share=False,
+                    share=True,
                     inbrowser=False,
                     max_threads=8,
                     favicon_path="./app/assets/bpc_logo.png",
-                    server_port=7862
+                    server_name="0.0.0.0",
+                    server_port=7863
                 )
 
         except (KeyboardInterrupt, SystemExit):

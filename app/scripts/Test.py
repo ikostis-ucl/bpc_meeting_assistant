@@ -1,5 +1,6 @@
 from app.engine.inference.groq_inference import GroqInference
 from app.scripts.Demo import Demo
+from app.utils.app_utils import pprint_console
 
 
 class Test(Demo):
@@ -14,8 +15,15 @@ class Test(Demo):
         Sets up paths and defines single test question.
         """
         super().__init__()
+
         self.args.input_path = "data/tests"
         self.args.storage_dir = "data/tests/vector_db_test"
+        if self.args.anon:
+            # TODO: Make a small anonymised test set
+            pprint_console("Running in --anon mode.")
+            # self.args.input_path = "./data/input_anonymised"
+            # self.args.storage_dir = "./data/vector_db_anonymised"
+
         self.questions = [
             "Peux-je avoir une liste remarques SECO ?"
         ]

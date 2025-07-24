@@ -1,6 +1,6 @@
 from app.engine.inference.groq_inference import GroqInference
 from app.scripts.Demo import Demo
-
+from app.utils.app_utils import pprint_console
 
 class Benchmark(Demo):
     """
@@ -11,8 +11,14 @@ class Benchmark(Demo):
     def __init__(self):
         """Initialize benchmark configuration with predefined questions and paths."""
         super().__init__()
+
         self.args.input_path = "./data/input"
         self.args.storage_dir = "./data/vector_db"
+        if self.args.anon:
+            pprint_console("Running in --anon mode.")
+            # self.args.input_path = "./data/input_anonymised"
+            # self.args.storage_dir = "./data/vector_db_anonymised"
+
         # Standard set of benchmark questions covering different aspects
         self.questions = [
             "Quelle est la couleur choisie (RAL) pour les châssis ?",

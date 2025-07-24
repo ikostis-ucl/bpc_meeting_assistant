@@ -62,6 +62,7 @@ def config_parser():
 
     # Deployment
     parser.add_argument('--prod', action='store_true', help='Run in production mode')
+    parser.add_argument('--anon', action='store_true', help='Run in anonymized mode')
 
     # API Keys
     parser.add_argument('--llama_parse_key', type=str, default=os.getenv('LLAMA_PARSE_KEY'),

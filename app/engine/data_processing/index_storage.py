@@ -14,8 +14,8 @@ from llama_parse import LlamaParse
 from tqdm import tqdm
 
 from app.engine.data_processing.data_loaders import load_index
+from app.engine.data_processing.metadata_extraction.TitleNodeFilter import TitleNodeFilter
 from app.engine.data_processing.metadata_extraction.InvolvedPartiesExtractor import InvolvedPartiesExtractor
-from app.engine.data_processing.metadata_extraction.KeywordExtractor import KeywordExtractor
 from app.engine.data_processing.metadata_extraction.parse_first_page_llm import parse_first_page
 from app.utils.app_utils import pprint_console, simplify_path, empty_dir, fmt_string, Color, pprint_error
 from app.utils.data_processing_utils import datetime_to_timestamp
@@ -64,8 +64,8 @@ class Storage:
                         model_kwargs={"seed": 42}, temperature=0.0)
 
         self.node_parser = MarkdownNodeParser()
+        self.title_filter = TitleNodeFilter()
 
-        # Ensure storage directory exists
         os.makedirs(self.args.storage_dir, exist_ok=True)
 
     def directory_confirmation(self, skip=False):
@@ -90,7 +90,7 @@ class Storage:
                     os.makedirs(self.args.storage_dir, exist_ok=True)
                     break
                 elif user_input == 'l' or user_input == '':
-                    self.index, _ = load_index(args=self.args, transformations=[self.node_parser])
+                    self.index, _ = load_index(args=self.args, transformations=[self.node_parser, self.title_filter])
                     break
                 else:
                     pprint_error("Invalid input. Please reply with 'l' for loading the index "
@@ -122,12 +122,10 @@ class Storage:
 
         # Get already indexed document IDs if index exists
         already_indexed_files = set()
-        doc_ref_ids = []  # Initialize this regardless of index status
+        doc_ref_ids = []
         if self.index is not None:
             doc_ref_ids = list(set([doc.ref_doc_id for doc in self.index.docstore.docs.values()]))
-            # Extract file names from document IDs
             for doc_id in doc_ref_ids:
-                # Convert doc_id back to filename (reverse of fname_no_xt.lower().replace(" ", "_"))
                 already_indexed_files.add(f"{doc_id}.pdf")
 
         # Process each file
@@ -175,16 +173,14 @@ class Storage:
                         'file_name': fname,
                         'page_number': page_num
                     }
-                    doc.excluded_embed_metadata_keys = ["meeting_datetime"]
-                    doc.excluded_llm_metadata_keys = ["meeting_datetime"]
+                    doc.excluded_embed_metadata_keys = ["meeting_datetime", "file_path", "file_name", "page_number"]
+                    doc.excluded_llm_metadata_keys = ["meeting_datetime", "file_path", "file_name", "page_number"]
                     doc.id_ = doc_id
 
                 if self.index is None:
                     self.index = VectorStoreIndex.from_documents(documents=documents,
                                                                  transformations=[self.node_parser,
-                                                                                  KeywordExtractor(keywords=3,
-                                                                                                   llm=self.llm,
-                                                                                                   show_progress=False),
+                                                                                  self.title_filter,
                                                                                   InvolvedPartiesExtractor(
                                                                                       entities=involved_parties)],
                                                                  embed_model=self.embedding_model,

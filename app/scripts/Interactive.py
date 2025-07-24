@@ -1,6 +1,6 @@
 from app.engine.inference.groq_inference import GroqInference
 from app.scripts.Demo import Demo
-
+from app.utils.app_utils import pprint_console
 
 class InteractiveQueryRAG(Demo):
     """
@@ -14,8 +14,13 @@ class InteractiveQueryRAG(Demo):
         Sets up paths and Groq inference agent.
         """
         super().__init__()
+
         self.args.input_path = "./data/input"
         self.args.storage_dir = "./data/vector_db"
+        if self.args.anon:
+            pprint_console("Running in --anon mode.")
+            # self.args.input_path = "./data/input_anonymised"
+            # self.args.storage_dir = "./data/vector_db_anonymised"
 
         self.agent = GroqInference(args=self.args)
         self.questions = []
