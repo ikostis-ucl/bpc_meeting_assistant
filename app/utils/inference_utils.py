@@ -85,16 +85,28 @@ def pprint_qa(question, results):
 
         if metadata:
             file_pages = {}
-            for node_id, node_values in metadata.items():
-                file_name = node_values["file_name"]
-                page_number = node_values["page_number"]
-                if file_name in file_pages:
-                    file_pages[file_name].append(page_number)
-                else:
-                    file_pages[file_name] = [page_number]
+            valid_citations = False
 
-            print(f"{Color.YELLOW}Citations:{Color.END}")
-            print(f"{Color.BOLD}Document name(s) and page number(s):{Color.END}")
-            for file_name, page_numbers in file_pages.items():
-                print(f"{file_name}: {list(set(page_numbers))}")
+            for node_id, node_values in metadata.items():
+                # Check if node has the required metadata fields
+                if "metadata" in node_values and isinstance(node_values["metadata"], dict):
+                    node_metadata = node_values["metadata"]
+                    file_name = node_metadata.get("file_name")
+                    page_number = node_metadata.get("page_number")
+
+                    if file_name and page_number is not None:
+                        valid_citations = True
+                        if file_name in file_pages:
+                            file_pages[file_name].append(page_number)
+                        else:
+                            file_pages[file_name] = [page_number]
+
+            if valid_citations and file_pages:
+                print(f"{Color.YELLOW}Citations:{Color.END}")
+                print(f"{Color.BOLD}Document name(s) and page number(s):{Color.END}")
+                for file_name, page_numbers in file_pages.items():
+                    print(f"{file_name}: {list(set(page_numbers))}")
+            else:
+                print(f"{Color.YELLOW}Citations: No valid citation metadata available{Color.END}")
+
         pprint_hline("-", 3)

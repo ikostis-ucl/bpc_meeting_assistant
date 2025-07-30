@@ -56,7 +56,7 @@ class GUI:
             "Informations concernant les faux-plafonds ?",
             "Quelles finitions pour les halls d'entrée ?",
             "Quelle isolation a été choisi pour les plafonds du sous-sol -1 ?",
-            "Pourrais-je avoir une liste des remarques faite par le SECO ?"
+            "Pourrais-je avoir une liste des remarques faites par le SECO ?"
         ]
 
     @staticmethod
@@ -101,18 +101,25 @@ class GUI:
             if timespan_key not in response_metadata:
                 response_metadata[timespan_key] = {}
 
-            # Process metadata for each node
-            for node_id, node_values in metadata.items():
-                file_name = node_values["file_name"]
-                file_path = node_values["file_path"]
-                page_number = node_values["page_number"]
-                if file_name in response_metadata[timespan_key]:
-                    response_metadata[timespan_key][file_name]["page_numbers"].append(page_number)
-                else:
-                    response_metadata[timespan_key][file_name] = {
-                        "file_path": file_path,
-                        "page_numbers": [page_number]
-                    }
+            # Process metadata for each node with enhanced structure handling
+            if metadata:
+                for node_id, node_values in metadata.items():
+                    # Check if node has the required metadata fields
+                    if "metadata" in node_values and isinstance(node_values["metadata"], dict):
+                        node_metadata = node_values["metadata"]
+                        file_name = node_metadata.get("file_name")
+                        file_path = node_metadata.get("file_path")
+                        page_number = node_metadata.get("page_number")
+
+                        # Only process nodes with valid citation metadata
+                        if file_name and file_path and page_number is not None:
+                            if file_name in response_metadata[timespan_key]:
+                                response_metadata[timespan_key][file_name]["page_numbers"].append(page_number)
+                            else:
+                                response_metadata[timespan_key][file_name] = {
+                                    "file_path": file_path,
+                                    "page_numbers": [page_number]
+                                }
 
             # Update chat history with response
             chat_history.append([None, f"Du {start_date_str} au {end_date_str}:"])
@@ -186,18 +193,10 @@ class GUI:
                                 file_path = node_values["file_path"]
                                 page_number = node_values.get("page_number") - 1
 
-                                # Handle anonymization if in anon mode
-                                if self.args.anon and file_name in ANON_INDEX:
-                                    anon_file_name = ANON_INDEX[file_name]
-                                    file_path = os.path.join(ANON_PATH, anon_file_name)
-                                    display_name = anon_file_name
+                                if file_name not in pdf_info:
+                                    pdf_info[file_name] = {"file_path": file_path, "page_numbers": [page_number]}
                                 else:
-                                    display_name = file_name
-
-                                if display_name not in pdf_info:
-                                    pdf_info[display_name] = {"file_path": file_path, "page_numbers": [page_number]}
-                                else:
-                                    pdf_info[display_name]["page_numbers"].append(page_number)
+                                    pdf_info[file_name]["page_numbers"].append(page_number)
 
                             # Display PDFs in tabs
                             for pdf_name, info in pdf_info.items():
@@ -232,15 +231,9 @@ class GUI:
                             for timespan, files in metadata.items():
                                 with gr.Tab(label=timespan):
                                     for file_name, file_info in files.items():
-                                        if self.args.anon and file_name in ANON_INDEX:
-                                            anon_file_name = ANON_INDEX[file_name]
-                                            pdf_path = os.path.join(ANON_PATH, anon_file_name)
-                                            display_name = anon_file_name
-                                        else:
-                                            pdf_path = file_info["file_path"]
-                                            display_name = file_name
+                                        pdf_path = file_info["file_path"]
 
-                                        with gr.Tab(label=display_name):
+                                        with gr.Tab(label=file_name):
                                             page_numbers = list(set(file_info["page_numbers"]))
                                             pdf_pages = []
                                             try:
@@ -262,7 +255,7 @@ class GUI:
                                                 selected_index=0,
                                                 type='pil',
                                                 interactive=False,
-                                                height=int(SMALL_WIN * 0.9),
+                                                height=SMALL_WIN,
                                             )
 
                         # Force garbage collection after rendering
