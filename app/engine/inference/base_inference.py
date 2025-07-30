@@ -4,6 +4,7 @@ import heapq
 from datetime import datetime
 from typing import List
 
+import torch
 from halo import Halo
 from llama_index.core import PromptTemplate
 from llama_index.core import Settings
@@ -35,6 +36,8 @@ class BaseInference:
         Args:
             args: Configuration arguments containing API keys, model paths, and other settings.
         """
+        self.args = args
+
         # Load document index and get timespan boundaries
         self.model = None
 
@@ -77,6 +80,9 @@ class BaseInference:
         
         Returns:
             ColbertRerank: A reranker instance
+
+        DEV NOTE: In a production setting, consider using a more robust reranker,
+        e.g. Cohere Rerank.
         """
         if self.reranker is None:
             self.reranker = ColbertRerank(top_n=5)

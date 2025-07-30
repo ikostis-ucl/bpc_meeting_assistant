@@ -42,7 +42,7 @@ class GUI:
         # Set the timespans using the configured time_freq value
         self.conv_agent.generate_timespans(starting_month_timestamp=self.conv_agent.start_date,
                                            ending_month_timestamp=self.conv_agent.end_date,
-                                           time_freq=args.time_freq)
+                                           time_freq=self.args.time_freq)
 
         # Example questions for the user interface
         self.examples = [
