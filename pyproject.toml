@@ -23,6 +23,7 @@ llama-index-postprocessor-colbert-rerank = "^0.3.0"
 fuzzywuzzy = "^0.18.0"
 configargparse = "^1.7.1"
 python-levenshtein = "^0.27.1"
+llama-index-retrievers-bm25 = "^0.5.2"
 
 
 [build-system]

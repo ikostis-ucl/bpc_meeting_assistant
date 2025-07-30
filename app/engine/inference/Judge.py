@@ -36,50 +36,55 @@ class Judge:
                           api_key=args.groq_api_key,
                           model_kwargs={"seed": 42}, temperature=0.0)
 
-        # Define prompt template for comparison
-        self.prompt_template = """\
-        Quand je pose la question suivante \
-        ------
-        Question: \
-        {query_string} \
-        ------ \
-        j'obtiens deux réponses : \
-        ------ \
-        Réponse 1 : {answer_prev} \
-        ------ \
-        Réponse 2 : {answer_next} \
-        ------ \
-        En prenant tout en considération, si les deux réponses sont essentiellement les mêmes, \
-        j'aimerais que vous me répondiez "True". S'il y a même de petites différences dans les détails \
-        fournis dans les réponses qui différencient le sens de la réponse, j'aimerais que vous me répondiez "False".\
-        Me répondre en n'utilisant que les mots "True" ou "False".
-        """
+        self.prompt_template = """Question posée: {query_string}
 
-        # Set up LLM program with validation
+        Réponse 1: {answer_prev}
+
+        Réponse 2: {answer_next}
+
+        Ces deux réponses à la même question contiennent-elles la même information contextuelle?
+
+        Retournez True si les réponses:
+        - Répondent à la question de manière équivalente
+        - Donnent les mêmes informations factuelles pertinentes
+        - Arrivent aux mêmes conclusions principales
+
+        Retournez False si:
+        - Une réponse contient des informations pertinentes absentes de l'autre
+        - Les conclusions diffèrent significativement
+        - L'une répond mieux à la question posée
+
+        Réponse (True/False seulement):"""
+
         self.program = LLMTextCompletionProgram.from_defaults(
-            llm=self.model,
             output_cls=Response,
             prompt_template_str=self.prompt_template,
-            verbose=True,
+            llm=self.model,
+            verbose=False,
         )
 
     def run(self, query_string, answer_prev, answer_next):
         """
-        Compare two answers to determine if they are essentially the same.
+        Compare two consecutive answers for contextual similarity.
 
         Args:
-            query_string: Original query that generated the answers.
-            answer_prev: First answer to compare.
-            answer_next: Second answer to compare.
+            query_string: Original user query for context
+            answer_prev: Previous timespan answer
+            answer_next: Next timespan answer
 
         Returns:
-            bool: True if answers are similar, False otherwise.
+            bool: True if answers are contextually similar, False otherwise
         """
         try:
-            output = self.program(query_string=query_string,
-                                  answer_prev=answer_prev,
-                                  answer_next=answer_next)
-        except ValidationError as exc:
-            pprint_error(f"{exc}")
+            response = self.program(
+                query_string=query_string,
+                answer_prev=answer_prev,
+                answer_next=answer_next
+            )
+            return response.judgement
+        except ValidationError as e:
+            pprint_error(f"Judge validation error: {e}")
             return False
-        return output.judgement
+        except Exception as e:
+            pprint_error(f"Judge execution error: {e}")
+            return False
