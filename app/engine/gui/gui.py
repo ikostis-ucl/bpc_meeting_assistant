@@ -6,7 +6,6 @@ import fitz
 import gradio as gr
 from PIL import Image
 
-from app.utils.gui_utils import ANON_PATH, ANON_INDEX
 from app.utils.inference_utils import pprint_qa
 
 HOME_PATH = os.path.expanduser("~")
