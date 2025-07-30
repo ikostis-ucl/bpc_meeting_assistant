@@ -19,8 +19,8 @@ class InteractiveQueryRAG(Demo):
         self.args.storage_dir = "./data/vector_db"
         if self.args.anon:
             pprint_console("Running in --anon mode.")
-            # self.args.input_path = "./data/input_anonymised"
-            # self.args.storage_dir = "./data/vector_db_anonymised"
+            self.args.input_path = "./data/input_anonymised"
+            self.args.storage_dir = "./data/vector_db_anonymised"
 
         self.agent = GroqInference(args=self.args)
         self.questions = []

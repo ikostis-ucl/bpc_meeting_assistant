@@ -55,7 +55,7 @@ class GUI:
             "Pourrais-je avoir un historique concernant les décisions prises pour les couvre-murs ?",
             "Informations concernant les faux-plafonds ?",
             "Quelles finitions pour les halls d'entrée ?",
-            "Quelle isolation a été choisi pour les plafonds du sous-sols -1 ?",
+            "Quelle isolation a été choisi pour les plafonds du sous-sol -1 ?",
             "Pourrais-je avoir une liste des remarques faite par le SECO ?"
         ]
 

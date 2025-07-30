@@ -39,8 +39,6 @@ class GroqInference(BaseInference):
         # Set up token counting and callbacks
         self.model.callback_manager = Settings.callback_manager
 
-        self.reranker = None
-
     @Halo(text=fmt_string(Color.CYAN, '[CONSOLE] Querying model...'),
           placement='right', animation='bounce', spinner='moon')
     @throttle_requests()

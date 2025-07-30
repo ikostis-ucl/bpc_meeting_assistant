@@ -20,8 +20,8 @@ if __name__ == "__main__":
 
     if args.anon:
         pprint_console("Running in --anon mode.")
-        # args.input_path = "./data/input_anonymised"
-        # args.storage_dir = "./data/vector_db_anonymised"
+        args.input_path = "./data/input_anonymised"
+        args.storage_dir = "./data/vector_db_anonymised"
 
     # args.input_path = "data/tests"
     # args.storage_dir = "data/tests/vector_db_test"
