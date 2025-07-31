@@ -4,8 +4,10 @@ from pydantic import BaseModel, ValidationError
 
 from app.utils.app_utils import pprint_error
 
+# TODO: Add a cos similarity comparison between the embeddings of the source nodes of each answer, all permutations.
 
 class Response(BaseModel):
+    # TODO: add a second judge to verify if the answer exists in the retrieved context.
     """
     Pydantic model for judge response validation.
 

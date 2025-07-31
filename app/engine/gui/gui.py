@@ -6,6 +6,7 @@ import fitz
 import gradio as gr
 from PIL import Image
 
+from app.utils.benchmark_utils import BENCHMARK_QUESTIONS_INDEX
 from app.utils.inference_utils import pprint_qa
 
 HOME_PATH = os.path.expanduser("~")
@@ -45,18 +46,7 @@ class GUI:
                                            time_freq=self.args.time_freq)
 
         # Example questions for the user interface
-        self.examples = [
-            "Quelle est la couleur choisie (RAL) pour les châssis ?",
-            "Liste des décisions prises concernant le carrelage des salles des bains (SDBs) et les dates (jour/mois/année) auxquelles elles ont été prises.",
-            "Quelle est la date de remise des espaces communs ?",
-            "Quelles sont les décisions qui ont étés prises pour les acrotères des terrasses ?",
-            "Pourrais-je avoir toutes les informations concernant l'ascenseur vélo ?",
-            "Pourrais-je avoir un historique concernant les décisions prises pour les couvre-murs ?",
-            "Informations concernant les faux-plafonds ?",
-            "Quelles finitions pour les halls d'entrée ?",
-            "Quelle isolation a été choisi pour les plafonds du sous-sol -1 ?",
-            "Pourrais-je avoir une liste des remarques faites par le SECO ?"
-        ]
+        self.examples = list(BENCHMARK_QUESTIONS_INDEX.values())
 
     @staticmethod
     def exec_user_query(question, chat_history):
