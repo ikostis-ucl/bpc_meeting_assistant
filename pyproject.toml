@@ -24,6 +24,7 @@ fuzzywuzzy = "^0.18.0"
 configargparse = "^1.7.1"
 python-levenshtein = "^0.27.1"
 llama-index-retrievers-bm25 = "^0.5.2"
+matplotlib = "^3.10.5"
 
 
 [build-system]

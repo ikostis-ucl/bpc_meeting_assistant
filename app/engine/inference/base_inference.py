@@ -44,6 +44,17 @@ class BaseInference:
         self.timespans = None
         self.generate_timespans(self.start_date, self.end_date, args.time_freq)
 
+        self.ts_doc_index = {}
+        for node in self.index.docstore.docs.values():
+            if hasattr(node, 'metadata') and node.metadata:
+                timestamp = node.metadata.get("meeting_datetime")
+                file_name = node.metadata.get("file_name")
+                if timestamp is not None and file_name is not None:
+                    if timestamp not in self.ts_doc_index:
+                        self.ts_doc_index[timestamp] = []
+                    if file_name not in self.ts_doc_index[timestamp]:
+                        self.ts_doc_index[timestamp].append(file_name)
+
         # Initialize embedding model
         self.embedding_model = HuggingFaceEmbedding(model_name=args.embeddings_model,
                                                     cache_folder=args.embeddings_cache_dir)

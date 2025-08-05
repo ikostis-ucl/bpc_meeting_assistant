@@ -1,4 +1,5 @@
 from collections import defaultdict
+from datetime import datetime
 from typing import Dict, List, Set, Tuple
 
 import numpy as np
@@ -9,86 +10,121 @@ from eval.eval_utils import precision_at_k, recall_at_k, average_precision, hit_
 
 class BenchmarkEvaluator:
     """
-    Page-level evaluation metrics for RAG retrieval benchmark.
+    Timespan-aware page-level evaluation metrics for RAG retrieval benchmark.
     """
 
-    def __init__(self, gt_csv_path: str):
+    def __init__(self, gt_csv_path: str, ts_doc_index: Dict, timespans: List[Tuple[int, int]]):
         """
-        Initialize with ground truth CSV.
+        Initialize with ground truth CSV and timespan information.
 
         Args:
             gt_csv_path: Path to ground truth CSV file
+            ts_doc_index: Timestamp to document name mapping from BaseInference
+            timespans: List of (start_timestamp, end_timestamp) tuples
         """
         self.gt_df = pd.read_csv(gt_csv_path, sep=';')
         self.queries = self._parse_ground_truth()
 
-    def _parse_ground_truth(self) -> Dict[str, Dict[str, Set[int]]]:
+        self.ts_doc_index = {}
+        for timestamp, doc_names in ts_doc_index.items():
+            if isinstance(doc_names, list):
+                self.ts_doc_index[timestamp] = [doc.removesuffix('.pdf') for doc in doc_names]
+            else:
+                self.ts_doc_index[timestamp] = doc_names.removesuffix('.pdf')
+
+        self.timespans = timespans
+
+    def _parse_ground_truth(self) -> Dict[str, Dict]:
         """Parse ground truth CSV into query -> document -> pages structure."""
         queries = {}
 
         for _, row in self.gt_df.iterrows():
             query_num = str(row['Query Number'])
             query_text = row['Query']
-            queries[query_num] = {'text': query_text, 'documents': {}}
+            queries[query_num] = {
+                'text': query_text,
+                'relevant_pages': set()  # Store all document::page IDs for this query
+            }
 
             # Parse each document column
             for col in self.gt_df.columns[2:]:  # Skip Query Number and Query columns
-                doc_name = col
+                doc_name = col.removesuffix('.pdf')
                 pages_str = str(row[col])
 
                 if pd.isna(pages_str) or pages_str == 'nan' or pages_str == '':
                     continue
 
                 # Parse page numbers (handle formats like "3&5", "4&7", etc.)
-                pages = set()
                 if '&' in pages_str:
                     for page in pages_str.split('&'):
                         try:
-                            pages.add(int(page.strip()))
+                            page_num = int(float(page.strip()))
+                            page_id = f"{doc_name}::{page_num}"
+                            queries[query_num]['relevant_pages'].add(page_id)
                         except ValueError:
                             continue
                 else:
                     try:
-                        pages.add(int(pages_str.strip()))
+                        page_num = int(float(pages_str.strip()))
+                        page_id = f"{doc_name}::{page_num}"
+                        queries[query_num]['relevant_pages'].add(page_id)
                     except ValueError:
                         continue
 
-                if pages:
-                    queries[query_num]['documents'][doc_name] = pages
-
         return queries
 
-    @staticmethod
-    def _extract_pages_from_results(results: List[Tuple]) -> Set[int]:
-        """Extract page numbers from retrieval results."""
+    def _get_timespan_documents(self, start_timestamp: int, end_timestamp: int) -> Set[str]:
+        """Get documents present in a specific timespan."""
+        timespan_documents = set()
+
+        for timestamp, doc_names in self.ts_doc_index.items():
+            if start_timestamp <= timestamp <= end_timestamp:
+                if isinstance(doc_names, list):
+                    timespan_documents.update(doc_names)
+                else:
+                    timespan_documents.add(doc_names)
+
+        return timespan_documents
+
+    def _extract_retrieved_pages(self, metadata: Dict) -> Set[str]:
+        """Extract document::page identifiers from retrieval metadata."""
         pages = set()
 
-        for _, metadata, _ in results:
-            if metadata:
-                for node_data in metadata.values():
-                    if 'metadata' in node_data and 'page_number' in node_data['metadata']:
-                        pages.add(node_data['metadata']['page_number'])
+        if metadata:
+            for node_data in metadata.values():
+                if 'metadata' in node_data:
+                    node_metadata = node_data['metadata']
+                    if 'page_number' in node_metadata and 'file_name' in node_metadata:
+                        doc_name = node_metadata['file_name'].removesuffix('.pdf')
+                        page_num = node_metadata['page_number']
+                        page_id = f"{doc_name}::{page_num}"
+                        pages.add(page_id)
 
         return pages
+
+    def _filter_ground_truth_by_timespan(self, query_num: str, timespan_documents: Set[str]) -> Set[str]:
+        """Filter ground truth pages to only include documents present in timespan."""
+        if query_num not in self.queries:
+            return set()
+
+        all_relevant_pages = self.queries[query_num]['relevant_pages']
+        timespan_relevant_pages = set()
+
+        for page_id in all_relevant_pages:
+            doc_name = page_id.split('::')[0]
+            if doc_name in timespan_documents:
+                timespan_relevant_pages.add(page_id)
+
+        return timespan_relevant_pages
 
     def evaluate_query(self, query_num: str, results: List[Tuple], k_values: List[int]) -> Dict:
         """Evaluate a single query with timespan-level breakdown."""
         if query_num not in self.queries:
             return {}
 
-        # Get all relevant pages for this query across all documents
-        relevant_pages = set()
-        for doc_pages in self.queries[query_num]['documents'].values():
-            relevant_pages.update(doc_pages)
-
-        # Skip evaluation if no ground truth pages exist
-        if not relevant_pages:
-            print(f"Skipping query {query_num}: No ground truth pages found")
-            return {}
-
         query_results = {
             'query_text': self.queries[query_num]['text'],
-            'total_relevant_pages': len(relevant_pages),
+            'total_relevant_pages': len(self.queries[query_num]['relevant_pages']),
             'timespans': {},
             'query_averages': {}
         }
@@ -97,56 +133,64 @@ class BenchmarkEvaluator:
 
         # Evaluate each timespan separately
         for i, (_, metadata, timespan) in enumerate(results):
-            timespan_key = f"timespan_{i + 1}_{timespan[0]}_{timespan[1]}"
+            start_timestamp, end_timestamp = timespan
+            timespan_key = f"ts_{i}_{start_timestamp}_{end_timestamp}"
 
-            # Extract pages for this specific timespan
-            timespan_pages = set()
-            if metadata:
-                for node_data in metadata.values():
-                    if 'metadata' in node_data and 'page_number' in node_data['metadata']:
-                        timespan_pages.add(node_data['metadata']['page_number'])
+            # Get documents present in this timespan
+            timespan_documents = self._get_timespan_documents(start_timestamp, end_timestamp)
 
-            timespan_pages_list = list(timespan_pages)
-            actual_pages_retrieved = len(timespan_pages)
+            # Get retrieved pages from metadata
+            retrieved_pages = self._extract_retrieved_pages(metadata)
+
+            # Filter ground truth to only include pages from documents in this timespan
+            relevant_pages = self._filter_ground_truth_by_timespan(query_num, timespan_documents)
+
+            # Skip if no relevant pages in this timespan (at least 1 document with a page needed)
+            if not relevant_pages:
+                continue
 
             timespan_result = {
                 'timespan': timespan,
-                'retrieved_pages_count': actual_pages_retrieved,
-                'retrieved_pages': list(timespan_pages),
+                'timespan_documents': list(timespan_documents),
+                'retrieved_pages': list(retrieved_pages),
+                'relevant_pages': list(relevant_pages),
                 'metrics': {}
             }
 
-            # Calculate metrics for this timespan
-            for k in k_values:
-                effective_k = min(k, actual_pages_retrieved, len(relevant_pages))
+            # Calculate MAP
+            retrieved_pages_list = list(retrieved_pages)
+            if retrieved_pages_list and relevant_pages:
+                map_score = average_precision(retrieved_pages_list, relevant_pages)
+            else:
+                map_score = 0.0
 
-                if effective_k > 0:
-                    precision = precision_at_k(timespan_pages, relevant_pages, effective_k)
-                    recall = recall_at_k(timespan_pages, relevant_pages, effective_k)
-                    hit_rate = hit_rate_at_k(timespan_pages, relevant_pages, effective_k)
-                    ndcg = ndcg_at_k(timespan_pages_list, relevant_pages, effective_k)
-                    map_score = average_precision(timespan_pages_list, relevant_pages)
+            timespan_result['metrics']['map'] = map_score
+            timespan_metrics['map'].append(map_score)
+
+            # Calculate k-dependent metrics
+            for k in k_values:
+                if relevant_pages and retrieved_pages:
+                    precision = precision_at_k(retrieved_pages, relevant_pages, k)
+                    recall = recall_at_k(retrieved_pages, relevant_pages, k)
+                    hit_rate = hit_rate_at_k(retrieved_pages, relevant_pages, k)
+                    ndcg = ndcg_at_k(retrieved_pages_list, relevant_pages, k)
                 else:
-                    # Zero because no pages retrieved, not because GT missing
-                    precision = recall = hit_rate = ndcg = map_score = 0.0
+                    precision = recall = hit_rate = ndcg = 0.0
 
                 timespan_result['metrics'][f'precision@{k}'] = precision
                 timespan_result['metrics'][f'recall@{k}'] = recall
                 timespan_result['metrics'][f'hit_rate@{k}'] = hit_rate
                 timespan_result['metrics'][f'ndcg@{k}'] = ndcg
 
-                # Collect for query-level averaging (include zeros from no retrieval)
+                # Collect for query-level averaging
                 timespan_metrics[f'precision@{k}'].append(precision)
                 timespan_metrics[f'recall@{k}'].append(recall)
                 timespan_metrics[f'hit_rate@{k}'].append(hit_rate)
                 timespan_metrics[f'ndcg@{k}'].append(ndcg)
 
-            timespan_result['metrics']['map'] = map_score
-            timespan_metrics['map'].append(map_score)
-
             query_results['timespans'][timespan_key] = timespan_result
 
-        # Calculate query-level averages (include all timespan results)
+        # Calculate query-level averages
         for metric, values in timespan_metrics.items():
             if values:
                 query_results['query_averages'][f'avg_{metric}'] = np.mean(values)
@@ -156,11 +200,8 @@ class BenchmarkEvaluator:
 
     def evaluate_all_queries(self, results_dict: Dict[str, List[Tuple]], k_values: List[int]) -> Dict:
         """Evaluate all queries and return hierarchical results."""
-        from datetime import datetime
-
         evaluation_results = {
             'timestamp': datetime.now().isoformat(),
-            'evaluation_summary': {},
             'queries': {},
             'global_averages': {}
         }
@@ -171,24 +212,20 @@ class BenchmarkEvaluator:
 
         # Evaluate each query
         for query_num, results in results_dict.items():
-            query_metrics = self.evaluate_query(query_num, results, k_values)
+            query_result = self.evaluate_query(query_num, results, k_values)
 
-            if query_metrics:  # Only process if metrics were calculated (GT exists)
+            if query_result and query_result.get('timespans'):
+                evaluation_results['queries'][query_num] = query_result
                 evaluated_queries += 1
-                evaluation_results['queries'][query_num] = query_metrics
 
-                # Collect query averages for global averaging (exclude GT-missing queries)
-                for metric, value in query_metrics['query_averages'].items():
-                    if isinstance(value, (int, float)) and metric.startswith('avg_'):
+                # Collect query averages for global calculation
+                for metric, value in query_result['query_averages'].items():
+                    if metric.startswith('avg_'):
                         query_level_metrics[metric].append(value)
             else:
                 skipped_queries += 1
-                evaluation_results['queries'][query_num] = {
-                    'status': 'skipped',
-                    'reason': 'no_ground_truth'
-                }
 
-        # Calculate global averages (only from queries that had GT)
+        # Calculate global averages
         for metric, values in query_level_metrics.items():
             if values:
                 evaluation_results['global_averages'][f'global_{metric}'] = np.mean(values)
