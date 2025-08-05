@@ -27,8 +27,16 @@ def config_parser():
                         default='./data/vector_db',
                         help='Vector DB directory path.')
 
+    # GUI
     parser.add_argument("--home_path", type=str, default=None,
                         help="Home path of the user. Used in GUI.")
+
+    # Benchmark
+    parser.add_argument('--benchmark_mode', action='store_true',
+                        help='Run in benchmark evaluation mode')
+    parser.add_argument('--benchmark_gt_path', type=str,
+                        default="eval/gt/meeting_minutes_publication_gt.csv",
+                        help='Path to ground truth CSV file')
 
     # Embeddings
     parser.add_argument('--embeddings_model', type=str, default="OrdalieTech/Solon-embeddings-large-0.1",

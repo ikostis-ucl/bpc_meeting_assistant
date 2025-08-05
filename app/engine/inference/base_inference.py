@@ -4,7 +4,6 @@ import heapq
 from datetime import datetime
 from typing import List
 
-import torch
 from halo import Halo
 from llama_index.core import PromptTemplate
 from llama_index.core import Settings
@@ -161,7 +160,7 @@ class BaseInference:
     @Halo(text=fmt_string(Color.CYAN, '[CONSOLE] Querying model...'),
           placement='right', animation='bounce', spinner='moon')
     @throttle_requests()
-    def query_llm_hybrid_enhanced(self, query_string: str, alpha: float = 0.5):
+    def query_llm(self, query_string: str, alpha: float = 0.5):
         """
         Process a query using enhanced hybrid retrieval with French preprocessing and RRF.
 
