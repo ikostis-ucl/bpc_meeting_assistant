@@ -8,7 +8,7 @@ from app.utils.app_utils import pprint_console
 from app.utils.benchmark_utils import BENCHMARK_QUESTIONS_INDEX
 from eval.benchmark_evaluator import BenchmarkEvaluator
 from eval.eval_inference import EvalInference
-from eval.eval_utils import visualize_benchmark_results
+from eval.eval_visualization import visualize_benchmark_results
 
 
 class Benchmark(Demo):

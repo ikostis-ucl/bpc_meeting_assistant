@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 from app.utils.benchmark_utils import BENCHMARK_QUESTIONS_INDEX
-from eval.eval_utils import precision_at_k, recall_at_k, hit_rate_at_k, f1_at_k
+from eval.eval_metrics import calculate_metrics_with_normalization
 
 
 class BenchmarkEvaluator:
@@ -104,7 +104,24 @@ class BenchmarkEvaluator:
 
         return timespan_documents
 
-    def _extract_retrieved_pages(self, metadata: Dict) -> List[str]:
+    def _filter_ground_truth_by_timespan(self, query_num: str, timespan_documents: Set[str]) -> Set[str]:
+
+        """Filter ground truth pages to only include documents present in timespan."""
+        if query_num not in self.queries:
+            return set()
+
+        all_relevant_pages = self.queries[query_num]['relevant_pages']
+        timespan_relevant_pages = set()
+
+        for page_id in all_relevant_pages:
+            doc_name = page_id.split('::')[0]
+            if doc_name in timespan_documents:
+                timespan_relevant_pages.add(page_id)
+
+        return timespan_relevant_pages
+
+    @staticmethod
+    def _extract_retrieved_pages(metadata: Dict) -> List[str]:
         """Extract document::page identifiers from retrieval metadata."""
         pages = []
         seen = set()  # For deduplication while preserving order
@@ -123,25 +140,6 @@ class BenchmarkEvaluator:
                             seen.add(page_id)
 
         return pages
-
-    def _filter_ground_truth_by_timespan(self, query_num: str, timespan_documents: Set[str]) -> Set[str]:
-        # TODO: Make sure that the relevant pages include ALL the relevant document::pages in the timespan.
-        #  If this is the case, the recall is capped due to the physical maximum of pages retrieved being
-        #  less than the maximum total. Amend the recall calculation to account for this. Mention in the report.
-
-        """Filter ground truth pages to only include documents present in timespan."""
-        if query_num not in self.queries:
-            return set()
-
-        all_relevant_pages = self.queries[query_num]['relevant_pages']
-        timespan_relevant_pages = set()
-
-        for page_id in all_relevant_pages:
-            doc_name = page_id.split('::')[0]
-            if doc_name in timespan_documents:
-                timespan_relevant_pages.add(page_id)
-
-        return timespan_relevant_pages
 
     def evaluate_query(self, query_num: str, results: List[Tuple], k_values: List[int]) -> Dict:
         """Evaluate a single query with timespan-level breakdown."""
@@ -183,26 +181,17 @@ class BenchmarkEvaluator:
                 'metrics': {}
             }
 
-            # Calculate k-dependent metrics including F1@k
+            # Calculate k-dependent metrics including normalized metrics
             for k in k_values:
-                if relevant_pages and retrieved_pages:
-                    precision = precision_at_k(retrieved_pages, relevant_pages, k)
-                    recall = recall_at_k(retrieved_pages, relevant_pages, k)
-                    f1 = f1_at_k(retrieved_pages, relevant_pages, k)
-                    hit_rate = hit_rate_at_k(retrieved_pages, relevant_pages, k)
-                else:
-                    precision = recall = hit_rate = f1 = 0.0
+                # Get all metrics including normalized ones
+                k_metrics = calculate_metrics_with_normalization(retrieved_pages, relevant_pages, k)
 
-                timespan_result['metrics'][f'precision@{k}'] = precision
-                timespan_result['metrics'][f'recall@{k}'] = recall
-                timespan_result['metrics'][f'f1@{k}'] = f1
-                timespan_result['metrics'][f'hit_rate@{k}'] = hit_rate
+                # Store in timespan results
+                timespan_result['metrics'].update(k_metrics)
 
                 # Collect for query-level averaging
-                timespan_metrics[f'precision@{k}'].append(precision)
-                timespan_metrics[f'recall@{k}'].append(recall)
-                timespan_metrics[f'f1@{k}'].append(f1)
-                timespan_metrics[f'hit_rate@{k}'].append(hit_rate)
+                for metric_name, metric_value in k_metrics.items():
+                    timespan_metrics[metric_name].append(metric_value)
 
             query_results['timespans'][timespan_key] = timespan_result
 

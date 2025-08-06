@@ -1,4 +1,3 @@
-# TODO: Q3 - Answers only in the last TS, plots show nothing, debug.
 BENCHMARK_QUESTIONS_INDEX = {
     "1": "Quelle est la couleur choisie (RAL) pour les châssis ?",
     "2": "Liste des décisions prises concernant le carrelage des salles de bain (SDBs) et les dates (jour/mois/année) auxquelles elles ont été prises.",
