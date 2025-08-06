@@ -60,7 +60,7 @@ class Benchmark(Demo):
     def run(self):
         """Execute evaluation workflow only."""
         print("Running benchmark evaluation...")
-        metrics = self.benchmark_eval(k_values=[1, 3, 5])
+        metrics = self.benchmark_eval(k_values=[2, 3, 4, 5])
 
         pprint_console("Benchmark completed, check results file for details.")
 

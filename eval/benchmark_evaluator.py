@@ -5,7 +5,8 @@ from typing import Dict, List, Set, Tuple
 import numpy as np
 import pandas as pd
 
-from eval.eval_utils import precision_at_k, recall_at_k, average_precision, hit_rate_at_k, ndcg_at_k
+from app.utils.benchmark_utils import BENCHMARK_QUESTIONS_INDEX
+from eval.eval_utils import precision_at_k, recall_at_k, hit_rate_at_k, f1_at_k
 
 
 class BenchmarkEvaluator:
@@ -34,25 +35,42 @@ class BenchmarkEvaluator:
 
         self.timespans = timespans
 
-    def _parse_ground_truth(self) -> Dict[str, Dict]:
-        """Parse ground truth CSV into query -> document -> pages structure."""
+    def _parse_ground_truth(self) -> Dict:
+        """Parse ground truth CSV into a structured format."""
         queries = {}
 
-        for _, row in self.gt_df.iterrows():
-            query_num = str(row['Query Number'])
-            query_text = row['Query']
-            queries[query_num] = {
-                'text': query_text,
-                'relevant_pages': set()  # Store all document::page IDs for this query
-            }
+        # Skip the first row (header) by using iloc[1:]
+        for _, row in self.gt_df.iloc[0:].iterrows():
+            # Convert first column to integer then to string to ensure format consistency
+            try:
+                query_num = str(int(float(row.iloc[0])))  # Handle cases like '1.0' -> '1'
+            except (ValueError, TypeError):
+                continue  # Skip rows with invalid query numbers
 
-            # Parse each document column
-            for col in self.gt_df.columns[2:]:  # Skip Query Number and Query columns
-                doc_name = col.removesuffix('.pdf')
-                pages_str = str(row[col])
+            # Skip if this query number is not in our benchmark index
+            if query_num not in BENCHMARK_QUESTIONS_INDEX:
+                continue
 
-                if pd.isna(pages_str) or pages_str == 'nan' or pages_str == '':
+            if query_num not in queries:
+                queries[query_num] = {
+                    'text': BENCHMARK_QUESTIONS_INDEX[query_num],  # Get text from benchmark index
+                    'relevant_pages': set()
+                }
+
+            # Process each document column (starting from column 2, which is index 2)
+            for col_idx in range(2, len(row)):
+                pages_str = str(row.iloc[col_idx])
+
+                # Skip empty cells
+                if pd.isna(row.iloc[col_idx]) or pages_str.strip() == '' or pages_str == 'nan':
                     continue
+
+                # Get document name from column header
+                doc_name = self.gt_df.columns[col_idx]
+
+                # Remove .pdf extension if present
+                if doc_name.endswith('.pdf'):
+                    doc_name = doc_name[:-4]
 
                 # Parse page numbers (handle formats like "3&5", "4&7", etc.)
                 if '&' in pages_str:
@@ -86,9 +104,10 @@ class BenchmarkEvaluator:
 
         return timespan_documents
 
-    def _extract_retrieved_pages(self, metadata: Dict) -> Set[str]:
+    def _extract_retrieved_pages(self, metadata: Dict) -> List[str]:
         """Extract document::page identifiers from retrieval metadata."""
-        pages = set()
+        pages = []
+        seen = set()  # For deduplication while preserving order
 
         if metadata:
             for node_data in metadata.values():
@@ -98,11 +117,18 @@ class BenchmarkEvaluator:
                         doc_name = node_metadata['file_name'].removesuffix('.pdf')
                         page_num = node_metadata['page_number']
                         page_id = f"{doc_name}::{page_num}"
-                        pages.add(page_id)
+
+                        if page_id not in seen:
+                            pages.append(page_id)
+                            seen.add(page_id)
 
         return pages
 
     def _filter_ground_truth_by_timespan(self, query_num: str, timespan_documents: Set[str]) -> Set[str]:
+        # TODO: Make sure that the relevant pages include ALL the relevant document::pages in the timespan.
+        #  If this is the case, the recall is capped due to the physical maximum of pages retrieved being
+        #  less than the maximum total. Amend the recall calculation to account for this. Mention in the report.
+
         """Filter ground truth pages to only include documents present in timespan."""
         if query_num not in self.queries:
             return set()
@@ -157,36 +183,26 @@ class BenchmarkEvaluator:
                 'metrics': {}
             }
 
-            # Calculate MAP
-            retrieved_pages_list = list(retrieved_pages)
-            if retrieved_pages_list and relevant_pages:
-                map_score = average_precision(retrieved_pages_list, relevant_pages)
-            else:
-                map_score = 0.0
-
-            timespan_result['metrics']['map'] = map_score
-            timespan_metrics['map'].append(map_score)
-
-            # Calculate k-dependent metrics
+            # Calculate k-dependent metrics including F1@k
             for k in k_values:
                 if relevant_pages and retrieved_pages:
                     precision = precision_at_k(retrieved_pages, relevant_pages, k)
                     recall = recall_at_k(retrieved_pages, relevant_pages, k)
+                    f1 = f1_at_k(retrieved_pages, relevant_pages, k)
                     hit_rate = hit_rate_at_k(retrieved_pages, relevant_pages, k)
-                    ndcg = ndcg_at_k(retrieved_pages_list, relevant_pages, k)
                 else:
-                    precision = recall = hit_rate = ndcg = 0.0
+                    precision = recall = hit_rate = f1 = 0.0
 
                 timespan_result['metrics'][f'precision@{k}'] = precision
                 timespan_result['metrics'][f'recall@{k}'] = recall
+                timespan_result['metrics'][f'f1@{k}'] = f1
                 timespan_result['metrics'][f'hit_rate@{k}'] = hit_rate
-                timespan_result['metrics'][f'ndcg@{k}'] = ndcg
 
                 # Collect for query-level averaging
                 timespan_metrics[f'precision@{k}'].append(precision)
                 timespan_metrics[f'recall@{k}'].append(recall)
+                timespan_metrics[f'f1@{k}'].append(f1)
                 timespan_metrics[f'hit_rate@{k}'].append(hit_rate)
-                timespan_metrics[f'ndcg@{k}'].append(ndcg)
 
             query_results['timespans'][timespan_key] = timespan_result
 
@@ -207,8 +223,6 @@ class BenchmarkEvaluator:
         }
 
         query_level_metrics = defaultdict(list)
-        evaluated_queries = 0
-        skipped_queries = 0
 
         # Evaluate each query
         for query_num, results in results_dict.items():
@@ -216,32 +230,16 @@ class BenchmarkEvaluator:
 
             if query_result and query_result.get('timespans'):
                 evaluation_results['queries'][query_num] = query_result
-                evaluated_queries += 1
 
                 # Collect query averages for global calculation
                 for metric, value in query_result['query_averages'].items():
                     if metric.startswith('avg_'):
                         query_level_metrics[metric].append(value)
-            else:
-                skipped_queries += 1
 
         # Calculate global averages
         for metric, values in query_level_metrics.items():
             if values:
                 evaluation_results['global_averages'][f'global_{metric}'] = np.mean(values)
                 evaluation_results['global_averages'][f'global_std_{metric.replace("avg_", "")}'] = np.std(values)
-
-        # Add evaluation summary
-        evaluation_results['evaluation_summary'] = {
-            'total_queries': len(results_dict),
-            'evaluated_queries': evaluated_queries,
-            'skipped_queries': skipped_queries,
-            'k_values': k_values
-        }
-
-        print(f"\nEvaluation Summary:")
-        print(f"Total queries: {len(results_dict)}")
-        print(f"Evaluated queries: {evaluated_queries}")
-        print(f"Skipped queries (no ground truth): {skipped_queries}")
 
         return evaluation_results

@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def precision_at_k(retrieved_pages: Set[int], relevant_pages: Set[int], k: int) -> float:
+def precision_at_k(retrieved_pages: List[str], relevant_pages: Set[str], k: int) -> float:
     """Calculate Precision@K at page level."""
     if not retrieved_pages:
         return 0.0
@@ -16,7 +16,7 @@ def precision_at_k(retrieved_pages: Set[int], relevant_pages: Set[int], k: int) 
     return relevant_retrieved / min(k, len(retrieved_list))
 
 
-def recall_at_k(retrieved_pages: Set[int], relevant_pages: Set[int], k: int) -> float:
+def recall_at_k(retrieved_pages: List[str], relevant_pages: Set[str], k: int) -> float:
     """Calculate Recall@K at page level."""
     if not relevant_pages:
         return 0.0
@@ -26,23 +26,7 @@ def recall_at_k(retrieved_pages: Set[int], relevant_pages: Set[int], k: int) -> 
     return relevant_retrieved / len(relevant_pages)
 
 
-def average_precision(retrieved_pages: List[int], relevant_pages: Set[int]) -> float:
-    """Calculate Average Precision for a single query."""
-    if not relevant_pages:
-        return 0.0
-
-    precision_sum = 0.0
-    relevant_found = 0
-
-    for i, page in enumerate(retrieved_pages, 1):
-        if page in relevant_pages:
-            relevant_found += 1
-            precision_sum += relevant_found / i
-
-    return precision_sum / len(relevant_pages) if relevant_pages else 0.0
-
-
-def hit_rate_at_k(retrieved_pages: Set[int], relevant_pages: Set[int], k: int) -> float:
+def hit_rate_at_k(retrieved_pages: List[str], relevant_pages: Set[str], k: int) -> float:
     """Calculate Hit Rate@K (binary: 1 if any relevant page found, 0 otherwise)."""
     if not relevant_pages:
         return 0.0
@@ -51,21 +35,18 @@ def hit_rate_at_k(retrieved_pages: Set[int], relevant_pages: Set[int], k: int) -
     return 1.0 if any(page in relevant_pages for page in retrieved_list) else 0.0
 
 
-def ndcg_at_k(retrieved_pages: List[int], relevant_pages: Set[int], k: int) -> float:
-    """Calculate NDCG@K with binary relevance."""
-    if not relevant_pages:
+def f1_at_k(retrieved_pages: List[str], relevant_pages: Set[str], k: int) -> float:
+    """Calculate F1@K at page level."""
+    if not relevant_pages or not retrieved_pages:
         return 0.0
 
-    # DCG@K
-    dcg = 0.0
-    for i, page in enumerate(retrieved_pages[:k]):
-        if page in relevant_pages:
-            dcg += 1.0 / np.log2(i + 2)  # i+2 because log2(1) = 0
+    precision = precision_at_k(retrieved_pages, relevant_pages, k)
+    recall = recall_at_k(retrieved_pages, relevant_pages, k)
 
-    # IDCG@K (ideal DCG)
-    idcg = sum(1.0 / np.log2(i + 2) for i in range(min(k, len(relevant_pages))))
+    if precision + recall == 0:
+        return 0.0
 
-    return dcg / idcg if idcg > 0 else 0.0
+    return 2 * (precision * recall) / (precision + recall)
 
 
 def visualize_benchmark_results(json_file_path: str):
@@ -80,11 +61,24 @@ def visualize_benchmark_results(json_file_path: str):
 
     eval_timestamp = data['timestamp']
     eval_date = datetime.fromisoformat(eval_timestamp).strftime("%Y-%m-%d %H:%M:%S")
-    k_values = data['evaluation_summary']['k_values']
 
-    # Extract metrics for plotting
-    timespan_metrics = ['precision', 'recall', 'hit_rate', 'ndcg']
-    query_level_metrics = ['map', 'precision', 'recall', 'hit_rate', 'ndcg']
+    # Extract k_values from the first query's metrics instead
+    first_query = next(iter(data['queries'].values()))
+    if first_query and 'timespans' in first_query:
+        first_timespan = next(iter(first_query['timespans'].values()))
+        k_values = []
+        for metric_key in first_timespan['metrics'].keys():
+            if '@' in metric_key:
+                k = int(metric_key.split('@')[1])
+                if k not in k_values:
+                    k_values.append(k)
+        k_values.sort()
+    else:
+        k_values = [1, 3, 5]  # fallback default
+
+    # Extract metrics for plotting - now includes f1
+    timespan_metrics = ['precision', 'recall', 'hit_rate', 'f1']
+    query_level_metrics = ['precision', 'recall', 'hit_rate', 'f1']
 
     # 1. Timespan-level plots (one plot per query per timespan)
     for query_num, query_data in data['queries'].items():
@@ -97,10 +91,9 @@ def visualize_benchmark_results(json_file_path: str):
         if n_timespans == 0:
             continue
 
-        # Create subplot grid for timespan metrics
-        fig, axes = plt.subplots(2, 2, figsize=(15, 10))
+        # Create subplot grid for timespan metrics - now 2x2 to accommodate F1
+        fig, axes = plt.subplots(2, 2, figsize=(16, 12))
         fig.suptitle(f'Query {query_num} - Timespan-level Metrics\nEval: {eval_date}\n"{query_text}"', fontsize=14)
-
         axes = axes.flatten()
 
         for i, metric in enumerate(timespan_metrics):
@@ -138,41 +131,32 @@ def visualize_benchmark_results(json_file_path: str):
     # 2. Query-level averages plot
     queries = list(data['queries'].keys())
     if queries:
-        fig, ax = plt.subplots(1, 1, figsize=(12, 8))
+        fig, ax = plt.subplots(1, 1, figsize=(14, 8))
 
         # Prepare data for query-level metrics
         query_data_dict = {}
         for metric in query_level_metrics:
             query_data_dict[metric] = {}
-            if metric == 'map':
-                query_data_dict[metric][''] = [data['queries'][q]['query_averages'].get(f'avg_{metric}', 0) for q in
-                                               queries]
-            else:
-                for k in k_values:
-                    query_data_dict[metric][f'@{k}'] = [data['queries'][q]['query_averages'].get(f'avg_{metric}@{k}', 0)
-                                                        for q in queries]
+            for k in k_values:
+                query_data_dict[metric][f'@{k}'] = [data['queries'][q]['query_averages'].get(f'avg_{metric}@{k}', 0)
+                                                    for q in queries]
 
         # Create grouped bar plot
         n_queries = len(queries)
         x = np.arange(n_queries)
 
         # Calculate total number of bars per query
-        total_bars = 1 + len(k_values) * (len(query_level_metrics) - 1)  # 1 for MAP + k_values for each other metric
+        total_bars = len(k_values) * len(query_level_metrics)
         width = 0.8 / total_bars
 
         bar_offset = 0
         colors = plt.cm.Set3(np.linspace(0, 1, len(query_level_metrics)))
 
         for i, metric in enumerate(query_level_metrics):
-            if metric == 'map':
-                ax.bar(x + bar_offset * width, query_data_dict[metric][''], width,
-                       label=f'{metric.upper()}', color=colors[i], alpha=0.8)
+            for j, k in enumerate(k_values):
+                ax.bar(x + bar_offset * width, query_data_dict[metric][f'@{k}'], width,
+                       label=f'{metric.title()}@{k}', color=colors[i], alpha=0.6 + 0.1 * j)
                 bar_offset += 1
-            else:
-                for j, k in enumerate(k_values):
-                    ax.bar(x + bar_offset * width, query_data_dict[metric][f'@{k}'], width,
-                           label=f'{metric.title()}@{k}', color=colors[i], alpha=0.6 + 0.1 * j)
-                    bar_offset += 1
 
         ax.set_xlabel('Query Number')
         ax.set_ylabel('Average Score')
@@ -188,30 +172,23 @@ def visualize_benchmark_results(json_file_path: str):
 
     # 3. Global averages plot
     if data['global_averages']:
-        fig, ax = plt.subplots(1, 1, figsize=(10, 6))
+        fig, ax = plt.subplots(1, 1, figsize=(12, 6))
 
         # Prepare global metrics data
         global_metrics = []
         global_values = []
 
         for metric in query_level_metrics:
-            if metric == 'map':
-                global_metrics.append(f'{metric.upper()}')
-                global_values.append(data['global_averages'].get(f'global_avg_{metric}', 0))
-            else:
-                for k in k_values:
-                    global_metrics.append(f'{metric.title()}@{k}')
-                    global_values.append(data['global_averages'].get(f'global_avg_{metric}@{k}', 0))
+            for k in k_values:
+                global_metrics.append(f'{metric.title()}@{k}')
+                global_values.append(data['global_averages'].get(f'global_avg_{metric}@{k}', 0))
 
         # Create bar plot
         colors = []
         for i, metric in enumerate(query_level_metrics):
-            if metric == 'map':
-                colors.append(plt.cm.Set3(i))
-            else:
-                base_color = plt.cm.Set3(i)
-                for j in range(len(k_values)):
-                    colors.append(base_color)
+            base_color = plt.cm.Set3(i)
+            for j in range(len(k_values)):
+                colors.append(base_color)
 
         bars = ax.bar(range(len(global_metrics)), global_values, color=colors, alpha=0.7)
 
