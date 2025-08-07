@@ -8,7 +8,7 @@ from app.utils.app_utils import pprint_console
 from app.utils.benchmark_utils import BENCHMARK_QUESTIONS_INDEX
 from eval.benchmark_evaluator import BenchmarkEvaluator
 from eval.eval_inference import EvalInference
-from eval.eval_utils import visualize_benchmark_results
+from eval.eval_visualization import visualize_benchmark_results
 
 
 class Benchmark(Demo):
@@ -60,7 +60,7 @@ class Benchmark(Demo):
     def run(self):
         """Execute evaluation workflow only."""
         print("Running benchmark evaluation...")
-        metrics = self.benchmark_eval(k_values=[1, 3, 5])
+        metrics = self.benchmark_eval(k_values=[2, 3, 4, 5])
 
         pprint_console("Benchmark completed, check results file for details.")
 
