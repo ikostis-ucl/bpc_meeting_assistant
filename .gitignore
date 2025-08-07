@@ -5,3 +5,4 @@
 /.gradio/
 /.gradio/*
 /data/*
+/eval/results/

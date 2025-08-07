@@ -4,7 +4,6 @@ import heapq
 from datetime import datetime
 from typing import List
 
-import torch
 from halo import Halo
 from llama_index.core import PromptTemplate
 from llama_index.core import Settings
@@ -44,6 +43,17 @@ class BaseInference:
         self.index, (self.start_date, self.end_date) = load_index(args)
         self.timespans = None
         self.generate_timespans(self.start_date, self.end_date, args.time_freq)
+
+        self.ts_doc_index = {}
+        for node in self.index.docstore.docs.values():
+            if hasattr(node, 'metadata') and node.metadata:
+                timestamp = node.metadata.get("meeting_datetime")
+                file_name = node.metadata.get("file_name")
+                if timestamp is not None and file_name is not None:
+                    if timestamp not in self.ts_doc_index:
+                        self.ts_doc_index[timestamp] = []
+                    if file_name not in self.ts_doc_index[timestamp]:
+                        self.ts_doc_index[timestamp].append(file_name)
 
         # Initialize embedding model
         self.embedding_model = HuggingFaceEmbedding(model_name=args.embeddings_model,
@@ -161,7 +171,7 @@ class BaseInference:
     @Halo(text=fmt_string(Color.CYAN, '[CONSOLE] Querying model...'),
           placement='right', animation='bounce', spinner='moon')
     @throttle_requests()
-    def query_llm_hybrid_enhanced(self, query_string: str, alpha: float = 0.5):
+    def query_llm(self, query_string: str, alpha: float = 0.5):
         """
         Process a query using enhanced hybrid retrieval with French preprocessing and RRF.
 

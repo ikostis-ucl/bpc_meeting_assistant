@@ -52,19 +52,4 @@ class GroqInference(BaseInference):
         Returns:
             list: List of tuples containing (answer, metadata, timespan) for each processed result.
         """
-        return super().query_llm_hybrid_enhanced(query_string)
-
-    # @Halo(text=fmt_string(Color.CYAN, '[CONSOLE] Querying model...'),
-    #       placement='right', animation='bounce', spinner='moon')
-    # @throttle_requests()
-    # def query_llm_hybrid_enhanced(self, query_string):
-    #     """
-    #     Process a query through the LLM and clean results.
-    #
-    #     Args:
-    #         query_string: User's query text.
-    #
-    #     Returns:
-    #         list: List of tuples containing (answer, metadata, timespan) for each processed result.
-    #     """
-    #     return super().query_llm_hybrid_enhanced(query_string)
+        return super().query_llm(query_string)
