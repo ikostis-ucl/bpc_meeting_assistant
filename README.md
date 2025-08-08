@@ -110,7 +110,7 @@ To address this challenge, we propose an application designed to streamline acce
     python run_gui.py
     ```
 
-3. **Run Benchmark Tests**
+3. **Run BenchmarkRetrieval Tests**
     ```bash
     python run_inference.py
     ```

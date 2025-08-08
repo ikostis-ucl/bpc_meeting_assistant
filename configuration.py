@@ -31,7 +31,7 @@ def config_parser():
     parser.add_argument("--home_path", type=str, default=None,
                         help="Home path of the user. Used in GUI.")
 
-    # Benchmark
+    # BenchmarkRetrieval
     parser.add_argument('--benchmark_mode', action='store_true',
                         help='Run in benchmark evaluation mode')
     parser.add_argument('--benchmark_gt_path', type=str,
@@ -48,7 +48,7 @@ def config_parser():
     parser.add_argument('--groq_model_inference', type=str,
                         default="llama-3.3-70b-versatile",
                         help='Model name for Groq inference.')
-    parser.add_argument('--groq_model_inference_tpm', type=int, default=12000,
+    parser.add_argument('--groq_model_inference_tpm', type=int, default=300000,
                         help='Tokens per minute for Groq model.')
 
     parser.add_argument('--groq_model_inference_judge', type=str,

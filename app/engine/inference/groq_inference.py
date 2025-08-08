@@ -1,10 +1,7 @@
-from halo import Halo
 from llama_index.core import Settings
 from llama_index.llms.groq import Groq
 
 from app.engine.inference.base_inference import BaseInference
-from app.utils.app_utils import fmt_string, Color
-from app.utils.inference_utils import throttle_requests
 
 
 class GroqInference(BaseInference):
@@ -29,7 +26,7 @@ class GroqInference(BaseInference):
         Args:
             args: Configuration arguments for models and API settings.
         """
-        super().__init__(args)
+
         # Initialize Groq model with specific settings
         self.model = Groq(model=args.groq_model_inference,
                           api_key=args.groq_api_key,
@@ -39,17 +36,4 @@ class GroqInference(BaseInference):
         # Set up token counting and callbacks
         self.model.callback_manager = Settings.callback_manager
 
-    @Halo(text=fmt_string(Color.CYAN, '[CONSOLE] Querying model...'),
-          placement='right', animation='bounce', spinner='moon')
-    @throttle_requests()
-    def query_llm(self, query_string):
-        """
-        Process a query through the LLM and clean results.
-
-        Args:
-            query_string: User's query text.
-
-        Returns:
-            list: List of tuples containing (answer, metadata, timespan) for each processed result.
-        """
-        return super().query_llm(query_string)
+        super().__init__(args)

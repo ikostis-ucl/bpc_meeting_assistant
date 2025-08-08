@@ -1,5 +1,5 @@
 from app.engine.inference.groq_inference import GroqInference
-from app.scripts.Demo import Demo
+from app.scripts.demo import Demo
 from app.utils.app_utils import pprint_console
 
 

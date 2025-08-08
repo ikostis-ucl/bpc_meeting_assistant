@@ -15,7 +15,7 @@ class EvalInference(BaseInference):
     without LLM generation, useful for benchmark testing.
     """
 
-    def __init__(self, args):
+    def __init__(self, args, questions=None):
         """
         Initialize the evaluator with the same components as BaseInference.
 
@@ -23,7 +23,7 @@ class EvalInference(BaseInference):
             args: Configuration arguments containing API keys, model paths, and other settings.
         """
         super().__init__(args)
-        self.questions = None
+        self.questions = questions
 
     def evaluate_retriever(self, query_string: str, alpha: float = 0.5) -> List[Tuple]:
         """
