@@ -1,6 +1,7 @@
 import calendar
 import gc
 import heapq
+import time
 from datetime import datetime
 from typing import List
 
@@ -36,9 +37,6 @@ class BaseInference:
             args: Configuration arguments containing API keys, model paths, and other settings.
         """
         self.args = args
-
-        # Load document index and get timespan boundaries
-        self.model = None
 
         self.index, (self.start_date, self.end_date) = load_index(args)
         self.timespans = None
@@ -83,6 +81,15 @@ class BaseInference:
 
         # Don't initialize reranker until needed
         self.reranker = None
+
+        if args.benchmark_mode:
+            self.timing_data = {
+                'retrieval_times': [],
+                'reranker_times': [],
+                'synthesis_times': [],
+                'judge_times': [],
+                'total_query_times': []
+            }
 
     def _get_reranker(self):
         """
@@ -168,6 +175,38 @@ class BaseInference:
 
         return filtered_nodes
 
+    def _record_timing(self, operation: str, duration: float, timespan_idx: int = None):
+        """Record timing data for benchmark analysis."""
+        if not self.args.benchmark_mode:
+            return
+
+        timing_entry = {
+            'duration': duration,
+            'timespan_idx': timespan_idx,
+            'timestamp': time.time()
+        }
+
+        if operation in self.timing_data:
+            self.timing_data[operation].append(timing_entry)
+
+    def get_timing_summary(self):
+        """Get summary of timing data for benchmark analysis."""
+        if not self.args.benchmark_mode:
+            return None
+
+        summary = {}
+        for operation, timings in self.timing_data.items():
+            if timings:
+                durations = [t['duration'] for t in timings]
+                summary[operation] = {
+                    'count': len(durations),
+                    'total': sum(durations),
+                    'average': sum(durations) / len(durations),
+                    'min': min(durations),
+                    'max': max(durations)
+                }
+        return summary
+
     @Halo(text=fmt_string(Color.CYAN, '[CONSOLE] Querying model...'),
           placement='right', animation='bounce', spinner='moon')
     @throttle_requests()
@@ -182,6 +221,8 @@ class BaseInference:
         Returns:
             list: List of tuples containing (answer, metadata, timespan) for each processed result.
         """
+        query_start_time = time.time() if self.args.benchmark_mode else None
+
         results = []
         reranker = self._get_reranker()
         query_bundle = QueryBundle(query_str=query_string)
@@ -190,7 +231,7 @@ class BaseInference:
         all_node_ids = [node.id_ for node in self.index.docstore.docs.values()]
         all_nodes = self.index.docstore.get_nodes(all_node_ids)
 
-        for start_date, end_date in self.timespans:
+        for timespan_idx, (start_date, end_date) in enumerate(self.timespans):
             # Create custom hybrid retriever with timespan filtering
             hybrid_retriever = HybridRetriever(
                 vector_index=self.index,
@@ -203,20 +244,32 @@ class BaseInference:
             )
 
             # Retrieve using custom retriever
+            retrieval_start = time.time() if self.args.benchmark_mode else None
             combined_nodes = hybrid_retriever.retrieve(query_bundle)
+            if self.args.benchmark_mode:
+                retrieval_time = time.time() - retrieval_start
+                self._record_timing('retrieval_times', retrieval_time, timespan_idx)
 
             # Apply reranking to top candidates
             top_candidates = combined_nodes[:20]
+            reranker_start = time.time() if self.args.benchmark_mode else None
             reranked_nodes = reranker.postprocess_nodes(top_candidates, query_bundle)
+            if self.args.benchmark_mode:
+                reranker_time = time.time() - reranker_start
+                self._record_timing('reranker_times', reranker_time, timespan_idx)
 
             # Create response synthesizer
             response_synthesizer = get_response_synthesizer(llm=self.model)
 
             # Generate answer
+            synthesis_start = time.time() if self.args.benchmark_mode else None
             answer = response_synthesizer.synthesize(
                 query=self.prompt_template.format(query_string=query_string),
                 nodes=reranked_nodes
             )
+            if self.args.benchmark_mode:
+                synthesis_time = time.time() - synthesis_start
+                self._record_timing('synthesis_times', synthesis_time, timespan_idx)
 
             # Process metadata with RRF scores
             metadata = {}
@@ -229,6 +282,7 @@ class BaseInference:
 
             results.append((answer.response, metadata, (start_date, end_date)))
 
+        judge_start = time.time() if self.args.benchmark_mode else None
         cleaned_results = [results[0]]
         for i in range(1, len(results)):
             answer_prev = cleaned_results[-1][0]
@@ -248,12 +302,20 @@ class BaseInference:
             else:
                 cleaned_results.append(results[i])
 
+        if self.args.benchmark_mode:
+            judge_time = time.time() - judge_start
+            self._record_timing('judge_times', judge_time)
+
         # Keep top 3 nodes based on scores
         for i in range(len(cleaned_results)):
             metadata = cleaned_results[i][1]
             top_nodes = heapq.nlargest(3, metadata.items(), key=lambda item: item[1]['score'])
             top_metadata = {node_id: data for node_id, data in top_nodes}
             cleaned_results[i] = (cleaned_results[i][0], top_metadata, cleaned_results[i][2])
+
+        if self.args.benchmark_mode:
+            total_query_time = time.time() - query_start_time
+            self._record_timing('total_query_times', total_query_time)
 
         self._cleanup_resources()
         return cleaned_results

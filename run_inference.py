@@ -2,7 +2,8 @@ import os
 import warnings
 
 # from app.scripts.Test import TestRAG as Scenario
-from app.scripts.Benchmark import BenchmarkRAG as Scenario
+from app.scripts.benchmark_retrieval import BenchmarkRetrieval as Scenario
+# from app.scripts.benchmark_rag import BenchmarkRAG as Scenario
 
 if __name__ == "__main__":
     warnings.simplefilter(action='ignore', category=FutureWarning)
