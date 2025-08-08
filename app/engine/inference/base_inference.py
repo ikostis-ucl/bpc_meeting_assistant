@@ -16,9 +16,10 @@ from app.engine.data_processing.data_loaders import load_index
 from app.engine.inference.Judge import Judge
 from app.engine.inference.retrievers.hybrid_retriever import HybridRetriever
 from app.utils.inference_utils import timed_operation
+from abc import ABC, abstractmethod
 
 
-class BaseInference:
+class BaseInference(ABC):
     """
     Base class for inference operations in the meeting minutes assistant.
 
@@ -34,6 +35,8 @@ class BaseInference:
             args: Configuration arguments containing API keys, model paths, and other settings.
         """
         self.args = args
+
+        self.model = self._create_model(args)
 
         self.index, (self.start_date, self.end_date) = load_index(args)
         self.timespans = None
@@ -87,6 +90,19 @@ class BaseInference:
                 'judge_times': [],
                 'total_query_times': []
             }
+
+    @abstractmethod
+    def _create_model(self, args):
+        """
+        Create and return the LLM model instance.
+
+        Args:
+            args: Configuration arguments
+
+        Returns:
+            The initialized LLM model
+        """
+        pass
 
     def _get_reranker(self):
         """
