@@ -2,6 +2,7 @@ import calendar
 import gc
 import heapq
 import time
+from abc import ABC, abstractmethod
 from datetime import datetime
 
 from llama_index.core import PromptTemplate
@@ -15,8 +16,7 @@ from llama_index.postprocessor.colbert_rerank import ColbertRerank
 from app.engine.data_processing.data_loaders import load_index
 from app.engine.inference.Judge import Judge
 from app.engine.inference.retrievers.hybrid_retriever import HybridRetriever
-from app.utils.inference_utils import timed_operation
-from abc import ABC, abstractmethod
+from app.utils.eval_utils import timed_operation
 
 
 class BaseInference(ABC):
@@ -267,7 +267,7 @@ class BaseInference(ABC):
             top_candidates = combined_nodes[:20]
             reranked_nodes = self._rerank_nodes(reranker, top_candidates, query_bundle, timespan_idx=timespan_idx)
 
-            response_synthesizer = get_response_synthesizer(llm=self.model)  # Assuming `self.model` is defined in the subclass
+            response_synthesizer = get_response_synthesizer(llm=self.model)
             answer = self._synthesize_response(response_synthesizer, query_string, reranked_nodes,
                                                timespan_idx=timespan_idx)
 
