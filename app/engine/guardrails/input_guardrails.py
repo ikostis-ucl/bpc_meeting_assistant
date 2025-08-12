@@ -1,4 +1,3 @@
-# app/engine/guardrails/input_guardrails.py
 import json
 import re
 import unicodedata
@@ -14,14 +13,14 @@ from app.utils.inference_utils import throttle_requests
 
 class InputGuardrails:
     """
-    Enhanced input guardrails using Llama Guard 4 and domain-specific thematics.
+    Input guardrails using exclusively extracted domain thematics.
     """
 
     def __init__(self, args):
-        """Initialize guardrails with Llama Guard 4 and extracted thematics."""
+        """Initialize guardrails with multilingual Groq model and extracted thematics only."""
         self.args = args
 
-        # Initialize Llama Guard 4 for content screening
+        # Initialize multilingual Groq model for domain classification
         self.guard_llm = Groq(
             model=args.groq_model_gr,
             api_key=args.groq_api_key,
@@ -36,189 +35,140 @@ class InputGuardrails:
         self.min_query_length = 3
         self.max_query_length = 500
 
-        # Load extracted domain thematics
-        self.domain_thematics = self._load_domain_thematics()
+        self.domain_thematics = self._load_extracted_thematics()
+        self.thematic_context = self._create_thematic_context()
 
-        # Create thematic categories for Llama Guard
-        self.thematic_categories = self._create_thematic_categories()
-
-    def _load_domain_thematics(self) -> Dict[str, str]:
-        """Load domain thematics from JSON file."""
+    def _load_extracted_thematics(self) -> Dict[str, str]:
+        """Load domain thematics exclusively from DomainThematicsExtractor results."""
         try:
             with open(self.args.thematics_storage_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-                thematics = data.get('thematics', {})
-                pprint_console(f"Loaded {len(thematics)} domain thematics for guardrails")
-                return thematics
+
+            thematics = data.get('thematics', {})
+
+            if not thematics:
+                pprint_error("No thematics found in extraction file")
+                pprint_error("Please run: python run_init_gr.py")
+                raise SystemExit("Cannot proceed without extracted thematics")
+
+            pprint_console(f"Loaded {len(thematics)} extracted thematics: {list(thematics.keys())}")
+            return thematics
+
         except FileNotFoundError:
-            pprint_error(f"Thematics file {self.args.thematics_storage_path} not found. Using fallback.")
-            return self._get_fallback_thematics()
+            pprint_error(f"Thematics file not found: {self.args.thematics_storage_path}")
+            pprint_error("Please run: python run_init_gr.py")
+            raise SystemExit("Extracted thematics required")
+
         except Exception as e:
-            pprint_error(f"Error loading thematics file: {e}. Using fallback.")
-            return self._get_fallback_thematics()
+            pprint_error(f"Error loading thematics: {e}")
+            raise SystemExit("Cannot proceed without valid extracted thematics")
 
-    def _get_fallback_thematics(self) -> Dict[str, str]:
-        """Fallback thematics if extraction file is not available."""
-        return {
-            "Systemes_techniques_batiment": "Tous les aspects techniques du bâtiment incluant HVAC, électricité, plomberie, sprinklage, ventilation, chauffage, climatisation, systèmes de sécurité, éclairage et équipements techniques.",
-            "Coordination_projet_communication": "Organisation d'équipes, réunions, échanges entre intervenants, communication client, coordination des métiers, planification collaborative et gestion des parties prenantes.",
-            "Suivi_execution_travaux": "Avancement des travaux, supervision chantier, contrôle qualité, gestion des phases, suivi des délais, coordination des interventions et monitoring de l'exécution.",
-            "Gestion_administrative_financiere": "Budgets, coûts, facturation, contrats, devis, aspects réglementaires, autorisations, conformité et gestion financière des projets.",
-            "Conception_modification_plans": "Évolution des plans, adaptations techniques, changements de conception, validation des solutions, études techniques et modifications architecturales."
-        }
+    def _create_thematic_context(self) -> str:
+        """Create formatted context using only extracted thematics."""
+        context_parts = []
 
-    def _create_thematic_categories(self) -> str:
-        """Create formatted thematic categories for Llama Guard prompt."""
-        categories = []
-        for i, (thematic, description) in enumerate(self.domain_thematics.items(), 1):
-            categories.append(f"O{i}: {thematic}")
-            categories.append(f"Définition: {description}")
-            categories.append("")
+        for i, (thematic_name, description) in enumerate(self.domain_thematics.items(), 1):
+            context_parts.append(f"{i}. {thematic_name}:\n{description}")
 
-        return "\n".join(categories)
+        return "\n\n".join(context_parts)
 
     def validate_query(self, query: str) -> Tuple[bool, str]:
-        """Comprehensive query validation using Llama Guard 4 and thematics."""
-        # 1. Basic validation guardrails
+        """Validate query using extracted thematics only."""
+        # Basic validation
         basic_valid, basic_reason = self._basic_validation(query)
         if not basic_valid:
             return False, basic_reason
 
-        # 2. Llama Guard 4 thematic screening
-        guard_valid, guard_reason = self._llama_guard_screening(query)
-        if not guard_valid:
-            return False, guard_reason
-
-        return True, guard_reason
-
-    @throttle_requests()
-    def _llama_guard_screening(self, query: str) -> Tuple[bool, str]:
-        """Use Llama Guard 4 to determine if query matches allowed thematics."""
-
-        guard_prompt = f"""<|begin_of_text|><|start_header_id|>user<|end_header_id|>
-
-Tâche: Évaluer si la requête utilisateur correspond aux thématiques autorisées pour un assistant de gestion de comptes-rendus de réunions de projets de construction.
-
-<|start_header_id|>assistant<|end_header_id|>
-
-Je vais analyser la requête selon les thématiques autorisées définies ci-dessous.
-
-# Politique de Sécurité
-
-## Thématiques Autorisées
-
-{self.thematic_categories}
-
-## Instructions d'Évaluation
-
-Évaluez si la requête utilisateur correspond à au moins une des thématiques autorisées (O1-O{len(self.domain_thematics)}). 
-
-Une requête est considérée comme SÛRE si elle:
-- Se rapporte directement à l'une des thématiques autorisées
-- Concerne la gestion de projets de construction ou de réunions d'équipe
-- Demande des informations sur les aspects techniques, organisationnels ou administratifs des projets
-
-Une requête est considérée comme NON SÛRE si elle:
-- Ne se rapporte à aucune des thématiques autorisées
-- Concerne des sujets sans rapport avec la construction ou la gestion de projet
-- Aborde des domaines extérieurs au périmètre professionnel défini
-
-## Requête Utilisateur
-
-{query}
-
-## Évaluation
-
-Fournissez votre évaluation au format suivant:
-
-**safe** ou **unsafe**
-
-Si unsafe, indiquez la raison: La requête ne correspond à aucune des thématiques autorisées pour cet assistant spécialisé en gestion de projets de construction.
-
-<|eot_id|>"""
-
-        try:
-            response = self.guard_llm.complete(guard_prompt)
-            response_text = response.text.strip().lower()
-
-            if "unsafe" in response_text:
-                return False, "Cette question ne correspond pas aux thématiques de gestion de projets de construction couvertes par cet assistant."
-            elif "safe" in response_text:
-                return True, ""
-            else:
-                # If response format is unclear, be permissive
-                pprint_error(f"Unclear Llama Guard response: {response_text}")
-                return True, ""
-
-        except Exception as e:
-            pprint_error(f"Llama Guard screening failed: {e}")
-            # Fallback to permissive in case of error
-            return True, ""
-
-    def _basic_validation(self, query: str) -> Tuple[bool, str]:
-        """Basic input validation rules."""
-        # Length validation
-        if len(query.strip()) < self.min_query_length:
-            return False, f"Requête trop courte (minimum {self.min_query_length} caractères)"
-
-        if len(query) > self.max_query_length:
-            return False, f"Requête trop longue (maximum {self.max_query_length} caractères)"
-
-        # Language detection (basic French check)
-        if not self._is_likely_french(query):
-            return False, "Veuillez formuler votre question en français"
-
-        # Suspicious patterns
-        if self._contains_suspicious_patterns(query):
-            return False, "Format de requête non autorisé"
+        # Domain classification using extracted thematics
+        domain_valid, domain_reason = self._domain_classification(query)
+        if not domain_valid:
+            return False, domain_reason
 
         return True, ""
 
-    def _is_likely_french(self, text: str) -> bool:
-        """Basic French language detection."""
-        text = unicodedata.normalize('NFD', text.lower())
-        french_chars = set('àâäæéèêëïîôöùûüÿçñ')
-        french_words = {'le', 'la', 'les', 'de', 'du', 'des', 'un', 'une', 'et', 'ou', 'que', 'qui', 'est', 'dans',
-                        'sur', 'avec', 'pour', 'comment', 'pourquoi', 'quand', 'où', 'quel', 'quelle'}
+    def _basic_validation(self, query: str) -> Tuple[bool, str]:
+        """Basic validation checks."""
+        query = re.sub(r'\s+', ' ', query.strip())
 
-        has_french_chars = any(char in french_chars for char in text)
-        words = re.findall(r'\b\w+\b', text)
-        has_french_words = any(word in french_words for word in words)
+        if len(query) < self.min_query_length:
+            return False, "too_short"
 
-        return has_french_chars or has_french_words or len(words) <= 2
+        if len(query) > self.max_query_length:
+            return False, "too_long"
 
-    def _contains_suspicious_patterns(self, query: str) -> bool:
-        """Check for suspicious patterns."""
-        suspicious_patterns = [
-            r'<script.*?>', r'javascript:', r'sql.*?injection',
-            r'union.*?select', r'drop.*?table', r'exec\s*\(',
-            r'<.*?>', r'eval\s*\(', r'system\s*\('
-        ]
-        query_lower = query.lower()
-        return any(re.search(pattern, query_lower, re.IGNORECASE) for pattern in suspicious_patterns)
+        normalized = unicodedata.normalize('NFKD', query)
+        special_char_ratio = len(re.findall(r'[^\w\s\-\.\,\?\!\:\;\(\)]', normalized)) / len(query)
+        if special_char_ratio > 0.3:
+            return False, "invalid_format"
+
+        if re.search(r'(.)\1{10,}', query):
+            return False, "invalid_format"
+
+        return True, ""
+
+    @throttle_requests()
+    def _domain_classification(self, query: str) -> Tuple[bool, str]:
+        """Classify query using only extracted thematics."""
+
+        classification_prompt = f"""Analysez cette requête par rapport aux thématiques extraites du projet.
+
+            THÉMATIQUES DU PROJET (extraites automatiquement des documents):
+            
+            {self.thematic_context}
+            
+            INSTRUCTIONS:
+            - Ces thématiques ont été extraites des documents réels du projet
+            - Vérifiez si la requête correspond à AU MOINS UNE de ces thématiques
+            - Questions autorisées: tout ce qui correspond aux thématiques ci-dessus
+            - Questions interdites: tout ce qui ne correspond à AUCUNE thématique
+            
+            REQUÊTE: "{query}"
+            
+            Cette requête correspond-elle à au moins une des thématiques extraites du projet?
+            
+            Répondez uniquement: OUI ou NON
+            
+            Réponse:"""
+
+        try:
+            response = self.guard_llm.complete(classification_prompt)
+            response_text = response.text.strip().upper()
+
+            if "NON" in response_text:
+                return False, "domain_mismatch"
+            elif "OUI" in response_text:
+                return True, ""
+            else:
+                return True, ""  # Fallback to permissive
+
+        except Exception as e:
+            pprint_error(f"Classification failed: {e}")
+            return True, ""  # Fallback to permissive
 
     def get_rejection_message(self, reason: str) -> str:
-        """Generate user-friendly rejection message."""
-        base_message = "Désolé, votre question n'a pas pu être traitée.\n\n"
+        """Generate rejection message using extracted thematic names."""
 
-        thematic_list = "\n".join([f"• {name}: {desc[:100]}..."
-                                   for name, desc in self.domain_thematics.items()])
+        thematic_list = "\n".join([f"• {name.replace('_', ' ')}" for name in self.domain_thematics.keys()])
 
-        suggestion = f"""\n\nCet assistant est spécialisé dans les thématiques suivantes:
+        rejection_messages = {
+            "too_short": "Question trop courte. Veuillez formuler une question plus détaillée.",
 
-{thematic_list}
+            "too_long": "Question trop longue. Veuillez la raccourcir.",
 
-Veuillez reformuler votre question en rapport avec ces domaines."""
+            "invalid_format": "Format invalide. Utilisez du texte lisible.",
 
-        return base_message + reason + suggestion
+            "domain_mismatch": (
+                f"Cette question ne correspond pas aux thématiques du projet. "
+                f"Je peux vous aider avec:\n\n{thematic_list}\n\n"
+                f"Veuillez reformuler votre question selon ces thématiques."
+            )
+        }
 
-    def get_thematics_info(self) -> str:
-        """Get information about loaded thematics for debugging."""
-        if not self.domain_thematics:
-            return "Aucune thématique chargée."
+        return rejection_messages.get(reason, "Question non autorisée.")
 
-        info = f"Thématiques chargées ({len(self.domain_thematics)}):\n"
+    def get_domain_summary(self) -> str:
+        """Summary of extracted thematics."""
+        summary = f"Thématiques extraites ({len(self.domain_thematics)}):\n\n"
         for i, (name, desc) in enumerate(self.domain_thematics.items(), 1):
-            info += f"  {i}. {name}: {desc[:80]}...\n"
-
-        return info
+            summary += f"{i}. {name.replace('_', ' ')}:\n   {desc[:100]}...\n\n"
+        return summary
