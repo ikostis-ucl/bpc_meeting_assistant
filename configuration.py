@@ -31,7 +31,7 @@ def config_parser():
     parser.add_argument("--home_path", type=str, default=None,
                         help="Home path of the user. Used in GUI.")
 
-    # BenchmarkRetrieval
+    # Benchmarking
     parser.add_argument('--benchmark_mode', action='store_true',
                         help='Run in benchmark evaluation mode')
     parser.add_argument('--benchmark_gt_path', type=str,

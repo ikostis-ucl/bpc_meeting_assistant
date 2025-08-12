@@ -1,7 +1,6 @@
 import calendar
 import gc
 import heapq
-import time
 from abc import ABC, abstractmethod
 from datetime import datetime
 
@@ -53,11 +52,9 @@ class BaseInference(ABC):
                     if file_name not in self.ts_doc_index[timestamp]:
                         self.ts_doc_index[timestamp].append(file_name)
 
-        # Initialize embedding model
         self.embedding_model = HuggingFaceEmbedding(model_name=args.embeddings_model,
                                                     cache_folder=args.embeddings_cache_dir)
 
-        # Set up prompt template for queries in French
         self.prompt_template = PromptTemplate(
             "Vous analysez des comptes-rendus de réunions de projet. "
             "Répondez de manière factuelle et concise aux questions en utilisant uniquement les informations présentes dans les documents fournis.\n\n"
@@ -71,15 +68,12 @@ class BaseInference(ABC):
             "Réponse:"
         )
 
-        # Set up token counting and callbacks
         self.token_counter = TokenCountingHandler()
         self.callback_manager = CallbackManager([self.token_counter])
         Settings.callback_manager = self.callback_manager
 
-        # Initialize judge component
         self.judge = Judge(args)
 
-        # Don't initialize reranker until needed
         self.reranker = None
 
         if self.args.benchmark_mode:
@@ -174,20 +168,6 @@ class BaseInference(ABC):
             self.timespans.append((int(current_start.timestamp()), int(current_end.timestamp())))
             current_start = current_end
 
-    def _record_timing(self, operation: str, duration: float, timespan_idx: int = None):
-        """Record timing data for benchmark analysis."""
-        if not self.args.benchmark_mode:
-            return
-
-        timing_entry = {
-            'duration': duration,
-            'timespan_idx': timespan_idx,
-            'timestamp': time.time()
-        }
-
-        if operation in self.timing_data:
-            self.timing_data[operation].append(timing_entry)
-
     @timed_operation('retrieval_times', timespan_aware=True)
     def _retrieve_nodes(self, hybrid_retriever, query_bundle, timespan_idx=None):
         """Wrapper for retrieval operation."""
@@ -246,7 +226,6 @@ class BaseInference(ABC):
         reranker = self._get_reranker()
         query_bundle = QueryBundle(query_str=query_string)
 
-        # Get all nodes once for efficiency
         all_node_ids = [node.id_ for node in self.index.docstore.docs.values()]
         all_nodes = self.index.docstore.get_nodes(all_node_ids)
 
