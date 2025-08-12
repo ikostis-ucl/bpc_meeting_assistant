@@ -25,6 +25,9 @@ class EvalInference(BaseInference):
         super().__init__(args)
         self.questions = questions
 
+    def _create_model(self, args):
+        return None
+
     def evaluate_retriever(self, query_string: str, alpha: float = 0.5) -> List[Tuple]:
         """
         Retrieval-only evaluation method for benchmark testing.

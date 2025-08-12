@@ -110,33 +110,3 @@ def pprint_qa(question, results):
                 print(f"{Color.YELLOW}Citations: No valid citation metadata available{Color.END}")
 
         pprint_hline("-", 3)
-
-
-def timed_operation(operation_name: str, timespan_aware: bool = False):
-    """
-    Decorator to time operations when benchmark_mode is enabled.
-
-    Args:
-        operation_name: Name of the operation for timing records
-        timespan_aware: Whether this operation should track timespan_idx
-    """
-
-    def decorator(func):
-        @wraps(func)
-        def wrapper(self, *args, **kwargs):
-            if not getattr(self.args, 'benchmark_mode', False):
-                return func(self, *args, **kwargs)
-
-            start_time = time.time()
-            result = func(self, *args, **kwargs)
-            duration = time.time() - start_time
-
-            # Extract timespan_idx if this is a timespan-aware operation
-            timespan_idx = kwargs.get('timespan_idx') if timespan_aware else None
-
-            self._record_timing(operation_name, duration, timespan_idx)
-            return result
-
-        return wrapper
-
-    return decorator

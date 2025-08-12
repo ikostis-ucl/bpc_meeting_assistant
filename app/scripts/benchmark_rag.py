@@ -22,6 +22,7 @@ class BenchmarkRAG(Demo):
         super().__init__()
 
         self.args.benchmark_mode = True
+        self.args.answer_assess = True
 
         self.query_results = []
 
@@ -192,7 +193,7 @@ class BenchmarkRAG(Demo):
         print("Running RAG benchmark with timing analysis...")
 
         for i, question in enumerate(self.questions):
-            pprint_debug(f"Processing query {i + 1}/{len(self.questions)}: {question}")
+            pprint_console(f"Processing query {i + 1}/{len(self.questions)}: {question}")
             self.run_single_query(i, question)
 
         # Print summary and save results
