@@ -7,7 +7,7 @@ from llama_index.core import Settings
 from llama_index.core.callbacks import TokenCountingHandler, CallbackManager
 from llama_index.llms.groq import Groq
 
-from app.utils.app_utils import pprint_error, pprint_console
+from app.utils.app_utils import pprint_error, pprint_debug
 from app.utils.inference_utils import throttle_requests
 
 
@@ -39,29 +39,64 @@ class InputGuardrails:
         self.thematic_context = self._create_thematic_context()
 
     def _load_extracted_thematics(self) -> Dict[str, str]:
-        """Load domain thematics exclusively from DomainThematicsExtractor results."""
+        """Load domain thematics using Pareto Principle (70/30 rule) for selection."""
         try:
             with open(self.args.thematics_storage_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
 
-            thematics = data.get('thematics', {})
+            all_thematics = data.get('thematics', {})
+            frequency_data = data.get('thematic_frequency', {})
 
-            if not thematics:
-                pprint_error("No thematics found in extraction file")
-                pprint_error("Please run: python run_init_gr.py")
-                raise SystemExit("Cannot proceed without extracted thematics")
+            if not all_thematics or not frequency_data:
+                pprint_error("No thematics or frequency data found in storage file.")
+                return {}
 
-            pprint_console(f"Loaded {len(thematics)} extracted thematics: {list(thematics.keys())}")
-            return thematics
+            # Calculate total occurrences
+            total_occurrences = sum(frequency_data.values())
+            target_coverage = total_occurrences * 0.7
+
+            # Sort thematics by frequency (descending)
+            sorted_thematics = sorted(
+                frequency_data.items(),
+                key=lambda x: x[1],
+                reverse=True
+            )
+
+            # Select thematics until we reach 70% coverage
+            selected_thematics = {}
+            cumulative_count = 0
+
+            for thematic_name, frequency in sorted_thematics:
+                cumulative_count += frequency
+
+                # Extract description from thematics data
+                if thematic_name in all_thematics:
+                    if isinstance(all_thematics[thematic_name], dict):
+                        description = all_thematics[thematic_name].get('description', '')
+                    else:
+                        description = str(all_thematics[thematic_name])
+
+                    selected_thematics[thematic_name] = description
+
+                # Stop when we reach 70% coverage
+                if cumulative_count >= target_coverage:
+                    break
+
+            coverage_percentage = (cumulative_count / total_occurrences) * 100
+            pprint_debug(
+                f"Pareto selection: {len(selected_thematics)} thematics covering {coverage_percentage:.1f}% of occurrences")
+
+            return selected_thematics
 
         except FileNotFoundError:
             pprint_error(f"Thematics file not found: {self.args.thematics_storage_path}")
-            pprint_error("Please run: python run_init_gr.py")
-            raise SystemExit("Extracted thematics required")
-
+            return {}
+        except json.JSONDecodeError:
+            pprint_error(f"Invalid JSON in thematics file: {self.args.thematics_storage_path}")
+            return {}
         except Exception as e:
-            pprint_error(f"Error loading thematics: {e}")
-            raise SystemExit("Cannot proceed without valid extracted thematics")
+            pprint_error(f"Error loading extracted thematics: {e}")
+            return {}
 
     def _create_thematic_context(self) -> str:
         """Create formatted context using only extracted thematics."""
