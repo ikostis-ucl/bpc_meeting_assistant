@@ -11,7 +11,7 @@ from llama_index.llms.groq import Groq
 from tqdm import tqdm
 
 from app.engine.data_processing.data_loaders import load_index
-from app.utils.app_utils import pprint_console, pprint_error
+from app.utils.app_utils import pprint_console, pprint_error, pprint_debug
 from app.utils.inference_utils import throttle_requests
 
 
@@ -40,10 +40,9 @@ class ThematicsExtractor:
 
         os.makedirs(os.path.dirname(self.args.thematics_storage_path), exist_ok=True)
 
-        # Simplified storage: only what we need
-        self.processed_documents = set()  # Track processed documents
-        self.thematic_frequency = defaultdict(int)  # {thematic_name: count}
-        self.thematics = {}  # {thematic_name: description}
+        self.processed_documents = set()
+        self.thematic_frequency = defaultdict(int)
+        self.thematics = {}
 
     def extract_thematics_from_index(self) -> Dict[str, any]:
         """
@@ -57,8 +56,6 @@ class ThematicsExtractor:
 
         # Group documents by file name
         documents_by_file = self._group_documents_by_file()
-
-        pprint_console(f"Found {len(documents_by_file)} unique documents")
 
         # Load existing data if file exists
         self._load_existing_data()
@@ -92,7 +89,7 @@ class ThematicsExtractor:
 
                 processed_count += 1
 
-                if processed_count % 5 == 0:  # Save periodically
+                if processed_count % 5 == 0:
                     self._save_data()
 
             except Exception as e:
@@ -133,7 +130,8 @@ class ThematicsExtractor:
 
         return '\n\n'.join(document_text)
 
-    def _analyze_document_structure(self, document_text: str) -> Dict[str, List[str]]:
+    @staticmethod
+    def _analyze_document_structure(document_text: str) -> Dict[str, List[str]]:
         """Analyze the Markdown structure to extract section information."""
 
         structure = {
@@ -192,7 +190,7 @@ class ThematicsExtractor:
                 pprint_console(
                     f"Loaded existing data: {len(self.processed_documents)} documents, {len(self.thematics)} unique thematics")
             else:
-                pprint_console("No existing data file found, starting fresh")
+                pprint_console("No existing data file found, starting fresh.")
         except Exception as e:
             pprint_error(f"Error loading existing data: {e}")
             self.thematics = {}
@@ -301,7 +299,7 @@ class ThematicsExtractor:
                 'total_documents': len(self.processed_documents),
                 'total_unique_thematics': len(self.thematics),
                 'processed_documents': list(self.processed_documents),
-                'thematics': {},  # Will store {name: {description, frequency}}
+                'thematics': {},
                 'thematic_frequency': dict(self.thematic_frequency)
             }
 
@@ -361,6 +359,6 @@ class ThematicsExtractor:
 
         # Print summary
         pprint_console(f"Extraction completed in {duration}")
-        pprint_console(self.get_comprehensive_summary())
+        pprint_debug(self.get_comprehensive_summary())
 
         return results

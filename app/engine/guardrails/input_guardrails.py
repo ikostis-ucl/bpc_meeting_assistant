@@ -20,7 +20,6 @@ class InputGuardrails:
         """Initialize guardrails with multilingual Groq model and extracted thematics only."""
         self.args = args
 
-        # Initialize multilingual Groq model for domain classification
         self.guard_llm = Groq(
             model=args.groq_model_gr,
             api_key=args.groq_api_key,
@@ -31,7 +30,6 @@ class InputGuardrails:
         self.token_counter = TokenCountingHandler()
         Settings.callback_manager = CallbackManager([self.token_counter])
 
-        # Validation thresholds
         self.min_query_length = 3
         self.max_query_length = 500
 
@@ -109,12 +107,10 @@ class InputGuardrails:
 
     def validate_query(self, query: str) -> Tuple[bool, str]:
         """Validate query using extracted thematics only."""
-        # Basic validation
         basic_valid, basic_reason = self._basic_validation(query)
         if not basic_valid:
             return False, basic_reason
 
-        # Domain classification using extracted thematics
         domain_valid, domain_reason = self._domain_classification(query)
         if not domain_valid:
             return False, domain_reason

@@ -6,7 +6,6 @@ from app.utils.app_utils import pprint_error
 
 
 class Response(BaseModel):
-    # TODO: add a second judge to verify if the answer exists in the retrieved context.
     """
     Pydantic model for judge response validation.
 
