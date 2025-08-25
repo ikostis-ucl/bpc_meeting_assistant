@@ -45,6 +45,8 @@ def config_parser():
                         help='Embeddings cache directory path.')
 
     # Guardrails
+    parser.add_argument('--disable_guardrails', action='store_true',
+                        help="Use the argument to bypass the input guardrails during inference.",)
     parser.add_argument('--thematics_storage_path', type=str,
                         default="./app/engine/guardrails/archive/meeting_assistant_thematics.json",
                         help='Storage path for the thematics file.')

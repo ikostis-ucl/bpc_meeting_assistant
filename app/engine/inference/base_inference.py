@@ -230,14 +230,16 @@ class BaseInference(ABC):
             list: List of tuples containing (answer, metadata, timespan) for each processed result
         """
 
-        is_valid, validation_reason = self.input_guardrails.validate_query(query_string)
 
-        if not is_valid:
-            rejection_message = self.input_guardrails.get_rejection_message(validation_reason)
-            pprint_debug(f"Query rejected: {rejection_message}")
-            return [(rejection_message, {}, (0, round(datetime.now().timestamp())))]
-        else:
-            pprint_debug("Valid query received for processing.")
+        if not self.args.disable_guardrails:
+            is_valid, validation_reason = self.input_guardrails.validate_query(query_string)
+
+            if not is_valid:
+                rejection_message = self.input_guardrails.get_rejection_message(validation_reason)
+                pprint_debug(f"Query rejected: {rejection_message}")
+                return [(rejection_message, {}, (0, round(datetime.now().timestamp())))]
+            else:
+                pprint_debug("Valid query received for processing.")
 
         results = []
         reranker = self._get_reranker()

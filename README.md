@@ -12,10 +12,15 @@ To address this challenge, we propose an application designed to streamline acce
 
 - **Document Processing & Indexing**
   - PDF document parsing via LlamaParse.
-  - Automated metadata extraction (dates, participants).
   - Vector storage using LlamaIndex.
+  - Automated metadata extraction (dates, participants).
   - Support for temporal document organization.
   - French language support.
+
+ - **Input guardrails using extracted domain thematics:**
+    - Automatic domain discovery from indexed documents via LLM analysis.
+    - Pareto Principle (70/30) selection of most relevant thematics.
+    - Real-time query validation against project scope.
 
 - **Query Processing**
   - Natural language query understanding in French.
@@ -25,7 +30,7 @@ To address this challenge, we propose an application designed to streamline acce
   - Answer similarity detection to prevent redundancy.
 
 - **User Interface**
-  - Interactive Gradio-based GUI with chat interface.
+  - Interactive gradio-based GUI with chat interface.
   - PDF document preview with source highlighting.
   - Temporal navigation of responses.
   - Predefined example queries.
@@ -100,17 +105,22 @@ To address this challenge, we propose an application designed to streamline acce
 
 ### Usage
 
-1. **Index Documents**
+1. **Index Documents** *(prerequisite)*
     ```bash
     python run_kb_indexing.py
     ```
 
-2. **Run Interactive GUI**
+2. **Extract Domain Thematics** *(required before GUI)*
+    ```bash
+    python run_init_gr.py
+    ```
+
+3. **Run Interactive GUI**
     ```bash
     python run_gui.py
     ```
 
-3. **Run BenchmarkRetrieval Tests**
+4. **Run BenchmarkRetrieval Tests**
     ```bash
     python run_inference.py
     ```
