@@ -237,15 +237,15 @@ class GUI:
                                                 if 'doc' in locals():
                                                     doc.close()
 
-                                            gr.Gallery(
-                                                value=pdf_pages,
-                                                allow_preview=True,
-                                                preview=True,
-                                                selected_index=0,
-                                                type='pil',
-                                                interactive=False,
-                                                height=SMALL_WIN,
-                                            )
+                                                gr.Gallery(
+                                                    value=pdf_pages,
+                                                    allow_preview=True,
+                                                    preview=True,
+                                                    selected_index=0,
+                                                    type='pil',
+                                                    interactive=False,
+                                                    height=SMALL_WIN,
+                                                )
 
                         # Force garbage collection after rendering
                         gc.collect()

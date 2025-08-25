@@ -13,9 +13,12 @@ from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.postprocessor.colbert_rerank import ColbertRerank
 
 from app.engine.data_processing.data_loaders import load_index
+from app.engine.guardrails.input_guardrails import InputGuardrails
 from app.engine.inference.Judge import Judge
 from app.engine.inference.retrievers.hybrid_retriever import HybridRetriever
+from app.utils.app_utils import pprint_debug
 from app.utils.eval_utils import timed_operation
+from app.utils.inference_utils import throttle_requests
 
 
 class BaseInference(ABC):
@@ -55,6 +58,8 @@ class BaseInference(ABC):
         self.embedding_model = HuggingFaceEmbedding(model_name=args.embeddings_model,
                                                     cache_folder=args.embeddings_cache_dir)
 
+        self.input_guardrails = InputGuardrails(args)
+
         self.prompt_template = PromptTemplate(
             "Vous analysez des comptes-rendus de réunions de projet. "
             "Répondez de manière factuelle et concise aux questions en utilisant uniquement les informations présentes dans les documents fournis.\n\n"
@@ -71,6 +76,7 @@ class BaseInference(ABC):
         self.token_counter = TokenCountingHandler()
         self.callback_manager = CallbackManager([self.token_counter])
         Settings.callback_manager = self.callback_manager
+        self.model_tpm = self.args.groq_model_inference_tpm
 
         self.judge = Judge(args)
 
@@ -210,6 +216,7 @@ class BaseInference(ABC):
 
         return cleaned_results
 
+    @throttle_requests()
     @timed_operation('total_query_times')
     def query_llm(self, query_string: str, alpha: float = 0.5):
         """
@@ -222,6 +229,18 @@ class BaseInference(ABC):
         Returns:
             list: List of tuples containing (answer, metadata, timespan) for each processed result
         """
+
+
+        if not self.args.disable_guardrails:
+            is_valid, validation_reason = self.input_guardrails.validate_query(query_string)
+
+            if not is_valid:
+                rejection_message = self.input_guardrails.get_rejection_message(validation_reason)
+                pprint_debug(f"Query rejected: {rejection_message}")
+                return [(rejection_message, {}, (0, round(datetime.now().timestamp())))]
+            else:
+                pprint_debug("Valid query received for processing.")
+
         results = []
         reranker = self._get_reranker()
         query_bundle = QueryBundle(query_str=query_string)

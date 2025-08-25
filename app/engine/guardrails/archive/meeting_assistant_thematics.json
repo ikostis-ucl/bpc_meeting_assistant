@@ -1,0 +1,621 @@
+{
+  "extraction_date": "2025-08-13T17:15:54.605822",
+  "total_documents": 60,
+  "total_unique_thematics": 110,
+  "processed_documents": [
+    "pv_anonym_49.pdf",
+    "pv_anonym_06.pdf",
+    "pv_anonym_26.pdf",
+    "pv_anonym_12.pdf",
+    "pv_anonym_05.pdf",
+    "pv_anonym_56.pdf",
+    "pv_anonym_16.pdf",
+    "pv_anonym_01.pdf",
+    "pv_anonym_07.pdf",
+    "pv_anonym_33.pdf",
+    "pv_anonym_28.pdf",
+    "pv_anonym_19.pdf",
+    "pv_anonym_54.pdf",
+    "pv_anonym_43.pdf",
+    "pv_anonym_11.pdf",
+    "pv_anonym_21.pdf",
+    "pv_anonym_55.pdf",
+    "pv_anonym_53.pdf",
+    "pv_anonym_44.pdf",
+    "pv_anonym_03.pdf",
+    "pv_anonym_36.pdf",
+    "pv_anonym_32.pdf",
+    "pv_anonym_13.pdf",
+    "pv_anonym_39.pdf",
+    "pv_anonym_48.pdf",
+    "pv_anonym_18.pdf",
+    "pv_anonym_27.pdf",
+    "pv_anonym_30.pdf",
+    "pv_anonym_22.pdf",
+    "pv_anonym_35.pdf",
+    "pv_anonym_20.pdf",
+    "pv_anonym_46.pdf",
+    "pv_anonym_58.pdf",
+    "pv_anonym_25.pdf",
+    "pv_anonym_09.pdf",
+    "pv_anonym_47.pdf",
+    "pv_anonym_41.pdf",
+    "pv_anonym_15.pdf",
+    "pv_anonym_23.pdf",
+    "pv_anonym_59.pdf",
+    "pv_anonym_08.pdf",
+    "pv_anonym_40.pdf",
+    "pv_anonym_34.pdf",
+    "pv_anonym_51.pdf",
+    "pv_anonym_60.pdf",
+    "pv_anonym_57.pdf",
+    "pv_anonym_31.pdf",
+    "pv_anonym_38.pdf",
+    "pv_anonym_10.pdf",
+    "pv_anonym_24.pdf",
+    "pv_anonym_29.pdf",
+    "pv_anonym_52.pdf",
+    "pv_anonym_14.pdf",
+    "pv_anonym_02.pdf",
+    "pv_anonym_42.pdf",
+    "pv_anonym_37.pdf",
+    "pv_anonym_04.pdf",
+    "pv_anonym_17.pdf",
+    "pv_anonym_50.pdf",
+    "pv_anonym_45.pdf"
+  ],
+  "thematics": {
+    "Gestion_Projet_Construction": {
+      "description": "Description : Cette thématique englobe tous les aspects liés à la gestion d'un projet de construction, incluant la planification, la coordination des équipes, la gestion des délais, la supervision des travaux, et la résolution des problèmes qui surviennent pendant le chantier. Elle couvre également les réunions, les communications entre les intervenants, et la prise de décisions pour assurer l'avancement du projet.",
+      "frequency": 20
+    },
+    "Systemes_Techniques_Batiment": {
+      "description": "Description : Cette thématique concerne tous les systèmes techniques du bâtiment, tels que les installations électriques, les systèmes de chauffage, de ventilation, et de climatisation, les réseaux d'eau et d'égout, les systèmes de sécurité, et les ascenseurs. Elle inclut également les considérations relatives à l'efficacité énergétique, la durabilité, et la conformité aux normes et réglementations.",
+      "frequency": 33
+    },
+    "Coordination_Projet_Communication": {
+      "description": "Description : Cette thématique se concentre sur l'organisation et la communication au sein de l'équipe de projet, incluant la planification des réunions, la gestion des échanges d'informations, la coordination des interventions des différents métiers, et la communication avec les clients et les parties prenantes. Elle vise à assurer une collaboration efficace et une prise de décision coordonnée.",
+      "frequency": 30
+    },
+    "Suivi_Execution_Travaux": {
+      "description": "Description : Cette thématique est relative au suivi de l'exécution des travaux, incluant la supervision du chantier, le contrôle de la qualité, la gestion des phases de construction, et le suivi des délais. Elle implique également la résolution des problèmes techniques et la mise en œuvre de solutions pour assurer la progression du projet.",
+      "frequency": 27
+    },
+    "Gestion_Administrative_Financiere": {
+      "description": "Description : Cette thématique englobe les aspects administratifs et financiers du projet, incluant la gestion des budgets, la facturation, les contrats, les devis, les aspects réglementaires, les autorisations, et la conformité aux exigences légales. Elle vise à assurer une gestion financière saine et une conformité aux règles et réglementations applicables.",
+      "frequency": 26
+    },
+    "Conception_Modification_Plans": {
+      "description": "Description : Cette thématique concerne la conception et les modifications des plans du projet, incluant l'évolution des plans, les adaptations techniques, les changements de conception, la validation des solutions, et les études techniques. Elle implique une collaboration étroite entre les différents intervenants pour garantir que les plans soient réalisables, fonctionnels, et conformes aux besoins et aux exigences du projet.",
+      "frequency": 20
+    },
+    "Sécurité_Santé_Environnement": {
+      "description": "Description : Cette thématique se concentre sur les aspects liés à la sécurité, la santé, et l'environnement sur le chantier, incluant la prévention des accidents, la gestion des risques, la protection de l'environnement, et la conformité aux normes et réglementations en matière de sécurité et de santé au travail. Elle vise à assurer un environnement de travail sûr pour tous les intervenants et à minimiser l'impact environnemental du projet.",
+      "frequency": 10
+    },
+    "Systemes_techniques_batiment": {
+      "description": "Description : Cette thématique englobe tous les aspects techniques liés aux systèmes de construction du bâtiment, tels que les systèmes d'égouttage, les conduites d'eau, les systèmes de ventilation, les systèmes de chauffage et de climatisation, les systèmes de sécurité, les systèmes d'éclairage, les systèmes de sprinklage, les systèmes de haute tension, les systèmes de recharge de voitures électriques, les systèmes de comptage d'eau, les systèmes de gestion des déchets, etc. Cette thématique couvre également les questions relatives à la conception, à l'installation, à la maintenance et à la réparation de ces systèmes.",
+      "frequency": 22
+    },
+    "Coordination_projet_communication": {
+      "description": "Description : Cette thématique concerne l'organisation et la coordination des équipes de projet, les réunions, les échanges d'informations entre les intervenants, la communication avec les clients, la planification collaborative, la gestion des conflits, la résolution des problèmes, la prise de décision, la définition des rôles et des responsabilités, la gestion des délais, la gestion des coûts, la gestion des ressources, etc. Cette thématique vise à assurer une communication efficace et une coordination efficiente entre les membres de l'équipe de projet.",
+      "frequency": 23
+    },
+    "Suivi_execution_travaux": {
+      "description": "Description : Cette thématique se concentre sur le suivi et la supervision des travaux de construction, la gestion des délais, la gestion des coûts, la gestion des ressources, la qualité des travaux, la sécurité sur le chantier, la gestion des risques, la résolution des problèmes, la prise de décision, la définition des priorités, la gestion des intervenants, etc. Cette thématique vise à assurer que les travaux de construction soient exécutés de manière efficace, efficiente et sécuritaire.",
+      "frequency": 23
+    },
+    "Gestion_administrative_financiere": {
+      "description": "Description : Cette thématique englobe les aspects administratifs et financiers du projet, tels que la gestion des budgets, la gestion des coûts, la facturation, les contrats, les devis, les aspects réglementaires, les autorisations, la conformité, les assurances, les garanties, les paiements, les factures, les comptes, etc. Cette thématique vise à assurer que les aspects administratifs et financiers du projet soient gérés de manière efficace et efficiente.",
+      "frequency": 22
+    },
+    "Conception_modification_plans": {
+      "description": "Description : Cette thématique concerne la conception et la modification des plans de construction, la définition des spécifications techniques, la sélection des matériaux, la définition des détails de construction, la création des plans d'exécution, la modification des plans en fonction des besoins du client ou des contraintes techniques, la gestion des changements, la résolution des problèmes, la prise de décision, la définition des priorités, etc. Cette thématique vise à assurer que les plans de construction soient conçus et modifiés de manière efficace et efficiente pour répondre aux besoins du projet.",
+      "frequency": 18
+    },
+    "Sécurité_santé": {
+      "description": "Description : Cette thématique se concentre sur la sécurité et la santé sur le chantier de construction, la prévention des accidents, la gestion des risques, la sécurité des travailleurs, la santé des travailleurs, les équipements de protection individuelle, les procédures de sécurité, les plans de sécurité, les inspections de sécurité, les formations à la sécurité, etc. Cette thématique vise à assurer que les travailleurs soient en sécurité et en bonne santé sur le chantier de construction.",
+      "frequency": 13
+    },
+    "Environnement_énergie": {
+      "description": "Description : Cette thématique englobe les aspects environnementaux et énergétiques du projet, tels que la gestion des déchets, la conservation de l'énergie, la réduction des émissions de gaz à effet de serre, la gestion des ressources naturelles, la protection de l'environnement, les systèmes de gestion environnementale, les audits énergétiques, les études de faisabilité, etc. Cette thématique vise à assurer que le projet soit conçu et exécuté de manière à minimiser son impact sur l'environnement et à promouvoir la durabilité.",
+      "frequency": 1
+    },
+    "Acoustique": {
+      "description": "Description : Cette thématique est spécifique aux aspects acoustiques des bâtiments, y compris la planification, la conception et l'installation des systèmes acoustiques, tels que les doublages acoustiques, les portes acoustiques, etc. Elle englobe également les aspects liés à la qualité acoustique des bâtiments et à la réduction des bruits.",
+      "frequency": 4
+    },
+    "Environnement_énergétique": {
+      "description": "Description : Cette thématique est relative aux aspects environnementaux et énergétiques des bâtiments, y compris la planification, la conception et l'installation des systèmes énergétiques, tels que les systèmes de chauffage, de refroidissement, de ventilation, etc. Elle inclut également les aspects liés à la performance énergétique des bâtiments, à la consommation d'énergie et à la réduction des émissions de gaz à effet de serre.",
+      "frequency": 3
+    },
+    "Coordination_Securite_Sante": {
+      "description": "Description : Cette thématique englobe les aspects liés à la sécurité et à la santé sur les chantiers de construction, notamment la coordination des mesures de sécurité, la gestion des risques, la prévention des accidents et la protection de la santé des travailleurs. Elle inclut les sous-domaines tels que la sécurité des travailleurs, la santé des travailleurs, la gestion des risques et la prévention des accidents. Ces thématiques représentent les domaines étendus qui englobent de nombreux sujets et questions dans la gestion de projets de construction. Elles sont larges et inclusives, permettant de couvrir tous les aspects abordés dans le document analysé.",
+      "frequency": 3
+    },
+    "Acoustique_Et_Thermique": {
+      "description": "Description : Cette thématique concerne les aspects liés à l'acoustique et à la thermique dans le bâtiment, incluant les principes acoustiques, les doublages acoustiques, les isolants thermiques, etc. Elle couvre également les aspects liés à la confort, à la qualité de l'air, à la température, etc. Les sujets abordés incluent les choix des matériaux, les installations, les réseaux, les équipements, etc.",
+      "frequency": 1
+    },
+    "Gestion_de_chantier": {
+      "description": "Description : Cette thématique englobe tous les aspects liés à la gestion du chantier, notamment la planification, la coordination des équipes, la supervision des travaux, le contrôle de la qualité, la gestion des délais et la coordination des interventions. Les sujets abordés incluent l'avancement des travaux, les réunions de chantier, les décisions prises, les problèmes rencontrés et les solutions proposées.",
+      "frequency": 4
+    },
+    "Conception_et_modification_de_plans": {
+      "description": "Description : Cette thématique concerne l'évolution des plans, les adaptations techniques, les changements de conception, la validation des solutions et les études techniques. Les sujets abordés incluent les modifications des plans, les choix des matériaux, les calculs techniques, les études de faisabilité et les validations des solutions.",
+      "frequency": 3
+    },
+    "Sécurité_et_santé": {
+      "description": "Description : Cette thématique englobe tous les aspects liés à la sécurité et à la santé sur le chantier, notamment les risques, les dangers, les mesures de prévention, les équipements de protection individuelle et les procédures d'urgence. Les sujets abordés incluent les risques identifiés, les mesures de prévention, les équipements de protection individuelle et les procédures d'urgence.",
+      "frequency": 4
+    },
+    "Environnement_et_urbanisme": {
+      "description": "Description : Cette thématique concerne les aspects environnementaux et urbanistiques du projet, notamment la gestion des déchets, la protection de l'environnement, les impacts sur le voisinage et les exigences urbanistiques. Les sujets abordés incluent les mesures de protection de l'environnement, les exigences urbanistiques et les impacts sur le voisinage.",
+      "frequency": 3
+    },
+    "Gestion_de_Projet": {
+      "description": "Description : Cette thématique englobe tous les aspects liés à la planification, à la coordination et à la gestion du projet de construction, y compris la définition des objectifs, la planification des tâches, la gestion des ressources, la coordination des équipes et la supervision des travaux.",
+      "frequency": 16
+    },
+    "Conception_et_Modification": {
+      "description": "Description : Cette thématique couvre tous les aspects liés à la conception et à la modification des plans et des spécifications du projet, y compris les changements de conception, les adaptations techniques, la validation des solutions et les études techniques.",
+      "frequency": 10
+    },
+    "Gestion de projet et coordination": {
+      "description": "Description : Cette thématique englobe tous les aspects liés à la gestion et à la coordination du projet, notamment la planification, l'organisation des réunions, la communication entre les intervenants, la gestion des métiers et la coordination des interventions. Les sujets abordés incluent la planification du chantier, les réunions de coordination, la communication entre les équipes, la gestion des délais et la coordination des métiers.",
+      "frequency": 1
+    },
+    "Conception et modification des plans": {
+      "description": "Description : Cette thématique concerne l'évolution des plans, les adaptations techniques, les changements de conception, la validation des solutions et les études techniques. Les sujets abordés incluent la modification des plans, la conception des espaces, la sélection des matériaux, la validation des solutions techniques et les études de faisabilité.",
+      "frequency": 1
+    },
+    "Suivi et exécution des travaux": {
+      "description": "Description : Cette thématique englobe le suivi et l'exécution des travaux, notamment l'avancement des travaux, la supervision du chantier, le contrôle de la qualité, la gestion des phases et le suivi des délais. Les sujets abordés incluent le suivi des travaux, la gestion des délais, la supervision du chantier, le contrôle de la qualité et la gestion des interventions.",
+      "frequency": 1
+    },
+    "Gestion administrative et financière": {
+      "description": "Description : Cette thématique concerne la gestion administrative et financière du projet, notamment les budgets, les coûts, la facturation, les contrats, les devis, les aspects réglementaires, les autorisations et la conformité. Les sujets abordés incluent la gestion des budgets, la facturation, les contrats, les devis, les autorisations et la conformité réglementaire.",
+      "frequency": 2
+    },
+    "Techniques spéciales - plomberie, sanitaire, chauffage, ventilation": {
+      "description": "Description : Cette thématique englobe les techniques spéciales liées à la plomberie, au sanitaire, au chauffage et à la ventilation, notamment la conception, l'installation et la mise en service de ces systèmes. Les sujets abordés incluent la conception des systèmes de plomberie, de sanitaire, de chauffage et de ventilation, l'installation de ces systèmes et leur mise en service.",
+      "frequency": 1
+    },
+    "Systèmes techniques du bâtiment": {
+      "description": "Description : Cette thématique concerne les systèmes techniques du bâtiment, notamment les systèmes électriques, les systèmes de sécurité, les systèmes de ventilation, les systèmes de chauffage et les systèmes de climatisation. Les sujets abordés incluent la conception, l'installation et la mise en service de ces systèmes.",
+      "frequency": 1
+    },
+    "Coordination sécurité-santé": {
+      "description": "Description : Cette thématique englobe la coordination de la sécurité et de la santé sur le chantier, notamment la gestion des risques, la prévention des accidents, la formation des intervenants et la mise en place de mesures de sécurité. Les sujets abordés incluent la gestion des risques, la prévention des accidents, la formation des intervenants et la mise en place de mesures de sécurité.",
+      "frequency": 1
+    },
+    "Aménagement et finition": {
+      "description": "Description : Cette thématique concerne l'aménagement et la finition des espaces, notamment la sélection des matériaux, la pose des revêtements, la peinture, la mise en place des équipements et la finition des détails. Les sujets abordés incluent la sélection des matériaux, la pose des revêtements, la peinture, la mise en place des équipements et la finition des détails. Ces thématiques englobent l'ensemble des aspects abordés dans le document et permettent de couvrir les différents domaines liés à la gestion de projet de construction.",
+      "frequency": 1
+    },
+    "Sécurité_Santé": {
+      "description": "Description : Cette thématique englobe tous les aspects liés à la sécurité et à la santé sur le chantier, y compris la prévention des accidents, la gestion des risques, la formation des travailleurs et la mise en place de mesures de sécurité.",
+      "frequency": 8
+    },
+    "Coordination_des_Métiers": {
+      "description": "Description : Cette thématique englobe tous les aspects liés à la coordination et à la communication entre les différents métiers et intervenants du projet. Elle inclut la coordination des plans, la gestion des interfaces, la résolution des conflits, ainsi que la communication avec les clients et les parties prenantes.",
+      "frequency": 2
+    },
+    "Coordination_securite_sante": {
+      "description": "Description : Cette thématique se concentre sur la coordination de la sécurité et de la santé sur le chantier, incluant les remarques relatives à la sécurité, les rapports de visite du CSS, les consignes de sécurité, les équipements de protection individuelle, etc. Les sujets abordés incluent la sécurité des travailleurs, la prévention des accidents, la gestion des risques, etc.",
+      "frequency": 1
+    },
+    "Environnement_urbanisme": {
+      "description": "Description : Cette thématique concerne les aspects environnementaux et urbanistiques du projet, tels que la gestion des eaux de pluie, les égouts, les déchets, les espaces verts, les aménagements urbains, etc. Les sujets abordés incluent la gestion des eaux de ruissellement, les réseaux d'égouttage, les espaces verts, les aménagements urbains, etc.",
+      "frequency": 3
+    },
+    "Gestion_Parties_Publiques": {
+      "description": "Description : Cette thématique se concentre sur la gestion des parties publiques d'un projet de construction, incluant la gestion des accès, des espaces publics, et des équipements communs. Elle englobe les domaines tels que la gestion des clés, la gestion des systèmes de sécurité, et la coordination avec les autorités compétentes. Les sujets connexes comprennent la gestion des espaces verts, la gestion des déchets, et la coordination avec les riverains.",
+      "frequency": 1
+    },
+    "Récolte_Eaux_De_Plue": {
+      "description": "Description : Cette thématique englobe tous les aspects liés à la récolte et à la gestion des eaux de pluie sur les chantiers de construction, incluant la conception et l'installation des systèmes de récolte, la gestion des débits, et la coordination avec les autorités compétentes. Elle couvre les domaines tels que la gestion des risques d'inondation, la protection de l'environnement, et la conformité aux normes et réglementations. Les sujets connexes incluent la gestion des eaux usées, la gestion des déchets, et la coordination avec les riverains.",
+      "frequency": 1
+    },
+    "Techniques_Speciales": {
+      "description": "Description : Cette thématique regroupe les aspects techniques spécifiques liés à la construction, tels que les systèmes de ventilation, les installations électriques, les systèmes de sécurité incendie, les ascenseurs, les escaliers, les gaines techniques, les isolations, les fondations, les structures du bâtiment, les matériaux de construction, les équipements de chantier, etc.",
+      "frequency": 3
+    },
+    "Acoustique_Acousticien": {
+      "description": "Description : Cette thématique est centrée sur les aspects acoustiques d'un bâtiment, incluant les principes acoustiques généraux, les doublages acoustiques, les isolations, les matériaux acoustiques, etc. Elle vise à garantir que les espaces soient conçus pour offrir un environnement acoustique confortable et fonctionnel.",
+      "frequency": 1
+    },
+    "Environnement_Urbanisme": {
+      "description": "Description : Cette thématique englobe les aspects liés à l'environnement et à l'urbanisme, incluant la gestion des eaux de pluie, les systèmes d'égouttage, les espaces verts, les matériaux de construction, etc. Elle vise à garantir que le projet soit conçu et réalisé de manière à minimiser son impact sur l'environnement et à intégrer les principes de développement durable.",
+      "frequency": 1
+    },
+    "Systèmes_techniques_bâtiment": {
+      "description": "Description : Cette thématique englobe tous les aspects techniques liés aux systèmes du bâtiment, tels que les systèmes HVAC, l'électricité, la plomberie, le sprinklage, la ventilation, le chauffage, la climatisation, les systèmes de sécurité, l'éclairage, etc. Les sous-domaines abordés incluent la pose de parements, les châssis, les descentes d'eau pluviale, les systèmes de gestion de la partie publique du parking, ainsi que les raccordements aux égouts publics.",
+      "frequency": 1
+    },
+    "Gestion_administrative_financière": {
+      "description": "Description : Cette thématique couvre les aspects liés à la gestion administrative et financière du projet, notamment les budgets, les coûts, la facturation, les contrats, les devis, les aspects réglementaires, les autorisations et la conformité. Les sous-domaines abordés incluent la gestion des coûts, la planification financière, la gestion des contrats et des devis, ainsi que les aspects administratifs liés à la construction.",
+      "frequency": 1
+    },
+    "**Suivi_execution_travaux**": {
+      "description": "Description : Cette thématique englobe tous les aspects liés au suivi et à l'exécution des travaux de construction, notamment l'avancement des travaux, la supervision du chantier, le contrôle qualité, la gestion des phases, le suivi des délais et la coordination des interventions. Les points abordés incluent les mises à jour sur les travaux en cours, les problèmes rencontrés, les solutions proposées et les décisions prises pour assurer la progression du projet.",
+      "frequency": 1
+    },
+    "**Coordination_projet_communication**": {
+      "description": "Description : Cette thématique couvre les aspects liés à la coordination du projet et à la communication entre les intervenants, notamment les réunions, les échanges d'informations, la planification collaborative et la gestion des relations entre les parties prenantes. Les points abordés incluent l'organisation des réunions, la transmission d'informations, la coordination des métiers et la gestion des conflits.",
+      "frequency": 1
+    },
+    "**Gestion_administrative_financiere**": {
+      "description": "Description : Cette thématique englobe les aspects liés à la gestion administrative et financière du projet, notamment les budgets, les coûts, la facturation, les contrats, les devis et les aspects réglementaires. Les points abordés incluent la gestion des coûts, la planification financière, la gestion des contrats et la conformité aux réglementations.",
+      "frequency": 1
+    },
+    "**Conception_modification_plans**": {
+      "description": "Description : Cette thématique couvre les aspects liés à la conception et à la modification des plans, notamment les adaptations techniques, les changements de conception, la validation des solutions et les études techniques. Les points abordés incluent les modifications des plans, les adaptations techniques, les études de faisabilité et la validation des solutions.",
+      "frequency": 1
+    },
+    "**Systemes_techniques_batiment**": {
+      "description": "Description : Cette thématique englobe les aspects liés aux systèmes techniques du bâtiment, notamment les systèmes de chauffage, de ventilation, de climatisation, d'électricité, de sprinklage et de sécurité. Les points abordés incluent la conception, l'installation et la mise en œuvre de ces systèmes, ainsi que leur maintenance et leur réparation.",
+      "frequency": 1
+    },
+    "**Gestion_securite_sante**": {
+      "description": "Description : Cette thématique couvre les aspects liés à la gestion de la sécurité et de la santé sur le chantier, notamment la prévention des accidents, la gestion des risques, la formation des intervenants et la mise en œuvre de mesures de sécurité. Les points abordés incluent la planification de la sécurité, la mise en œuvre de mesures de prévention et la gestion des incidents.",
+      "frequency": 1
+    },
+    "**Choix_des_materiaux**": {
+      "description": "Description : Cette thématique englobe les aspects liés au choix des matériaux, notamment les matériaux de construction, les finitions, les équipements et les systèmes techniques. Les points abordés incluent la sélection des matériaux, la définition des spécifications techniques et la validation des choix.",
+      "frequency": 1
+    },
+    "**Gestion_des_intervenants**": {
+      "description": "Description : Cette thématique couvre les aspects liés à la gestion des intervenants, notamment les sous-traitants, les fournisseurs, les architectes, les ingénieurs et les autres parties prenantes. Les points abordés incluent la sélection des intervenants, la gestion des contrats, la coordination des travaux et la résolution des conflits.",
+      "frequency": 1
+    },
+    "Techniques_speciales": {
+      "description": "Description : Cette thématique se concentre sur les techniques spéciales telles que la plomberie, le sanitaire, les ascenseurs, les systèmes de sécurité, les systèmes de ventilation, les systèmes de chauffage et de climatisation. Les sujets abordés incluent la conception, l'installation, la maintenance et la réparation de ces systèmes.",
+      "frequency": 1
+    },
+    "Architecture": {
+      "description": "Description : Cette thématique englobe les aspects architecturaux du projet, tels que la conception de la façade, les choix des matériaux, les couleurs, les textures, les finitions, les aménagements intérieurs et extérieurs. Les sujets abordés incluent la conception initiale, les modifications de plans, les adaptations aux normes et réglementations, les études de faisabilité et les tests de validation.",
+      "frequency": 1
+    },
+    "Environnement_et_Urbanisme": {
+      "description": "Description : Cette thématique couvre les aspects liés à l'environnement et à l'urbanisme, y compris la récolte des eaux de pluie, les plantations, les aménagements minéraux, les bordures en acier corten, etc. Ces thématiques représentent les domaines étendus qui englobent de nombreux sujets et questions dans la gestion de projets de construction.",
+      "frequency": 1
+    },
+    "Gestion_des_risques": {
+      "description": "Description : Cette thématique concerne la gestion des risques liés au projet de construction, tels que les risques de sécurité, les risques environnementaux, les risques financiers, les risques de retard, les risques de non-conformité, etc. Les sujets abordés incluent l'identification des risques, l'évaluation des risques, la mise en place de mesures de prévention, la gestion des crises et la résolution des problèmes.",
+      "frequency": 4
+    },
+    "Coordination_des_intervenants": {
+      "description": "Description : Cette thématique englobe la coordination des intervenants dans le projet de construction, tels que les architectes, les ingénieurs, les entrepreneurs, les sous-traitants, les fournisseurs, etc. Les sujets abordés incluent la définition des rôles et des responsabilités, la planification des interventions, la gestion des délais, la coordination des travaux, la gestion des conflits et la résolution des problèmes. Ces thématiques sont larges et inclusives, et elles représentent tous les domaines abordés dans le document spécifique. Elles peuvent englober de nombreux sujets et questions dans la gestion de projets de construction.",
+      "frequency": 2
+    },
+    "Environnement_durabilité": {
+      "description": "Description : Cette thématique couvre les aspects environnementaux et de durabilité du projet, tels que la gestion des déchets, la conservation de l'énergie, l'utilisation de matériaux durables et la réduction de l'impact environnemental. Les sujets abordés incluent la gestion des déchets, la conservation de l'énergie, l'utilisation de matériaux durables et la réduction de l'impact environnemental.",
+      "frequency": 1
+    },
+    "Qualité_contrôle": {
+      "description": "Description : Cette thématique couvre les aspects liés à la qualité et au contrôle du projet, incluant la définition des normes de qualité, la mise en place de processus de contrôle, la vérification de la conformité et la gestion des non-conformités. Les sujets abordés incluent la définition des normes de qualité, la mise en place de processus de contrôle, la vérification de la conformité et la gestion des non-conformités.",
+      "frequency": 1
+    },
+    "Choix_Materiels_Equipements": {
+      "description": "Description : Cette thématique englobe tous les aspects liés au choix des matériaux et des équipements pour un projet de construction, notamment les choix de finition, les matériaux de construction, les équipements techniques et les fournitures. Ces thématiques représentent les domaines étendus qui englobent de nombreux sujets et questions dans la gestion de projets de construction.",
+      "frequency": 2
+    },
+    "Conception_et_Modification_de_Plans": {
+      "description": "Description : Cette thématique concerne tous les aspects liés à la conception et à la modification des plans, tels que les études, les analyses, les simulations, les modélisations, les conceptions, les dessins, les croquis, les schémas, les plans, les maquettes, les prototypes, les tests, les essais, les validations, les vérifications, les corrections, les révisions, les mises à jour, les changements, les adaptations, les améliorations, les optimisations, les rationalisations, les simplifications, les complexifications, les intégrations, les interfaces, les interactions, les systèmes, les sous-systèmes, les composants, les éléments, les matériaux, les technologies, les outils, les méthodes, les processus, les procédures, les normes, les réglementations, les lois, les contrats, les accords, les partenariats, les relations avec les parties prenantes, les attentes, les besoins, les objectifs, les stratégies, les tactiques, les opérations, les activités, les tâches, les responsabilités, les rôles, les fonctions, les organigrammes, les structures, les systèmes, les technologies, les infrastructures, les équipements, les matériels, les logiciels, les données, les informations, les connaissances, les compétences, les expériences, les leçons apprises.",
+      "frequency": 5
+    },
+    "Suivi_et_Execution_des_Travaux": {
+      "description": "Description : Cette thématique englobe tous les aspects liés au suivi et à l'exécution des travaux, tels que les plans, les délais, les coûts, les ressources, les risques, les changements, les problèmes, les solutions, les progrès, les échéances, les jalons, les indicateurs de performance, les tableaux de bord, les rapports, les analyses, les recommandations, les actions correctives, les suivis, les évaluations, les audits, les révisions, les mises à jour, les formations, les compétences, les outils, les méthodes, les processus, les procédures, les normes, les réglementations, les lois, les contrats, les accords, les partenariats, les relations avec les parties prenantes, les attentes, les besoins, les objectifs, les stratégies, les tactiques, les opérations, les activités, les tâches, les responsabilités, les rôles, les fonctions, les organigrammes, les structures, les systèmes, les technologies, les infrastructures, les équipements, les matériels, les logiciels, les données, les informations, les connaissances, les compétences, les expériences, les leçons apprises.",
+      "frequency": 2
+    },
+    "Gestion_Administrative_et_Financiere": {
+      "description": "Description : Cette thématique concerne tous les aspects liés à la gestion administrative et financière, tels que les budgets, les coûts, les factures, les contrats, les devis, les aspects réglementaires, les autorisations, la conformité, les impôts, les taxes, les cotisations, les assurances, les garanties, les cautions, les dépôts, les avances, les acomptes, les paiements, les encaissements, les décaissements, les transferts, les virements, les opérations, les transactions, les comptes, les bilans, les états, les rapports, les analyses, les recommandations, les actions correctives, les suivis, les évaluations, les audits, les révisions, les mises à jour, les formations, les compétences, les outils, les méthodes, les processus, les procédures, les normes, les réglementations, les lois, les contrats, les accords, les partenariats, les relations avec les parties prenantes, les attentes, les besoins, les objectifs, les stratégies, les tactiques, les opérations, les activités, les tâches, les responsabilités, les rôles, les fonctions, les organigrammes, les structures, les systèmes, les technologies, les infrastructures, les équipements, les matériels, les logiciels, les données, les informations, les connaissances, les compétences, les expériences, les leçons apprises.",
+      "frequency": 7
+    },
+    "Sécurité_et_Santé": {
+      "description": "Description : Cette thématique englobe tous les aspects liés à la sécurité et à la santé, tels que les risques, les dangers, les menaces, les vulnérabilités, les impacts, les conséquences, les précautions, les mesures, les règles, les réglementations, les lois, les normes, les procédures, les plans, les protocoles, les équipements, les matériels, les outils, les méthodes, les processus, les formations, les compétences, les expériences, les leçons apprises, les audits, les évaluations, les révisions, les mises à jour, les recommandations, les actions correctives, les suivis, les évaluations, les audits, les révisions, les mises à jour.",
+      "frequency": 8
+    },
+    "Environnement_et_Durable": {
+      "description": "Description : Cette thématique concerne tous les aspects liés à l'environnement et au développement durable, tels que les impacts environnementaux, les émissions, les rejets, les déchets, les pollutions, les nuisances, les risques, les dangers, les menaces, les vulnérabilités, les conséquences, les précautions, les mesures, les règles, les réglementations, les lois, les normes, les procédures, les plans, les protocoles, les équipements, les matériels, les outils, les méthodes, les processus, les formations, les compétences, les expériences, les leçons apprises, les audits, les évaluations, les révisions, les mises à jour, les recommandations, les actions correctives, les suivis, les évaluations, les audits, les révisions, les mises à jour.",
+      "frequency": 4
+    },
+    "Qualité_et_Performance": {
+      "description": "Description : Cette thématique englobe tous les aspects liés à la qualité et à la performance, tels que les objectifs, les cibles, les indicateurs, les mesures, les évaluations, les audits, les révisions, les mises à jour, les recommandations, les actions correctives, les suivis, les évaluations, les audits, les révisions, les mises à jour, les formations, les compétences, les expériences, les leçons apprises, les équipements, les matériels, les outils, les méthodes, les processus, les procédures, les normes, les réglementations, les lois, les contrats, les accords, les partenariats, les relations avec les parties prenantes, les attentes, les besoins, les objectifs, les stratégies, les tactiques, les opérations, les activités, les tâches, les responsabilités, les rôles, les fonctions, les organigrammes, les structures, les systèmes, les technologies, les infrastructures, les équipements, les matériels, les logiciels, les données, les informations, les connaissances, les compétences, les expériences, les leçons apprises.",
+      "frequency": 1
+    },
+    "Gestion_des_Ressources": {
+      "description": "Description : Cette thématique concerne tous les aspects liés à la gestion des ressources, tels que les ressources humaines, les ressources matérielles, les ressources financières, les ressources informationnelles, les ressources technologiques, les ressources énergétiques, les ressources environnementales, les ressources naturelles, les ressources culturelles, les ressources sociales, les ressources politiques, les ressources économiques, les ressources stratégiques, les ressources tactiques, les ressources opérationnelles, les ressources fonctionnelles, les ressources structurelles, les ressources systémiques, les ressources infrastructurelles, les ressources équipementielles, les ressources logicielles, les ressources données, les ressources informations, les ressources connaissances, les ressources compétences, les ressources expériences, les ressources leçons apprises.",
+      "frequency": 1
+    },
+    "Gestion_Acquerreurs": {
+      "description": "Description : Cette thématique se concentre sur la gestion des acquéreurs, notamment la gestion des demandes, la gestion des modifications, la gestion des relations avec les acquéreurs et la gestion des conflits. Elle inclut les sous-domaines tels que la gestion des relations client, la gestion des réclamations et la gestion des litiges.",
+      "frequency": 1
+    },
+    "Coordination_des_Travaux": {
+      "description": "Description : Cette thématique se concentre sur la coordination des travaux de construction, y compris la planification des tâches, la gestion des délais, la coordination des sous-traitants et la supervision des travaux. Elle implique également la résolution des problèmes et la gestion des changements qui surviennent pendant la phase de construction.",
+      "frequency": 2
+    },
+    "Coordination_des_Intervenants": {
+      "description": "Description : Cette thématique concerne la coordination des différents intervenants sur le projet de construction, y compris les architectes, les ingénieurs, les sous-traitants, les fournisseurs et les autorités réglementaires. Elle implique la communication, la négociation et la résolution des conflits pour assurer une collaboration efficace et efficiente.",
+      "frequency": 1
+    },
+    "Suivi_et_Controle_Qualite": {
+      "description": "Description : Cette thématique se concentre sur le suivi et le contrôle de la qualité des travaux de construction, y compris la vérification des plans, la inspection des travaux, la gestion des défauts et la prise de mesures correctives pour assurer que les travaux sont conformes aux normes et aux exigences. Ces thématiques sont larges et inclusives, et elles représentent les principaux domaines abordés dans le document. Elles peuvent être utilisées pour organiser et structurer les informations, et pour identifier les principaux enjeux et défis liés au projet de construction.",
+      "frequency": 1
+    },
+    "Qualite_et_Securite": {
+      "description": "Description : Cette thématique englobe les aspects liés à la qualité et à la sécurité du projet, tels que la gestion des risques, la sécurité sur le chantier, la qualité des matériaux et des travaux, la conformité aux normes et réglementations, etc. Elle inclut également la gestion des audits, des inspections et des certifications. Ces thématiques sont larges et inclusives, et elles représentent tous les domaines abordés dans le document spécifique. Elles peuvent englober de nombreux sujets et questions dans la gestion de projets de construction.",
+      "frequency": 1
+    },
+    "Environnement_et_énergie": {
+      "description": "Description : Cette thématique concerne les aspects environnementaux et énergétiques du projet, notamment les choix de matériaux, les détails de construction et les solutions techniques. Elle inclut les systèmes de ventilation, les systèmes de chauffage, les systèmes de climatisation, les systèmes de sécurité, etc.",
+      "frequency": 1
+    },
+    "Aménagement_et_esthétique": {
+      "description": "Description : Cette thématique englobe tous les aspects liés à l'aménagement et à l'esthétique du bâtiment, notamment les choix de matériaux, les détails de construction et les solutions techniques. Elle inclut les systèmes de façade, les systèmes de toiture, les systèmes de cloison, etc.",
+      "frequency": 1
+    },
+    "Relation_avec_les_acquereurs": {
+      "description": "Description : Cette thématique concerne les aspects liés à la relation avec les acquéreurs, notamment les réunions, les décisions prises, les problèmes rencontrés et les solutions apportées. Elle inclut les choix de matériaux, les détails de construction et les solutions techniques.",
+      "frequency": 1
+    },
+    "Acoustique_et_étanchéité": {
+      "description": "Description : Cette thématique englobe les aspects liés à l'acoustique et à l'étanchéité dans les bâtiments, y compris la conception et la mise en œuvre de solutions pour réduire les bruits et les fuites d'air. Elle couvre les questions relatives à la performance acoustique, à l'étanchéité et à la durabilité des bâtiments.",
+      "frequency": 1
+    },
+    "Installation_équipements": {
+      "description": "Description : Cette thématique se concentre sur l'installation et la mise en service des équipements de construction, y compris les ascenseurs, les systèmes de ventilation, les systèmes de chauffage et de climatisation, etc. Elle englobe les aspects liés à la planification, à la coordination et à la supervision de l'installation de ces équipements.",
+      "frequency": 1
+    },
+    "Gestion_environnementale": {
+      "description": "Description : Cette thématique est liée à la gestion environnementale des projets de construction, y compris la réduction des déchets, la conservation de l'énergie et la protection de l'environnement. Elle couvre les aspects liés à la conception et à la mise en œuvre de solutions durables et respectueuses de l'environnement.",
+      "frequency": 1
+    },
+    "Systèmes_Techniques_et_Équipements": {
+      "description": "Description : Cette thématique concerne les systèmes techniques et les équipements utilisés dans le projet, tels que les systèmes de chauffage, de ventilation, de climatisation, d'électricité, de plomberie, etc. Les sujets abordés incluent la conception, l'installation, la mise en service et la maintenance de ces systèmes et équipements.",
+      "frequency": 1
+    },
+    "Gestion_Administrative_et_Financière": {
+      "description": "Description : Cette thématique concerne la gestion administrative et financière du projet, y compris la gestion des coûts, des budgets, des factures, des contrats, des devis, ainsi que la conformité aux normes et réglementations financières. Les sujets abordés incluent la gestion des coûts, la planification financière, la gestion des contrats et des devis, ainsi que la vérification de la conformité aux normes et réglementations financières. Ces thématiques englobent les principaux domaines abordés dans le document et peuvent servir de base pour une analyse plus approfondie et une gestion efficace du projet.",
+      "frequency": 1
+    },
+    "Choix_des_materiaux": {
+      "description": "Description : Sélection des matériaux de construction, choix des sous-traitants, définition des spécifications techniques, etc.",
+      "frequency": 1
+    },
+    "Gestion_des_espaces_communs": {
+      "description": "Description : Gestion des espaces communs, tels que les halls d'entrée, les patios, les toitures terrasses, les balcons, les plantations, etc.",
+      "frequency": 1
+    },
+    "Gestion_des_systemes_de_securite": {
+      "description": "Description : Gestion des systèmes de sécurité, tels que les systèmes de sprinklage, les systèmes de détection d'incendie, les systèmes de sécurité incendie, etc.",
+      "frequency": 1
+    },
+    "Gestion_des_systemes_de_communication": {
+      "description": "Description : Gestion des systèmes de communication, tels que les réseaux de communication, les systèmes de téléphonie, les systèmes de vidéo-surveillance, etc. Ces thématiques couvrent l'ensemble des aspects abordés dans le document, allant de la conception et de la planification à la gestion des travaux et des systèmes techniques, en passant par la sécurité, la santé et la communication.",
+      "frequency": 1
+    },
+    "Gestion de projet": {
+      "description": "Description : Cette thématique englobe tous les aspects liés à la planification, à la coordination et au suivi du projet de construction. Elle inclut la gestion des réunions, la planification des tâches, la coordination des intervenants, la gestion des délais et des coûts, ainsi que la résolution des problèmes et des conflits.",
+      "frequency": 1
+    },
+    "Conception et modification de plans": {
+      "description": "Description : Cette thématique concerne la création, la modification et la validation des plans de construction, y compris les plans d'architecture, les plans de structure, les plans d'installation technique, etc. Elle inclut également la coordination entre les différents intervenants pour s'assurer que les plans sont cohérents et conformes aux exigences du projet.",
+      "frequency": 1
+    },
+    "Coordination des métiers": {
+      "description": "Description : Cette thématique traite de la coordination entre les différents métiers et intervenants sur le chantier, tels que les architectes, les ingénieurs, les entrepreneurs, les sous-traitants, etc. Elle inclut la gestion des interfaces entre les différents métiers, la résolution des conflits et la coordination des activités pour assurer une exécution efficace du projet.",
+      "frequency": 1
+    },
+    "Suivi et contrôle de la qualité": {
+      "description": "Description : Cette thématique concerne le suivi et le contrôle de la qualité des travaux, y compris la vérification des matériaux, la conformité aux normes et aux réglementations, la gestion des défauts et des non-conformités, etc. Elle inclut également la mise en place de mesures pour améliorer la qualité et la satisfaction des clients.",
+      "frequency": 1
+    },
+    "Sécurité et santé sur le chantier": {
+      "description": "Description : Cette thématique traite de la sécurité et de la santé sur le chantier, y compris la prévention des accidents, la gestion des risques, la mise en place de mesures de sécurité, la formation des travailleurs, etc. Elle inclut également la gestion des situations d'urgence et la mise en place de plans d'urgence.",
+      "frequency": 1
+    },
+    "Communication et collaboration": {
+      "description": "Description : Cette thématique concerne la communication et la collaboration entre les différents intervenants sur le projet, y compris les clients, les architectes, les ingénieurs, les entrepreneurs, les sous-traitants, etc. Elle inclut la gestion des échanges d'informations, la résolution des conflits, la mise en place de mesures pour améliorer la communication et la collaboration. Ces thématiques sont larges et inclusives, et elles représentent tous les domaines abordés dans le document spécifique. Elles peuvent englober de nombreux sujets et questions dans la gestion de projets de construction.",
+      "frequency": 1
+    },
+    "Architecture_et_Design": {
+      "description": "Description : Cette thématique concerne tous les aspects liés à l'architecture et au design du projet, notamment la conception des espaces, la sélection des matériaux, la définition des couleurs, des textures et des finitions.",
+      "frequency": 1
+    },
+    "Suivi_et_Execution": {
+      "description": "Description : Cette thématique se concentre sur le suivi et l'exécution des travaux, y compris la supervision du chantier, le contrôle de la qualité, la gestion des phases, le suivi des délais et la coordination des interventions. Elle vise à assurer que les travaux soient réalisés conformément aux plans, aux spécifications et aux normes de qualité.",
+      "frequency": 3
+    },
+    "Coordination_et_Communication": {
+      "description": "Description : Cette thématique concerne la coordination et la communication entre les différentes parties prenantes du projet, y compris les équipes de conception, les entrepreneurs, les sous-traitants, les clients et les autorités. Elle vise à assurer que toutes les parties soient informées et impliquées dans le processus de prise de décision et de mise en œuvre du projet.",
+      "frequency": 1
+    },
+    "Environnement_et_Durabilité": {
+      "description": "Description : Cette thématique se concentre sur les aspects environnementaux et de durabilité du projet, y compris la gestion des déchets, la conservation de l'énergie, l'utilisation de matériaux durables et la réduction de l'impact environnemental. Elle vise à minimiser les effets négatifs du projet sur l'environnement et à promouvoir des pratiques de construction durables.",
+      "frequency": 1
+    },
+    "Coordination_gainés_téchniques": {
+      "description": "Description : Cette thématique concerne la coordination des gaines techniques, y compris la planification, la conception, la modification, la validation, la coordination des plans, etc. Les sujets abordés incluent la planification de la coordination, la création des plans, la modification des plans, la validation des plans, la coordination des plans avec les autres intervenants.",
+      "frequency": 1
+    },
+    "Isolation_acoustique": {
+      "description": "Description : Cette thématique se concentre sur les aspects liés à l'isolation acoustique, y compris la planification, la conception, la coordination, la supervision, etc. Les sujets abordés incluent la planification de l'isolation acoustique, la conception des systèmes d'isolation, la coordination des interventions, la supervision du chantier, la gestion des risques, la conformité aux réglementations.",
+      "frequency": 1
+    },
+    "Gestion_Risques_Qualité": {
+      "description": "Description : Cette thématique se concentre sur la gestion des risques et de la qualité dans les projets de construction, incluant l'identification des risques, l'analyse de leur impact, et la mise en place de stratégies pour les atténuer. Elle englobe les aspects tels que la définition des normes de qualité, la mise en place de processus de contrôle qualité, et la gestion des non-conformités. Les sujets abordés incluent la planification de la qualité, la supervision, et la certification des travaux.",
+      "frequency": 1
+    },
+    "Environnement_Energétique": {
+      "description": "Description : Cette thématique concerne les aspects environnementaux et énergétiques liés à la construction, notamment la gestion des déchets, la conservation de l'énergie, la réduction des émissions de gaz à effet de serre et la promotion des énergies renouvelables. Elle inclut les sous-thématiques suivantes : - Gestion des déchets - Conservation de l'énergie - Réduction des émissions de gaz à effet de serre - Promotion des énergies renouvelables Ces thématiques sont larges et inclusives, et elles représentent tous les domaines abordés dans le document analysé.",
+      "frequency": 1
+    },
+    "Coordination_des_modifications": {
+      "description": "Description : Cette thématique couvre la coordination des modifications, incluant les modifications électriques, les variantes de projet, les choix de matériaux, les détails de construction, etc. Les sujets abordés incluent la coordination des modifications, les réunions de coordination, les mises à jour des plans, etc.",
+      "frequency": 1
+    },
+    "Planification_et_suivi": {
+      "description": "Description : Cette thématique concerne la planification et le suivi du projet, incluant les planning, les délais, les jours épuisés, les jours supplémentaires, les jours d'intempéries, les jours restants, etc. Les sujets abordés incluent la planification des réunions, la coordination des débouchés de ventilation, la mise à jour des plans, etc. Ces thématiques couvrent l'ensemble des sujets abordés dans le document et représentent les domaines étendus qui peuvent englober de nombreux sujets et questions dans la gestion de projets de construction.",
+      "frequency": 1
+    },
+    "Coordination_Produits_et_Materiels": {
+      "description": "Description : Cette thématique englobe tous les aspects liés à la sélection, à la commande et à la gestion des produits et des matériaux nécessaires à la construction. Elle inclut la sélection des matériaux, la commande des produits, la gestion des stocks, et la coordination avec les fournisseurs. Les sous-domaines couverts incluent la sélection de matériaux, la commande de produits, la gestion des stocks, et la coordination avec les fournisseurs.",
+      "frequency": 1
+    },
+    "Isolation_et_Etanchéité": {
+      "description": "Description : Cette thématique se concentre sur les aspects liés à l'isolation et à l'étanchéité du bâtiment, notamment la gestion de l'humidité, de la condensation et des infiltrations d'eau. Elle inclut la sélection des matériaux, la conception et la mise en œuvre des systèmes d'isolation et d'étanchéité.",
+      "frequency": 1
+    },
+    "Choix_des_Matériaux_et_Fournitures": {
+      "description": "Description : Cette thématique concerne les aspects liés au choix des matériaux et des fournitures pour le projet, notamment la sélection des produits, la vérification de la qualité et la conformité aux spécifications. Elle inclut également la gestion des commandes, des livraisons et des stocks.",
+      "frequency": 1
+    },
+    "Isolation_Acoustique_Thermique": {
+      "description": "Description : Cette thématique est liée à l'isolation acoustique et thermique du bâtiment, incluant la gestion des isolants, la vérification des isolants, et la mise en œuvre des solutions pour résoudre les problèmes d'isolation. Elle couvre également la gestion des ponts thermiques, la gestion des ponts acoustiques, et la mise en œuvre des solutions pour améliorer l'isolation acoustique et thermique du bâtiment.",
+      "frequency": 1
+    },
+    "Gestion_Environnementale": {
+      "description": "Description : Cette thématique se concentre sur la gestion environnementale du projet de construction, incluant la gestion des déchets, la gestion des eaux, la gestion des sols, et la mise en œuvre des solutions pour réduire l'impact environnemental du projet. Elle englobe également la gestion des équipements environnementaux, la vérification des équipements environnementaux, et la mise en œuvre des solutions pour améliorer la gestion environnementale du projet.",
+      "frequency": 1
+    },
+    "Conception_et_modification": {
+      "description": "Description : Cette thématique concerne tous les aspects liés à la conception et à la modification des plans, y compris les adaptations techniques, les changements de conception, la validation des solutions et les études techniques.",
+      "frequency": 1
+    },
+    "Coordination_Sécurité_Santé": {
+      "description": "Description : Cette thématique englobe les aspects liés à la sécurité et à la santé sur le chantier, notamment la présence du coordonnateur de sécurité, les réunions de chantier, les rapports de visite, les consignes de sécurité, les équipements de protection individuelle, les formations et les briefings.",
+      "frequency": 1
+    },
+    "Securite_Sante": {
+      "description": "Description : Cette thématique met l'accent sur l'importance de la sécurité et de la santé sur les chantiers de construction. Elle englobe les mesures de prévention des accidents, la gestion des risques, et la promotion d'un environnement de travail sûr et sain. Les sujets abordés dans cette thématique incluent la planification de la sécurité, la formation et la sensibilisation des travailleurs, la gestion des équipements de protection individuelle, et la vérification de la conformité aux normes et réglementations en vigueur.",
+      "frequency": 1
+    },
+    "Aménagement_et_Equipement": {
+      "description": "Description : Cette thématique traite de l'aménagement et de l'équipement des espaces, y compris la conception et la mise en œuvre des plans d'aménagement, la sélection des équipements et des matériaux, la gestion des espaces et la mise en œuvre des solutions pour les besoins spécifiques des utilisateurs.",
+      "frequency": 1
+    },
+    "Communication_et_Collaboration": {
+      "description": "Description : Cette thématique concerne tous les aspects liés à la communication et à la collaboration entre les intervenants du projet, y compris la gestion des informations, la mise en œuvre des outils de communication, la planification des réunions, la gestion des conflits et la promotion de la collaboration et de la confiance entre les équipes.",
+      "frequency": 1
+    },
+    "Abords_et_Amenagements": {
+      "description": "Description : Cette thématique couvre tous les aspects liés aux abords et aux aménagements, y compris la gestion des espaces verts, la gestion des clôtures, la gestion des allées, la gestion des parkings, etc. Elle inclut également la gestion des équipements, les réparations et les maintenance.",
+      "frequency": 1
+    }
+  },
+  "thematic_frequency": {
+    "Gestion_Projet_Construction": 20,
+    "Systemes_Techniques_Batiment": 33,
+    "Coordination_Projet_Communication": 30,
+    "Suivi_Execution_Travaux": 27,
+    "Gestion_Administrative_Financiere": 26,
+    "Conception_Modification_Plans": 20,
+    "Sécurité_Santé_Environnement": 10,
+    "Systemes_techniques_batiment": 22,
+    "Coordination_projet_communication": 23,
+    "Suivi_execution_travaux": 23,
+    "Gestion_administrative_financiere": 22,
+    "Conception_modification_plans": 18,
+    "Sécurité_santé": 13,
+    "Environnement_énergie": 1,
+    "Acoustique": 4,
+    "Environnement_énergétique": 3,
+    "Coordination_Securite_Sante": 3,
+    "Acoustique_Et_Thermique": 1,
+    "Gestion_de_chantier": 4,
+    "Conception_et_modification_de_plans": 3,
+    "Sécurité_et_santé": 4,
+    "Environnement_et_urbanisme": 3,
+    "Gestion_de_Projet": 16,
+    "Conception_et_Modification": 10,
+    "Gestion de projet et coordination": 1,
+    "Conception et modification des plans": 1,
+    "Suivi et exécution des travaux": 1,
+    "Gestion administrative et financière": 2,
+    "Techniques spéciales - plomberie, sanitaire, chauffage, ventilation": 1,
+    "Systèmes techniques du bâtiment": 1,
+    "Coordination sécurité-santé": 1,
+    "Aménagement et finition": 1,
+    "Sécurité_Santé": 8,
+    "Coordination_des_Métiers": 2,
+    "Coordination_securite_sante": 1,
+    "Environnement_urbanisme": 3,
+    "Gestion_Parties_Publiques": 1,
+    "Récolte_Eaux_De_Plue": 1,
+    "Techniques_Speciales": 3,
+    "Acoustique_Acousticien": 1,
+    "Environnement_Urbanisme": 1,
+    "Systèmes_techniques_bâtiment": 1,
+    "Gestion_administrative_financière": 1,
+    "**Suivi_execution_travaux**": 1,
+    "**Coordination_projet_communication**": 1,
+    "**Gestion_administrative_financiere**": 1,
+    "**Conception_modification_plans**": 1,
+    "**Systemes_techniques_batiment**": 1,
+    "**Gestion_securite_sante**": 1,
+    "**Choix_des_materiaux**": 1,
+    "**Gestion_des_intervenants**": 1,
+    "Techniques_speciales": 1,
+    "Architecture": 1,
+    "Environnement_et_Urbanisme": 1,
+    "Gestion_des_risques": 4,
+    "Coordination_des_intervenants": 2,
+    "Environnement_durabilité": 1,
+    "Qualité_contrôle": 1,
+    "Choix_Materiels_Equipements": 2,
+    "Conception_et_Modification_de_Plans": 5,
+    "Suivi_et_Execution_des_Travaux": 2,
+    "Gestion_Administrative_et_Financiere": 7,
+    "Sécurité_et_Santé": 8,
+    "Environnement_et_Durable": 4,
+    "Qualité_et_Performance": 1,
+    "Gestion_des_Ressources": 1,
+    "Gestion_Acquerreurs": 1,
+    "Coordination_des_Travaux": 2,
+    "Coordination_des_Intervenants": 1,
+    "Suivi_et_Controle_Qualite": 1,
+    "Qualite_et_Securite": 1,
+    "Environnement_et_énergie": 1,
+    "Aménagement_et_esthétique": 1,
+    "Relation_avec_les_acquereurs": 1,
+    "Acoustique_et_étanchéité": 1,
+    "Installation_équipements": 1,
+    "Gestion_environnementale": 1,
+    "Systèmes_Techniques_et_Équipements": 1,
+    "Gestion_Administrative_et_Financière": 1,
+    "Choix_des_materiaux": 1,
+    "Gestion_des_espaces_communs": 1,
+    "Gestion_des_systemes_de_securite": 1,
+    "Gestion_des_systemes_de_communication": 1,
+    "Gestion de projet": 1,
+    "Conception et modification de plans": 1,
+    "Coordination des métiers": 1,
+    "Suivi et contrôle de la qualité": 1,
+    "Sécurité et santé sur le chantier": 1,
+    "Communication et collaboration": 1,
+    "Architecture_et_Design": 1,
+    "Suivi_et_Execution": 3,
+    "Coordination_et_Communication": 1,
+    "Environnement_et_Durabilité": 1,
+    "Coordination_gainés_téchniques": 1,
+    "Isolation_acoustique": 1,
+    "Gestion_Risques_Qualité": 1,
+    "Environnement_Energétique": 1,
+    "Coordination_des_modifications": 1,
+    "Planification_et_suivi": 1,
+    "Coordination_Produits_et_Materiels": 1,
+    "Isolation_et_Etanchéité": 1,
+    "Choix_des_Matériaux_et_Fournitures": 1,
+    "Isolation_Acoustique_Thermique": 1,
+    "Gestion_Environnementale": 1,
+    "Conception_et_modification": 1,
+    "Coordination_Sécurité_Santé": 1,
+    "Securite_Sante": 1,
+    "Aménagement_et_Equipement": 1,
+    "Communication_et_Collaboration": 1,
+    "Abords_et_Amenagements": 1
+  }
+}

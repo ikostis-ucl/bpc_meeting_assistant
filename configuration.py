@@ -44,6 +44,13 @@ def config_parser():
     parser.add_argument('--embeddings_cache_dir', type=str, default="./resources/.emb_models",
                         help='Embeddings cache directory path.')
 
+    # Guardrails
+    parser.add_argument('--disable_guardrails', action='store_true',
+                        help="Use the argument to bypass the input guardrails during inference.",)
+    parser.add_argument('--thematics_storage_path', type=str,
+                        default="./app/engine/guardrails/archive/meeting_assistant_thematics.json",
+                        help='Storage path for the thematics file.')
+
     # Groq LLM API
     parser.add_argument('--groq_model_inference', type=str,
                         default="llama-3.3-70b-versatile",
@@ -58,9 +65,19 @@ def config_parser():
     parser.add_argument('--groq_model_indexing_extraction', type=str,
                         default="llama-3.3-70b-versatile",
                         help='Groq model name used in information extraction while indexing.')
+    parser.add_argument('--groq_model_indexing_extraction_tpm', type=int, default=300000,
+                        help='Tokens per minute for Groq model.')
     parser.add_argument('--groq_model_indexing_kw', type=str,
                         default="llama-3.1-8b-instant",
                         help='Groq model name used in information extraction while indexing.')
+    parser.add_argument('--groq_model_indexing_kw_tpm', type=int, default=250000,
+                        help='Tokens per minute for Groq model.')
+
+    parser.add_argument('--groq_model_gr', type=str,
+                        default='meta-llama/llama-4-maverick-17b-128e-instruct',
+                        help='Groq model name used in guardrails.')
+    parser.add_argument('--groq_model_gr_tpm', type=int, default=300000,
+                        help='Tokens per minute for Groq model used in guardrails.')
 
     # Retriever
     parser.add_argument('--time_freq', type=int, default=5,
