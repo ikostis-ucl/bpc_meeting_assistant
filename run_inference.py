@@ -1,7 +1,6 @@
 import os
 import warnings
 
-# from app.scripts.Test import TestRAG as Scenario
 # from app.scripts.benchmark_retrieval import BenchmarkRetrieval as Scenario
 from app.scripts.benchmark_rag import BenchmarkRAG as Scenario
 
