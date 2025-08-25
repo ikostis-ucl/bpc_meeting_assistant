@@ -1,7 +1,9 @@
 import json
+import os
 import re
 import unicodedata
-from typing import Dict, Tuple
+from collections import defaultdict
+from typing import Dict, Tuple, List
 
 from llama_index.core import Settings
 from llama_index.core.callbacks import TokenCountingHandler, CallbackManager
@@ -36,64 +38,199 @@ class InputGuardrails:
         self.domain_thematics = self._load_extracted_thematics()
         self.thematic_context = self._create_thematic_context()
 
+    def _normalize_and_merge_thematics(self, thematics_data: Dict) -> Dict[str, str]:
+        """
+        Normalize thematic titles and merge duplicates with LLM-assisted description merging.
+
+        Args:
+            thematics_data: Raw thematics data from JSON file
+
+        Returns:
+            Dict[str, str]: Normalized and merged thematics with descriptions
+        """
+
+        # Helper function to normalize titles
+        def normalize_title(title: str) -> str:
+            normalized = re.sub(r'[*_\-]+', '', title)
+            normalized = re.sub(r'[\s_]+', '_', normalized.lower())
+            normalized = normalized.strip('_')
+            return normalized
+
+        grouped_thematics = defaultdict(list)
+
+        for title, data in thematics_data['thematics'].items():
+            normalized_title = normalize_title(title)
+            grouped_thematics[normalized_title].append({
+                'original_title': title,
+                'description': data['description'],
+                'frequency': data['frequency']
+            })
+
+        # Merge duplicates
+        merged_thematics = {}
+        merged_frequencies = {}
+
+        for normalized_title, duplicates in grouped_thematics.items():
+            if len(duplicates) == 1:
+                duplicate = duplicates[0]
+                merged_thematics[duplicate['original_title']] = duplicate['description']
+                merged_frequencies[duplicate['original_title']] = duplicate['frequency']
+            else:
+                # Aggregate frequencies by summing them
+                total_frequency = sum(d['frequency'] for d in duplicates)
+                descriptions = [d['description'] for d in duplicates]
+                original_titles = [d['original_title'] for d in duplicates]
+
+                canonical_title = max(duplicates, key=lambda x: x['frequency'])['original_title']
+
+                merged_description = self._merge_descriptions_with_llm(descriptions, canonical_title)
+                merged_thematics[canonical_title] = merged_description
+                merged_frequencies[canonical_title] = total_frequency
+
+                pprint_debug(
+                    f"Merged {len(duplicates)} duplicates into '{canonical_title}' (total frequency: {total_frequency})")
+                pprint_debug(f"Original titles: {original_titles}")
+
+        # Store frequencies for Pareto calculation
+        self._merged_frequencies = merged_frequencies
+        return merged_thematics
+
+    def _merge_descriptions_with_llm(self, descriptions: List[str], canonical_title: str) -> str:
+        """
+        Use Groq LLM to merge multiple descriptions into a single coherent one.
+
+        Args:
+            descriptions: List of descriptions to merge
+            canonical_title: The canonical title for context
+
+        Returns:
+            str: Merged description
+        """
+        merge_prompt = f"""Tu es un expert en fusion de descriptions thématiques pour des projets de construction.
+    
+        TITRE DE LA THÉMATIQUE: {canonical_title}
+    
+        DESCRIPTIONS À FUSIONNER:
+        {chr(10).join(f"Description {i + 1}: {desc}" for i, desc in enumerate(descriptions))}
+    
+        INSTRUCTIONS:
+        1. Fusionne ces descriptions en une seule description cohérente et complète
+        2. Conserve tous les aspects importants mentionnés dans chaque description
+        3. Élimine les redondances tout en préservant les nuances
+        4. Maintiens le même format et style que les descriptions originales
+        5. Commence par "Description : "
+        6. Garde la même langue que les descriptions originales
+    
+        DESCRIPTION FUSIONNÉE:"""
+
+        try:
+            response = self.guard_llm.complete(merge_prompt)
+            merged_description = response.text.strip()
+
+            if not merged_description.startswith("Description :"):
+                merged_description = f"Description : {merged_description}"
+
+            return merged_description
+
+        except Exception as e:
+            pprint_error(f"LLM merge failed for '{canonical_title}': {e}")
+            # Fallback: concatenate descriptions with separator
+            return f"Description : {' | '.join(desc.replace('Description : ', '').strip() for desc in descriptions)}"
+
+    def _apply_pareto_principle(self, merged_thematics: Dict[str, str], thematics_data: Dict) -> Dict[str, str]:
+        """
+        Apply Pareto principle to select the most important thematics (80/20 rule).
+
+        Args:
+            merged_thematics: Normalized and merged thematics
+            thematics_data: Original data for frequency information
+
+        Returns:
+            Dict[str, str]: Top thematics following Pareto principle
+        """
+        # Use stored frequencies from merge process
+        thematic_frequencies = [(title, self._merged_frequencies[title])
+                                for title in merged_thematics.keys()]
+
+        # Sort by frequency (descending)
+        thematic_frequencies.sort(key=lambda x: x[1], reverse=True)
+
+        # Apply Pareto principle (top 20% of thematics)
+        total_thematics = len(thematic_frequencies)
+        pareto_count = max(1, int(total_thematics * 0.2))
+
+        selected_thematics = {}
+        total_frequency = sum(freq for _, freq in thematic_frequencies)
+        cumulative_frequency = 0
+
+        pprint_debug(f"Applying Pareto principle: selecting top {pareto_count} out of {total_thematics} thematics")
+
+        for i, (title, frequency) in enumerate(thematic_frequencies[:pareto_count]):
+            selected_thematics[title] = merged_thematics[title]
+            cumulative_frequency += frequency
+
+            pprint_debug(f"Selected: {title} (frequency: {frequency})")
+
+        coverage_percentage = (cumulative_frequency / total_frequency) * 100
+        pprint_debug(f"Pareto selection covers {coverage_percentage:.1f}% of total frequency")
+
+        return selected_thematics
+
+    @staticmethod
+    def _titles_match(title1: str, title2: str) -> bool:
+        """Check if two titles match after normalization."""
+        import re
+
+        def normalize(title):
+            normalized = re.sub(r'[*_\-]+', '', title)
+            normalized = re.sub(r'[\s_]+', '_', normalized.lower())
+            return normalized.strip('_')
+
+        return normalize(title1) == normalize(title2)
+
     def _load_extracted_thematics(self) -> Dict[str, str]:
-        """Load domain thematics using Pareto Principle (70/30 rule) for selection."""
+        """Load and process extracted thematics from JSON file."""
         try:
             with open(self.args.thematics_storage_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
+                thematics_data = json.load(f)
 
-            all_thematics = data.get('thematics', {})
-            frequency_data = data.get('thematic_frequency', {})
+            pprint_debug(f"Loaded {len(thematics_data['thematics'])} raw thematics")
 
-            if not all_thematics or not frequency_data:
-                pprint_error("No thematics or frequency data found in storage file.")
-                return {}
+            if os.path.exists(self.args.merged_thematics_storage_path):
+                pprint_debug("Loading existing merged thematics")
+                with open(self.args.merged_thematics_storage_path, 'r', encoding='utf-8') as f:
+                    cached_data = json.load(f)
 
-            # Calculate total occurrences
-            total_occurrences = sum(frequency_data.values())
-            target_coverage = total_occurrences * 0.7
+                # Extract merged thematics and frequencies from cache
+                merged_thematics = cached_data.get('merged_thematics', {})
+                self._merged_frequencies = cached_data.get('merged_frequencies', {})
 
-            # Sort thematics by frequency (descending)
-            sorted_thematics = sorted(
-                frequency_data.items(),
-                key=lambda x: x[1],
-                reverse=True
-            )
+                pprint_debug(f"Loaded {len(merged_thematics)} merged thematics from file")
+            else:
+                pprint_debug("No merged thematics found, running merge procedure")
+                merged_thematics = self._normalize_and_merge_thematics(thematics_data)
+                pprint_debug(f"After normalization and merging: {len(merged_thematics)} unique thematics")
 
-            # Select thematics until we reach 70% coverage
-            selected_thematics = {}
-            cumulative_count = 0
+                # Save merged results with frequencies
+                cache_data = {
+                    'merged_thematics': merged_thematics,
+                    'merged_frequencies': self._merged_frequencies
+                }
+                with open(self.args.merged_thematics_storage_path, 'w', encoding='utf-8') as f:
+                    json.dump(cache_data, f, indent=2, ensure_ascii=False)
+                pprint_debug(f"Saved merged thematics to {self.args.merged_thematics_storage_path}")
 
-            for thematic_name, frequency in sorted_thematics:
-                cumulative_count += frequency
+            # Apply Pareto principle
+            final_thematics = self._apply_pareto_principle(merged_thematics, thematics_data)
+            pprint_debug(f"After Pareto principle: {len(final_thematics)} selected thematics")
 
-                # Extract description from thematics data
-                if thematic_name in all_thematics:
-                    if isinstance(all_thematics[thematic_name], dict):
-                        description = all_thematics[thematic_name].get('description', '')
-                    else:
-                        description = str(all_thematics[thematic_name])
-
-                    selected_thematics[thematic_name] = description
-
-                # Stop when we reach 70% coverage
-                if cumulative_count >= target_coverage:
-                    break
-
-            coverage_percentage = (cumulative_count / total_occurrences) * 100
-            pprint_debug(
-                f"Pareto selection: {len(selected_thematics)} thematics covering {coverage_percentage:.1f}% of occurrences")
-
-            return selected_thematics
+            return final_thematics
 
         except FileNotFoundError:
             pprint_error(f"Thematics file not found: {self.args.thematics_storage_path}")
             return {}
-        except json.JSONDecodeError:
-            pprint_error(f"Invalid JSON in thematics file: {self.args.thematics_storage_path}")
-            return {}
         except Exception as e:
-            pprint_error(f"Error loading extracted thematics: {e}")
+            pprint_error(f"Error loading thematics: {e}")
             return {}
 
     def _create_thematic_context(self) -> str:

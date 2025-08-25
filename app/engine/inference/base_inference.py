@@ -230,14 +230,33 @@ class BaseInference(ABC):
             list: List of tuples containing (answer, metadata, timespan) for each processed result
         """
 
-
         if not self.args.disable_guardrails:
             is_valid, validation_reason = self.input_guardrails.validate_query(query_string)
 
             if not is_valid:
                 rejection_message = self.input_guardrails.get_rejection_message(validation_reason)
                 pprint_debug(f"Query rejected: {rejection_message}")
-                return [(rejection_message, {}, (0, round(datetime.now().timestamp())))]
+
+                if self.args.anon:
+                    _pdf_path = "app/assets/idle_screen_anon.pdf"
+                else:
+                    _pdf_path = "app/assets/idle_screen.pdf"
+
+                # Create placeholder metadata for GUI rendering
+                placeholder_metadata = {
+                    "placeholder_node": {
+                        'score': 0.0,
+                        'text': "There is no relevant information to your query",
+                        'metadata': {
+                            'file_name': "Home",
+                            'file_path': _pdf_path,
+                            'page_number': 1,
+                            'meeting_datetime': round(datetime.now().timestamp())
+                        }
+                    }
+                }
+
+                return [(rejection_message, placeholder_metadata, (0, round(datetime.now().timestamp())))]
             else:
                 pprint_debug("Valid query received for processing.")
 
