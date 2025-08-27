@@ -204,9 +204,3 @@ class HybridRetriever(BaseRetriever):
         combined_nodes = self._combine_retrievers_rrf(dense_nodes, sparse_nodes)
 
         return combined_nodes
-
-    def set_filters(self, filters: MetadataFilters) -> None:
-        """Set additional metadata filters for the vector retriever."""
-        # This would combine with existing timespan filters
-        # For now, this is a placeholder for future extension
-        pass
