@@ -25,8 +25,6 @@ class HybridRetriever(BaseRetriever):
             similarity_top_k: int = 50,
             alpha: float = 0.5,
             rrf_k: int = 60,
-            start_date: Optional[int] = None,
-            end_date: Optional[int] = None,
             callback_manager: Optional[CallbackManager] = None,
     ) -> None:
         """
@@ -34,12 +32,10 @@ class HybridRetriever(BaseRetriever):
 
         Args:
             vector_index: Vector index for dense retrieval
-            nodes: List of nodes for BM25 retrieval (will be filtered if dates provided)
+            nodes: List of nodes for BM25 retrieval (pre-filtered by document batch)
             similarity_top_k: Number of top results to retrieve from each method
             alpha: Weight for combining scores (1.0 = only dense, 0.0 = only sparse)
             rrf_k: RRF parameter for rank fusion
-            start_date: Start timestamp for timespan filtering
-            end_date: End timestamp for timespan filtering
             callback_manager: Callback manager for tracing
         """
         self._vector_index = vector_index
@@ -47,40 +43,19 @@ class HybridRetriever(BaseRetriever):
         self._similarity_top_k = similarity_top_k
         self._alpha = alpha
         self._rrf_k = rrf_k
-        self._start_date = start_date
-        self._end_date = end_date
-
-        # Filter nodes by timespan if dates are provided
-        if self._start_date is not None and self._end_date is not None:
-            self._nodes = self._filter_nodes_by_timespan(nodes)
 
         super().__init__(callback_manager)
 
-    def _filter_nodes_by_timespan(self, nodes: List) -> List:
-        """Filter nodes based on meeting datetime within the specified timespan."""
-        filtered_nodes = []
-        for node in nodes:
-            if node.metadata.get("meeting_datetime"):
-                meeting_time = node.metadata["meeting_datetime"]
-                if self._start_date <= meeting_time <= self._end_date:
-                    filtered_nodes.append(node)
-        return filtered_nodes
-
-    def _create_metadata_filters(self) -> Optional[MetadataFilters]:
-        """Create metadata filters for timespan filtering."""
-        if self._start_date is None or self._end_date is None:
+    def _create_metadata_filters(self, timestamp_batch: List) -> Optional[MetadataFilters]:
+        """Create metadata filters for timestamp batch filtering."""
+        if not timestamp_batch:
             return None
 
         filters = [
             MetadataFilter(
                 key="meeting_datetime",
-                value=self._start_date,
-                operator=FilterOperator.GTE
-            ),
-            MetadataFilter(
-                key="meeting_datetime",
-                value=self._end_date,
-                operator=FilterOperator.LTE
+                value=timestamp_batch,
+                operator=FilterOperator.IN
             )
         ]
         return MetadataFilters(filters=filters)
@@ -165,7 +140,7 @@ class HybridRetriever(BaseRetriever):
     @trace_method("HybridRetriever.retrieve")
     def _retrieve(self, query_bundle: QueryBundle) -> List[NodeWithScore]:
         """
-        Retrieve nodes using hybrid approach with timespan filtering.
+        Retrieve nodes using hybrid approach with document batch filtering.
 
         Args:
             query_bundle: Query bundle containing the search query.
@@ -175,7 +150,10 @@ class HybridRetriever(BaseRetriever):
         """
         query_str = query_bundle.query_str
 
-        metadata_filters = self._create_metadata_filters()
+        # Extract timestamp batch from query bundle custom attributes if available
+        timestamp_batch = getattr(query_bundle, 'query_batch', [])
+
+        metadata_filters = self._create_metadata_filters(timestamp_batch)
         vector_retriever = VectorIndexRetriever(
             index=self._vector_index,
             similarity_top_k=self._similarity_top_k,

@@ -43,7 +43,7 @@ To address this challenge, we propose an application designed to streamline acce
 1. **Data Processing (`app/engine/data_processing/`)**
    - `Storage`: Handles document parsing, metadata extraction, and vector storage.
    - `DataLoaders`: Manages index loading and timestamp tracking.
-   - `MetadataExtractors`: Extracts keywords and involved parties.
+   - `MetadataExtractors`: Extracts dates and involved parties.
 
 2. **Inference Engine (`app/engine/inference/`)**
    - `BaseInference`: Core temporal query functionality.
@@ -128,20 +128,25 @@ To address this challenge, we propose an application designed to streamline acce
 ## Directory Structure
 
 ```
-meeting-minutes-assistant/
-├── app/
-│   ├── assets/            # Assets and environment files
-│   ├── engine/           
-│   │   ├── data_processing/  # Document processing
-│   │   ├── gui/             # User interface
-│   │   └── inference/       # Query processing
-│   ├── scripts/          # Main execution scripts
-│   └── utils/            # Utility functions
-├── data/
-│   ├── input/            # Input documents
-│   ├── tests/            # Test documents
-│   └── vector_db/        # Vector storage
-└── resources/            # Model cache and resources
+bpc_meeting_assistant/ 
+├── app/ 
+│ ├── assets/               # Static assets and resources 
+│ ├── engine/ 
+│ │ ├── data_processing/    # Document processing modules 
+│ │ ├── guardrails/         # Input validation and domain filtering 
+│ │ ├── gui/                # Gradio-based user interface 
+│ │ └── inference/          # Query processing and LLM integration 
+│ ├── scripts/              # Execution and utility scripts 
+│ └── utils/                # Helper functions and utilities  
+├── data/  
+├── eval/                   # Evaluation and benchmarking tools  
+├── resources/              # Model cache and external resources 
+├── configuration.py        # Main configuration file 
+├── run_gui.py              # GUI application launcher 
+├── run_inference.py        # Inference benchmark runner 
+├── run_init_gr.py          # Initialization script for GUI 
+├── run_kb_indexing.py      # Knowledge base indexing script 
+└── README.md               # This file
 ```
 
 ## Configuration
@@ -149,23 +154,40 @@ meeting-minutes-assistant/
 Key parameters in `configuration.py`:
 
 ### Data Processing
-- `input_path`: Path to input documents (default: `./data/input`)
-- `storage_dir`: Vector database location (default: `./data/vector_db`)
+- `input_path`: Path to input documents
+- `storage_dir`: Vector database location
 
 ### Embeddings
-- `embeddings_model`: HuggingFace embedding model (default: `OrdalieTech/Solon-embeddings-large-0.1`)
-- `embeddings_cache_dir`: Embeddings cache directory (default: `./resources/.emb_models`)
+- `embeddings_model`: HuggingFace embedding model
+- `embeddings_cache_dir`: Embeddings cache directory
+
+### Guardrails
+- `disable_guardrails`: Bypass input guardrails during inference (flag)
+- `thematics_storage_path`: Storage path for thematics file
+- `merged_thematics_storage_path`: Storage path for merged thematics file
 
 ### LLM Models (Groq)
-- `groq_model_inference`: Main inference model (default: `llama-3.3-70b-versatile`)
-- `groq_model_inference_judge`: Model for answer similarity assessment (default: `llama-3.3-70b-versatile`)
-- `groq_model_indexing_extraction`: Model for information extraction during indexing (default: `llama-3.3-70b-versatile`)
-- `groq_model_indexing_kw`: Model for keyword extraction (default: `llama-3.1-8b-instant`)
-- `groq_model_inference_tpm`: Tokens per minute limit (default: 12000)
+- `groq_model_inference`: Main inference model
+- `groq_model_inference_tpm`: Tokens per minute for inference
+- `groq_model_inference_judge`: Model for answer similarity assessment
+- `groq_model_indexing_extraction`: Model for information extraction during indexing
+- `groq_model_indexing_extraction_tpm`: Tokens per minute for extraction
+- `groq_model_indexing_kw`: Model for keyword extraction
+- `groq_model_indexing_kw_tpm`: Tokens per minute for keyword extraction
+- `groq_model_gr`: Model for guardrails
+- `groq_model_gr_tpm`: Tokens per minute for guardrails
 
 ### Retrieval Settings
-- `time_freq`: Time step duration in months for temporal analysis (default: 5)
-- `cutoff_percentage`: Percentage of retrieved nodes for context (default: 0.05)
+- `n_batch`: Number of documents processed in batch
+
+### Deployment
+- `prod`: Run in production mode (flag)
+- `anon`: Run in anonymized mode (flag)
+- `home_path`: Home path for GUI usage
+
+### Benchmarking
+- `benchmark_mode`: Run in benchmark evaluation mode (flag)
+- `benchmark_gt_path`: Path to ground truth CSV file
 
 ## Production Deployment
 

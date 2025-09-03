@@ -14,14 +14,14 @@ class BenchmarkEvaluator:
     Timespan-aware page-level evaluation metrics for RAG retrieval benchmark.
     """
 
-    def __init__(self, gt_csv_path: str, ts_doc_index: Dict, timespans: List[Tuple[int, int]]):
+    def __init__(self, gt_csv_path: str, ts_doc_index: Dict, document_batches: List[List]):
         """
-        Initialize with ground truth CSV and timespan information.
+        Initialize with ground truth CSV and document batch information.
 
         Args:
             gt_csv_path: Path to ground truth CSV file
             ts_doc_index: Timestamp to document name mapping from BaseInference
-            timespans: List of (start_timestamp, end_timestamp) tuples
+            document_batches: List of document batches (each batch is a list of timestamps)
         """
         self.gt_df = pd.read_csv(gt_csv_path, sep=';')
         self.queries = self._parse_ground_truth()
@@ -33,7 +33,7 @@ class BenchmarkEvaluator:
             else:
                 self.ts_doc_index[timestamp] = doc_names.removesuffix('.pdf')
 
-        self.timespans = timespans
+        self.document_batches = document_batches
 
     def _parse_ground_truth(self) -> Dict:
         """Parse ground truth CSV into a structured format."""
@@ -91,34 +91,34 @@ class BenchmarkEvaluator:
 
         return queries
 
-    def _get_timespan_documents(self, start_timestamp: int, end_timestamp: int) -> Set[str]:
-        """Get documents present in a specific timespan."""
-        timespan_documents = set()
+    def _get_batch_documents(self, timestamp_batch: List) -> Set[str]:
+        """Get documents present in a specific document batch."""
+        batch_documents = set()
 
-        for timestamp, doc_names in self.ts_doc_index.items():
-            if start_timestamp <= timestamp <= end_timestamp:
+        for timestamp in timestamp_batch:
+            if timestamp in self.ts_doc_index:
+                doc_names = self.ts_doc_index[timestamp]
                 if isinstance(doc_names, list):
-                    timespan_documents.update(doc_names)
+                    batch_documents.update(doc_names)
                 else:
-                    timespan_documents.add(doc_names)
+                    batch_documents.add(doc_names)
 
-        return timespan_documents
+        return batch_documents
 
-    def _filter_ground_truth_by_timespan(self, query_num: str, timespan_documents: Set[str]) -> Set[str]:
-
-        """Filter ground truth pages to only include documents present in timespan."""
+    def _filter_ground_truth_by_batch(self, query_num: str, batch_documents: Set[str]) -> Set[str]:
+        """Filter ground truth pages to only include documents present in batch."""
         if query_num not in self.queries:
             return set()
 
         all_relevant_pages = self.queries[query_num]['relevant_pages']
-        timespan_relevant_pages = set()
+        batch_relevant_pages = set()
 
         for page_id in all_relevant_pages:
             doc_name = page_id.split('::')[0]
-            if doc_name in timespan_documents:
-                timespan_relevant_pages.add(page_id)
+            if doc_name in batch_documents:
+                batch_relevant_pages.add(page_id)
 
-        return timespan_relevant_pages
+        return batch_relevant_pages
 
     @staticmethod
     def _extract_retrieved_pages(metadata: Dict) -> List[str]:
@@ -142,40 +142,40 @@ class BenchmarkEvaluator:
         return pages
 
     def evaluate_query(self, query_num: str, results: List[Tuple], k_values: List[int]) -> Dict:
-        """Evaluate a single query with timespan-level breakdown."""
+        """Evaluate a single query with batch-level breakdown."""
         if query_num not in self.queries:
             return {}
 
         query_results = {
             'query_text': self.queries[query_num]['text'],
             'total_relevant_pages': len(self.queries[query_num]['relevant_pages']),
-            'timespans': {},
+            'batches': {},
             'query_averages': {}
         }
 
-        timespan_metrics = defaultdict(list)
+        batch_metrics = defaultdict(list)
 
-        # Evaluate each timespan separately
-        for i, (_, metadata, timespan) in enumerate(results):
-            start_timestamp, end_timestamp = timespan
-            timespan_key = f"ts_{i}_{start_timestamp}_{end_timestamp}"
+        # Evaluate each batch separately
+        for i, (_, metadata, (batch_idx, timestamp_batch)) in enumerate(results):
+            batch_key = f"batch_{batch_idx}"
 
-            # Get documents present in this timespan
-            timespan_documents = self._get_timespan_documents(start_timestamp, end_timestamp)
+            # Get documents present in this batch
+            batch_documents = self._get_batch_documents(timestamp_batch)
 
             # Get retrieved pages from metadata
             retrieved_pages = self._extract_retrieved_pages(metadata)
 
-            # Filter ground truth to only include pages from documents in this timespan
-            relevant_pages = self._filter_ground_truth_by_timespan(query_num, timespan_documents)
+            # Filter ground truth to only include pages from documents in this batch
+            relevant_pages = self._filter_ground_truth_by_batch(query_num, batch_documents)
 
-            # Skip if no relevant pages in this timespan (at least 1 document with a page needed)
+            # Skip if no relevant pages in this batch
             if not relevant_pages:
                 continue
 
-            timespan_result = {
-                'timespan': timespan,
-                'timespan_documents': list(timespan_documents),
+            batch_result = {
+                'batch_idx': batch_idx,
+                'timestamp_batch': timestamp_batch,
+                'batch_documents': list(batch_documents),
                 'retrieved_pages': list(retrieved_pages),
                 'relevant_pages': list(relevant_pages),
                 'metrics': {}
@@ -183,20 +183,19 @@ class BenchmarkEvaluator:
 
             # Calculate k-dependent metrics including normalized metrics
             for k in k_values:
-                # Get all metrics including normalized ones
                 k_metrics = calculate_metrics_with_normalization(retrieved_pages, relevant_pages, k)
 
-                # Store in timespan results
-                timespan_result['metrics'].update(k_metrics)
+                # Store in batch results
+                batch_result['metrics'].update(k_metrics)
 
                 # Collect for query-level averaging
                 for metric_name, metric_value in k_metrics.items():
-                    timespan_metrics[metric_name].append(metric_value)
+                    batch_metrics[metric_name].append(metric_value)
 
-            query_results['timespans'][timespan_key] = timespan_result
+            query_results['batches'][batch_key] = batch_result
 
         # Calculate query-level averages
-        for metric, values in timespan_metrics.items():
+        for metric, values in batch_metrics.items():
             if values:
                 query_results['query_averages'][f'avg_{metric}'] = np.mean(values)
                 query_results['query_averages'][f'std_{metric}'] = np.std(values)
@@ -211,24 +210,24 @@ class BenchmarkEvaluator:
             'global_averages': {}
         }
 
-        query_level_metrics = defaultdict(list)
+        all_metrics = defaultdict(list)
 
         # Evaluate each query
         for query_num, results in results_dict.items():
-            query_result = self.evaluate_query(query_num, results, k_values)
+            query_results = self.evaluate_query(query_num, results, k_values)
+            evaluation_results['queries'][query_num] = query_results
 
-            if query_result and query_result.get('timespans'):
-                evaluation_results['queries'][query_num] = query_result
-
-                # Collect query averages for global calculation
-                for metric, value in query_result['query_averages'].items():
-                    if metric.startswith('avg_'):
-                        query_level_metrics[metric].append(value)
+            # Collect metrics for global averages
+            for metric_key, metric_value in query_results['query_averages'].items():
+                if 'avg_' in metric_key:
+                    all_metrics[metric_key].append(metric_value)
 
         # Calculate global averages
-        for metric, values in query_level_metrics.items():
-            if values:
-                evaluation_results['global_averages'][f'global_{metric}'] = np.mean(values)
-                evaluation_results['global_averages'][f'global_std_{metric.replace("avg_", "")}'] = np.std(values)
+        for metric_key, values in all_metrics.items():
+            global_key = metric_key.replace('avg_', 'global_avg_')
+            evaluation_results['global_averages'][global_key] = np.mean(values)
+
+            global_std_key = metric_key.replace('avg_', 'global_std_')
+            evaluation_results['global_averages'][global_std_key] = np.std(values)
 
         return evaluation_results

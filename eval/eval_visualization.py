@@ -19,12 +19,12 @@ def visualize_benchmark_results(json_file_path: str):
     eval_timestamp = data['timestamp']
     eval_date = datetime.fromisoformat(eval_timestamp).strftime("%Y-%m-%d %H:%M:%S")
 
-    # Extract k_values from the first query's metrics instead
+    # Extract k_values from the first query's metrics
     first_query = next(iter(data['queries'].values()))
-    if first_query and 'timespans' in first_query:
-        first_timespan = next(iter(first_query['timespans'].values()))
+    if first_query and 'batches' in first_query:
+        first_batch = next(iter(first_query['batches'].values()))
         k_values = []
-        for metric_key in first_timespan['metrics'].keys():
+        for metric_key in first_batch['metrics'].keys():
             if '@' in metric_key:
                 k = int(metric_key.split('@')[1])
                 if k not in k_values:
@@ -33,8 +33,9 @@ def visualize_benchmark_results(json_file_path: str):
     else:
         k_values = [1, 3, 5]  # fallback default
 
-    # Extract metrics for plotting - now includes normalized metrics
-    timespan_metrics = ['precision', 'recall', 'normalized_recall', 'hit_rate', 'f1', 'normalized_f1']
+    # Update metric groups and visualization logic
+    batch_metrics = ['precision', 'recall', 'normalized_recall', 'hit_rate', 'f1', 'normalized_f1']  # Changed variable name
+
 
     # Separate metric groups for cleaner visualization
     standard_metrics = ['hit_rate', 'precision', 'recall', 'f1']
@@ -74,36 +75,36 @@ def visualize_benchmark_results(json_file_path: str):
 
     metric_colors = get_metric_colors()
 
-    # 1. Timespan-level plots (one plot per query per timespan)
+    # 1. Batch-level plots (one plot per query per batch)
     for query_num, query_data in data['queries'].items():
         query_text = query_data['query_text'][:50] + "..." if len(query_data['query_text']) > 50 else query_data[
             'query_text']
 
-        timespans = list(query_data['timespans'].keys())
-        n_timespans = len(timespans)
+        batches = list(query_data['batches'].keys())
+        n_batches = len(batches)
 
-        if n_timespans == 0:
+        if n_batches == 0:
             continue
 
-        # Create subplot grid for timespan metrics - now 2x3 to accommodate normalized metrics
+        # Create subplot grid for batch metrics - now 2x3 to accommodate normalized metrics
         fig, axes = plt.subplots(2, 3, figsize=(20, 12))
-        fig.suptitle(f'Query {query_num} - Timespan-level Metrics\nEval: {eval_date}\n"{query_text}"', fontsize=14)
+        fig.suptitle(f'Query {query_num} - Batch-level Metrics\nEval: {eval_date}\n"{query_text}"', fontsize=14)
         axes = axes.flatten()
 
-        for i, metric in enumerate(timespan_metrics):
+        for i, metric in enumerate(batch_metrics):
             ax = axes[i]
 
             # Prepare data for this metric
-            timespan_labels = []
+            q_batch_labels = []
             metric_data = {f'@{k}': [] for k in k_values}
 
-            for ts_key, ts_data in query_data['timespans'].items():
-                timespan_labels.append(ts_key.split('_')[1])  # Extract timespan number
+            for ts_key, ts_data in query_data['batches'].items():
+                q_batch_labels.append(ts_key.split('_')[1])  # Extract batch number
                 for k in k_values:
                     metric_data[f'@{k}'].append(ts_data['metrics'][f'{metric}@{k}'])
 
             # Create grouped bar plot with custom colors
-            x = np.arange(len(timespan_labels))
+            x = np.arange(len(q_batch_labels))
             width = 0.25
 
             for j, k in enumerate(k_values):
@@ -111,11 +112,11 @@ def visualize_benchmark_results(json_file_path: str):
                 color = metric_colors[f'{metric}@{k}']
                 ax.bar(x + offset, metric_data[f'@{k}'], width, label=f'@{k}', color=color)
 
-            ax.set_xlabel('Timespan')
+            ax.set_xlabel('Query Batch')
             ax.set_ylabel(f'{metric.title()}')
-            ax.set_title(f'{metric.title()}@k by Timespan')
+            ax.set_title(f'{metric.title()}@k by Query Batch')
             ax.set_xticks(x)
-            ax.set_xticklabels(timespan_labels)
+            ax.set_xticklabels(q_batch_labels)
             ax.legend()
             ax.grid(True, alpha=0.3)
             ax.set_ylim(0, 1.0)

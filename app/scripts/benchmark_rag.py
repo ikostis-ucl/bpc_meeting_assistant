@@ -53,23 +53,23 @@ class BenchmarkRAG(Demo):
         if not hasattr(self.agent, 'timing_data'):
             return {}
 
-        num_timespans = len(self.agent.timespans)
+        num_batches = len(self.agent.document_batches)
         timings = {}
 
         for operation, data_list in self.agent.timing_data.items():
             if operation == 'total_query_times':
                 timings[operation] = data_list[-1]['duration'] if data_list else 0
             else:
-                last_n = data_list[-num_timespans:] if len(data_list) >= num_timespans else data_list
+                last_n = data_list[-num_batches:] if len(data_list) >= num_batches else data_list
                 timings[operation] = [t['duration'] for t in last_n]
 
         return timings
 
     def _calculate_comprehensive_metrics(self) -> Dict:
-        """Calculate per-query, per-timespan, and global averages."""
+        """Calculate per-query, per-batch, and global averages."""
         metrics = {
             'per_query': {},
-            'per_timespan_averages': {},
+            'per_batch_averages': {},
             'global_averages': {},
             'summary_stats': {}
         }
@@ -84,7 +84,7 @@ class BenchmarkRAG(Demo):
                     query_metrics[operation] = times
                 else:
                     query_metrics[operation] = {
-                        'per_timespan': times,
+                        'per_batch': times,
                         'average': sum(times) / len(times) if times else 0,
                         'total': sum(times) if times else 0
                     }
@@ -112,27 +112,27 @@ class BenchmarkRAG(Demo):
                     'max': max(all_times)
                 }
 
-        num_timespans = len(self.agent.timespans) if hasattr(self.agent, 'timespans') else 0
+        num_batches = len(self.agent.document_batches) if hasattr(self.agent, 'document_batches') else 0
 
-        for timespan_idx in range(num_timespans):
-            timespan_metrics = {}
+        for batch_idx in range(num_batches):
+            batch_metrics = {}
 
             for operation in ['retrieval_times', 'reranker_times', 'synthesis_times']:
-                timespan_times = []
+                batch_times = []
                 for query_data in self.query_results:
                     timings = query_data['timings'].get(operation, [])
-                    if timespan_idx < len(timings):
-                        timespan_times.append(timings[timespan_idx])
+                    if batch_idx < len(timings):
+                        batch_times.append(timings[batch_idx])
 
-                if timespan_times:
-                    timespan_metrics[operation] = {
-                        'average': sum(timespan_times) / len(timespan_times),
-                        'count': len(timespan_times),
-                        'min': min(timespan_times),
-                        'max': max(timespan_times)
+                if batch_times:
+                    batch_metrics[operation] = {
+                        'average': sum(batch_times) / len(batch_times),
+                        'count': len(batch_times),
+                        'min': min(batch_times),
+                        'max': max(batch_times)
                     }
 
-            metrics['per_timespan_averages'][f'timespan_{timespan_idx}'] = timespan_metrics
+            metrics['per_batch_averages'][f'batch_{batch_idx}'] = batch_metrics
 
         return metrics
 
@@ -150,7 +150,7 @@ class BenchmarkRAG(Demo):
             'metadata': {
                 'timestamp': datetime.now().isoformat(),
                 'total_queries': len(self.query_results),
-                'timespans_count': len(self.agent.timespans) if hasattr(self.agent, 'timespans') else 0
+                'batches_count': len(self.agent.document_batches) if hasattr(self.agent, 'document_batches') else 0
             },
             'queries': [
                 {

@@ -83,8 +83,8 @@ def config_parser():
                         help='Tokens per minute for Groq model used in guardrails.')
 
     # Retriever
-    parser.add_argument('--time_freq', type=int, default=5,
-                        help='Duration of timespans, counted in months.')
+    parser.add_argument('--n_batch', type=int, default=12,
+                        help='Number of docs to be processed in batch.')
 
     # Deployment
     parser.add_argument('--prod', action='store_true', help='Run in production mode')

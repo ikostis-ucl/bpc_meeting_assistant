@@ -1,4 +1,4 @@
-import calendar
+from typing import List
 import gc
 import heapq
 from abc import ABC, abstractmethod
@@ -41,8 +41,8 @@ class BaseInference(ABC):
         self.model = self._create_model(args)
 
         self.index, (self.start_date, self.end_date) = load_index(args)
-        self.timespans = None
-        self.generate_timespans(self.start_date, self.end_date, args.time_freq)
+        self.document_batches = None
+        self.generate_document_batches()
 
         self.ts_doc_index = {}
         for node in self.index.docstore.docs.values():
@@ -129,47 +129,23 @@ class BaseInference(ABC):
 
         gc.collect()
 
-    def generate_timespans(self, starting_month_timestamp, ending_month_timestamp, time_freq):
+    def generate_document_batches(self):
         """
-        Generate time spans between start and end dates based on specified frequency.
-
-        Args:
-            starting_month_timestamp: Start date timestamp.
-            ending_month_timestamp: End date timestamp.
-            time_freq: Time frequency in months.
+        Generate document batches by splitting unique timestamps into groups.
         """
+        timestamps = set()
+        for node in self.index.docstore.docs.values():
+            if hasattr(node, 'metadata') and node.metadata:
+                timestamp = node.metadata.get("meeting_datetime")
+                if timestamp is not None:
+                    timestamps.add(timestamp)
 
-        def add_months(source_date, months):
-            """
-            Helper function to add months to a date while handling month/year transitions.
+        sorted_timestamps = sorted(timestamps)
 
-            Args:
-                source_date: Base date to add months to.
-                months: Number of months to add.
-
-            Returns:
-                datetime: New date after adding specified months.
-            """
-            month = source_date.month - 1 + months
-            year = source_date.year + month // 12
-            month = month % 12 + 1
-            day = min(source_date.day, calendar.monthrange(year, month)[1])
-            return datetime(year, month, day)
-
-        self.timespans = []
-
-        start_date = datetime.fromtimestamp(starting_month_timestamp)
-        end_date = datetime.fromtimestamp(ending_month_timestamp)
-
-        current_start = start_date
-
-        # Generate timespan intervals
-        while current_start < end_date:
-            current_end = add_months(current_start, time_freq)
-            if current_end > end_date:
-                current_end = end_date
-            self.timespans.append((int(current_start.timestamp()), int(current_end.timestamp())))
-            current_start = current_end
+        self.document_batches = []
+        for i in range(0, len(sorted_timestamps), self.args.n_batch):
+            batch = sorted_timestamps[i:i + self.args.n_batch]
+            self.document_batches.append(batch)
 
     @timed_operation('retrieval_times', timespan_aware=True)
     def _retrieve_nodes(self, hybrid_retriever, query_bundle, timespan_idx=None):
@@ -189,6 +165,16 @@ class BaseInference(ABC):
             nodes=reranked_nodes
         )
 
+    def _filter_nodes_by_timestamp_batch(self, nodes: List, timestamp_batch: List) -> List:
+        """Filter nodes based on timestamp batch."""
+        timestamp_set = set(timestamp_batch)
+        filtered_nodes = []
+        for node in nodes:
+            meeting_time = node.metadata.get("meeting_datetime")
+            if meeting_time in timestamp_set:
+                filtered_nodes.append(node)
+        return filtered_nodes
+
     @timed_operation('judge_times')
     def _filter_results(self, query_string, results):
         """Wrapper for judge operation."""
@@ -199,14 +185,27 @@ class BaseInference(ABC):
             judgement = self.judge.run(query_string, answer_prev, answer_next)
 
             if judgement:
+                min_timestamp = min(cleaned_results[-1][3][0], results[i][3][0])
+                max_timestamp = max(cleaned_results[-1][3][1], results[i][3][1])
+
                 if cleaned_results[-1][1] is None:
-                    cleaned_results[-1] = (cleaned_results[-1][0], {}, cleaned_results[-1][2])
+                    cleaned_results[-1] = (
+                        cleaned_results[-1][0],
+                        {},
+                        cleaned_results[-1][2],
+                        (min_timestamp, max_timestamp)
+                    )
                 if results[i][1] is not None:
                     cleaned_results[-1][1].update(results[i][1])
+
+                merged_batch_idx = cleaned_results[-1][2][0]
+                merged_timestamp_batch = list(set(cleaned_results[-1][2][1] + results[i][2][1]))
+
                 cleaned_results[-1] = (
                     cleaned_results[-1][0],
                     cleaned_results[-1][1],
-                    (cleaned_results[-1][2][0], results[i][2][1])
+                    (merged_batch_idx, merged_timestamp_batch),
+                    (min_timestamp, max_timestamp)
                 )
             else:
                 cleaned_results.append(results[i])
@@ -252,37 +251,41 @@ class BaseInference(ABC):
                         }
                     }
                 }
-
-                return [(rejection_message, placeholder_metadata, (0, round(datetime.now().timestamp())))]
+                current_timestamp = round(datetime.now().timestamp())
+                return [(rejection_message, placeholder_metadata, (0, [current_timestamp]),
+                         (current_timestamp, current_timestamp))]
             else:
                 pprint_debug("Valid query received for processing.")
 
         results = []
         reranker = self._get_reranker()
-        query_bundle = QueryBundle(query_str=query_string)
+        # query_bundle = QueryBundle(query_str=query_string) # TODO: Remove this line if unnecessary
 
         all_node_ids = [node.id_ for node in self.index.docstore.docs.values()]
         all_nodes = self.index.docstore.get_nodes(all_node_ids)
 
-        for timespan_idx, (start_date, end_date) in enumerate(self.timespans):
+        for batch_idx, query_batch in enumerate(self.document_batches):
+            batch_nodes = self._filter_nodes_by_timestamp_batch(all_nodes, query_batch)
+
             hybrid_retriever = HybridRetriever(
                 vector_index=self.index,
-                nodes=all_nodes,
+                nodes=batch_nodes,
                 similarity_top_k=50,
                 alpha=alpha,
-                start_date=start_date,
-                end_date=end_date,
                 callback_manager=self.callback_manager
             )
 
-            combined_nodes = self._retrieve_nodes(hybrid_retriever, query_bundle, timespan_idx=timespan_idx)
+            query_bundle = QueryBundle(query_str=query_string)
+            query_bundle.query_batch = query_batch
 
-            top_candidates = combined_nodes[:20]
-            reranked_nodes = self._rerank_nodes(reranker, top_candidates, query_bundle, timespan_idx=timespan_idx)
+            combined_nodes = self._retrieve_nodes(hybrid_retriever, query_bundle, timespan_idx=batch_idx)
+
+            top_candidates = combined_nodes[:50]
+            reranked_nodes = self._rerank_nodes(reranker, top_candidates, query_bundle, timespan_idx=batch_idx)
 
             response_synthesizer = get_response_synthesizer(llm=self.model)
             answer = self._synthesize_response(response_synthesizer, query_string, reranked_nodes,
-                                               timespan_idx=timespan_idx)
+                                               timespan_idx=batch_idx)
 
             metadata = {}
             for node in reranked_nodes:
@@ -292,7 +295,10 @@ class BaseInference(ABC):
                     'metadata': node.metadata
                 }
 
-            results.append((answer.response, metadata, (start_date, end_date)))
+            min_batch_timestamp = min(query_batch)
+            max_batch_timestamp = max(query_batch)
+            results.append(
+                (answer.response, metadata, (batch_idx, query_batch), (min_batch_timestamp, max_batch_timestamp)))
 
         cleaned_results = self._filter_results(query_string, results)
 
@@ -301,7 +307,12 @@ class BaseInference(ABC):
             metadata = cleaned_results[i][1]
             top_nodes = heapq.nlargest(3, metadata.items(), key=lambda item: item[1]['score'])
             top_metadata = {node_id: data for node_id, data in top_nodes}
-            cleaned_results[i] = (cleaned_results[i][0], top_metadata, cleaned_results[i][2])
+            cleaned_results[i] = (
+                cleaned_results[i][0],
+                top_metadata,
+                cleaned_results[i][2],
+                cleaned_results[i][3]
+            )
 
         self._cleanup_resources()
         return cleaned_results

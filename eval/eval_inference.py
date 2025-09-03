@@ -33,40 +33,44 @@ class EvalInference(BaseInference):
         Retrieval-only evaluation method for benchmark testing.
 
         Performs hybrid retrieval and reranking without LLM generation,
-        making it suitable for evaluating retrieval performance.
+        making it suitable for evaluating retrieval performance over document batches.
 
         Args:
-            query_string: User's query text
+            query_string: The query to evaluate
             alpha: Weight for combining dense and sparse scores (0.0 = only sparse, 1.0 = only dense)
 
         Returns:
-            List of tuples with (None, metadata, timespan) - no LLM generation
+            List[Tuple]: List of (None, metadata, (batch_idx, query_batch)) tuples
         """
         results = []
         reranker = self._get_reranker()
-        query_bundle = QueryBundle(query_str=query_string)
 
         # Get all nodes once for efficiency
         all_node_ids = [node.id_ for node in self.index.docstore.docs.values()]
         all_nodes = self.index.docstore.get_nodes(all_node_ids)
 
-        for start_date, end_date in self.timespans:
-            # Create custom hybrid retriever with timespan filtering
+        for batch_idx, query_batch in enumerate(self.document_batches):
+            # Filter nodes by timestamp batch
+            batch_nodes = self._filter_nodes_by_timestamp_batch(all_nodes, query_batch)
+
+            # Create hybrid retriever with batch-filtered nodes
             hybrid_retriever = HybridRetriever(
                 vector_index=self.index,
-                nodes=all_nodes,
+                nodes=batch_nodes,
                 similarity_top_k=50,
                 alpha=alpha,
-                start_date=start_date,
-                end_date=end_date,
                 callback_manager=self.callback_manager
             )
 
-            # Retrieve using custom retriever
+            # Create query bundle with batch information
+            query_bundle = QueryBundle(query_str=query_string)
+            query_bundle.query_batch = query_batch
+
+            # Retrieve using hybrid retriever
             combined_nodes = hybrid_retriever.retrieve(query_bundle)
 
             # Apply reranking to top candidates
-            top_candidates = combined_nodes[:20]
+            top_candidates = combined_nodes[:50]
             reranked_nodes = reranker.postprocess_nodes(top_candidates, query_bundle)
 
             # Process metadata with scores
@@ -78,8 +82,8 @@ class EvalInference(BaseInference):
                     'metadata': node.metadata
                 }
 
-            # No LLM generation - return None for answer
-            results.append((None, metadata, (start_date, end_date)))
+            # Return batch_idx and query_batch instead of start/end dates
+            results.append((None, metadata, (batch_idx, query_batch)))
 
         # Keep top 5 nodes based on scores for each result
         for i in range(len(results)):

@@ -36,7 +36,7 @@ class BenchmarkRetrieval(Demo):
             self.evaluator = BenchmarkEvaluator(
                 self.args.benchmark_gt_path,
                 self.agent.ts_doc_index,
-                self.agent.timespans
+                self.agent.document_batches
             )
 
         results_dict = {}

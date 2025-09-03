@@ -71,16 +71,19 @@ def pprint_qa(question, results):
 
     Args:
         question (str): The question asked.
-        results (list): List of tuples containing (response, metadata, timespan).
+        results (list): List of tuples containing (response, metadata, (batch_idx, timestamp_batch)).
     """
     pprint_hline("=")
     print(f"{Color.GREEN}Question:{Color.END}\n{question}")
     pprint_hline("-", 3)
     print(f"{Color.CYAN}Answers:{Color.END}")
 
-    for response, metadata, (start_date, end_date) in results:
-        start_date_str = datetime.datetime.fromtimestamp(start_date).strftime('%d/%m/%Y')
-        end_date_str = datetime.datetime.fromtimestamp(end_date).strftime('%d/%m/%Y')
+    for response, metadata, (batch_idx, timestamp_batch), (min_timestamp, max_timestamp) in results:
+        # min_timestamp = min(timestamp_batch)
+        # max_timestamp = max(timestamp_batch)
+
+        start_date_str = datetime.datetime.fromtimestamp(min_timestamp).strftime('%d/%m/%Y')
+        end_date_str = datetime.datetime.fromtimestamp(max_timestamp).strftime('%d/%m/%Y')
         print(f"{Color.DARKCYAN}{start_date_str} - {end_date_str}:{Color.END} {response}")
 
         if metadata:
@@ -88,7 +91,6 @@ def pprint_qa(question, results):
             valid_citations = False
 
             for node_id, node_values in metadata.items():
-                # Check if node has the required metadata fields
                 if "metadata" in node_values and isinstance(node_values["metadata"], dict):
                     node_metadata = node_values["metadata"]
                     file_name = node_metadata.get("file_name")

@@ -40,10 +40,6 @@ class GUI:
         else:
             self.idle_screen = "./app/assets/idle_screen.pdf"
 
-        self.conv_agent.generate_timespans(starting_month_timestamp=self.conv_agent.start_date,
-                                           ending_month_timestamp=self.conv_agent.end_date,
-                                           time_freq=self.args.time_freq)
-
         self.examples = list(BENCHMARK_QUESTIONS_INDEX.values())
 
     @staticmethod
@@ -77,9 +73,13 @@ class GUI:
 
         response_metadata = {}
 
-        for answer, metadata, (_s_date, _e_date) in results:
-            start_date_str = datetime.datetime.fromtimestamp(_s_date).strftime('%d/%m/%Y')
-            end_date_str = datetime.datetime.fromtimestamp(_e_date).strftime('%d/%m/%Y')
+        for answer, metadata, (batch_idx, timestamp_batch), (min_timestamp, max_timestamp) in results:
+            # Calculate min and max dates from timestamp batch
+            # min_timestamp = min(timestamp_batch)
+            # max_timestamp = max(timestamp_batch)
+
+            start_date_str = datetime.datetime.fromtimestamp(min_timestamp).strftime('%d/%m/%Y')
+            end_date_str = datetime.datetime.fromtimestamp(max_timestamp).strftime('%d/%m/%Y')
             timespan_key = f"{start_date_str} to {end_date_str}"
 
             if timespan_key not in response_metadata:
