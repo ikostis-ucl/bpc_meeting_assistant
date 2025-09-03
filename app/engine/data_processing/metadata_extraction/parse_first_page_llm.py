@@ -38,22 +38,19 @@ def parse_first_page(file_path, llm_name, llm_key, doc_parser):
         first_page_doc.save(first_page_pdf)
         first_page_pdf.flush()
 
-        # Parse the first page with LlamaParse
         first_page_content = doc_parser.load_data(temp_pdf_path)
 
     if not first_page_content:
         return None, []
 
-    # Define the Pydantic model
+    # Pydantic model for information extraction
     class MeetingInfo(BaseModel):
         date: str = Field(description="Meeting date in DD/MM/YYYY format")
         involved_parties: list[str] = Field(
             description="List of abbreviations of parties involved in the meeting")
 
-    # Extract text from the first page content
     text = first_page_content[0].text if first_page_content else ""
 
-    # Create extraction prompt
     extraction_prompt = f"""
     You are an expert at extracting structured information from construction meeting minutes.
 
@@ -81,7 +78,6 @@ def parse_first_page(file_path, llm_name, llm_key, doc_parser):
     try:
         response = extraction_llm.complete(extraction_prompt)
 
-        # Extract JSON from the response text
         json_pattern = r'\{[\s\S]*\}'
         json_match = re.search(json_pattern, response.text)
 
@@ -93,10 +89,8 @@ def parse_first_page(file_path, llm_name, llm_key, doc_parser):
 
             extracted_data = json.loads(json_str)
 
-            # Create and validate with Pydantic model
             meeting_info = MeetingInfo(**extracted_data)
 
-            # Format the date as a list [dd, mm, yyyy]
             date_str = meeting_info.date
             if date_str and re.match(r"\d{2}/\d{2}/\d{4}", date_str):
                 formatted_datetime = date_str.split('/')
@@ -104,14 +98,12 @@ def parse_first_page(file_path, llm_name, llm_key, doc_parser):
             else:
                 return None, meeting_info.involved_parties
         else:
-            # Fallback regex extraction if JSON parsing fails
+            # Fallback policy if JSON extraction fails
             print(f"Failed to extract JSON from response: {response.text[:100]}...")
 
-            # Extract date using regex
             date_pattern = r'\b\d{2}/\d{2}/\d{4}\b'
             date_match = re.search(date_pattern, response.text)
 
-            # Extract abbreviations (typical format for party abbreviations)
             party_pattern = r'\b[A-Z]{2,5}\b'
             parties = re.findall(party_pattern, response.text)
 

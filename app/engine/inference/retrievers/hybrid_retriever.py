@@ -88,33 +88,28 @@ class HybridRetriever(BaseRetriever):
     @staticmethod
     def preprocessing_fr(text: str) -> str:
         """Enhanced text preprocessing optimized for French text."""
-        # Convert to lowercase
         text = text.lower()
-
-        # Normalize Unicode characters (NFD normalization for French accents)
         text = unicodedata.normalize('NFD', text)
 
         # Remove punctuation but keep French accents and hyphens
         text = re.sub(r'[^\w\sàâäæéèêëïîôöùûüÿçñ-]', ' ', text)
 
         # Handle French contractions and common patterns
-        text = re.sub(r"\bl'", ' le ', text)  # l'école -> le école
-        text = re.sub(r"\bd'", ' de ', text)  # d'accord -> de accord
-        text = re.sub(r"\bqu'", ' que ', text)  # qu'est -> que est
-        text = re.sub(r"\bc'", ' ce ', text)  # c'est -> ce est
-        text = re.sub(r"\bs'", ' se ', text)  # s'agit -> se agit
-        text = re.sub(r"\bm'", ' me ', text)  # m'aide -> me aide
-        text = re.sub(r"\bt'", ' te ', text)  # t'aide -> te aide
-        text = re.sub(r"\bn'", ' ne ', text)  # n'est -> ne est
+        text = re.sub(r"\bl'", ' le ', text)
+        text = re.sub(r"\bd'", ' de ', text)
+        text = re.sub(r"\bqu'", ' que ', text)
+        text = re.sub(r"\bc'", ' ce ', text)
+        text = re.sub(r"\bs'", ' se ', text)
+        text = re.sub(r"\bm'", ' me ', text)
+        text = re.sub(r"\bt'", ' te ', text)
+        text = re.sub(r"\bn'", ' ne ', text)
 
-        # Remove extra whitespace
         text = ' '.join(text.split())
 
         return text
 
     def _bm25_retriever(self, nodes: List) -> BM25Retriever:
         """Create BM25 retriever with enhanced French preprocessing."""
-        # Create copies of nodes to avoid modifying originals
         processed_nodes = []
         for node in nodes:
             processed_node = node.copy()
@@ -141,11 +136,9 @@ class HybridRetriever(BaseRetriever):
         Returns:
             List[NodeWithScore]: Combined and ranked nodes.
         """
-        # Create rank dictionaries
         dense_ranks = {node.id_: i + 1 for i, node in enumerate(dense_nodes)}
         sparse_ranks = {node.id_: i + 1 for i, node in enumerate(sparse_nodes)}
 
-        # Get all unique node IDs
         all_node_ids = set(dense_ranks.keys()) | set(sparse_ranks.keys())
 
         # Calculate RRF scores
@@ -155,13 +148,11 @@ class HybridRetriever(BaseRetriever):
             sparse_rrf = 1 / (self._rrf_k + sparse_ranks.get(node_id, len(sparse_nodes) + 1))
             rrf_scores[node_id] = self._alpha * dense_rrf + (1 - self._alpha) * sparse_rrf
 
-        # Create node dictionary for lookup
         node_dict = {}
         for node in dense_nodes + sparse_nodes:
             if node.id_ not in node_dict:
                 node_dict[node.id_] = node
 
-        # Create result nodes with RRF scores
         result_nodes = []
         for node_id, score in sorted(rrf_scores.items(), key=lambda x: x[1], reverse=True):
             if node_id in node_dict:
@@ -184,7 +175,6 @@ class HybridRetriever(BaseRetriever):
         """
         query_str = query_bundle.query_str
 
-        # Create vector retriever with metadata filters
         metadata_filters = self._create_metadata_filters()
         vector_retriever = VectorIndexRetriever(
             index=self._vector_index,
@@ -192,15 +182,12 @@ class HybridRetriever(BaseRetriever):
             filters=metadata_filters
         )
 
-        # Create enhanced BM25 retriever (already filtered nodes in __init__)
         bm25_retriever = self._bm25_retriever(self._nodes)
 
-        # Retrieve from both methods
-        dense_nodes = vector_retriever.retrieve(query_str)  # Original query for embeddings
+        dense_nodes = vector_retriever.retrieve(query_str)
         processed_query = self.preprocessing_fr(query_str)
-        sparse_nodes = bm25_retriever.retrieve(processed_query)  # Processed query for BM25
+        sparse_nodes = bm25_retriever.retrieve(processed_query)
 
-        # Combine using RRF
         combined_nodes = self._combine_retrievers_rrf(dense_nodes, sparse_nodes)
 
         return combined_nodes

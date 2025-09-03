@@ -35,7 +35,6 @@ class InteractiveQueryRAG(Demo):
             question = input("Question: ")
             self.questions.append(question)
 
-            # Check if user wants to continue
             response = input("Do you want to ask another question? (y/[n]): ")
             if response == '' or response == 'n':
                 break

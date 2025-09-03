@@ -1,4 +1,4 @@
-from app.engine.guardrails.extract_thematics import ThematicsExtractor
+from app.engine.guardrails.extract_thematics import DomainsExtractor
 from app.utils.app_utils import pprint_console
 from configuration import config_parser
 
@@ -16,7 +16,7 @@ def main():
         args.storage_dir = "./data/vector_db_anonymised"
 
     # Initialize extractor
-    extractor = ThematicsExtractor(args)
+    extractor = DomainsExtractor(args)
 
     # Run extraction
     keywords = extractor.run_extraction()

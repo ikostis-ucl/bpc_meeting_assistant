@@ -123,12 +123,10 @@ class BaseInference(ABC):
         Clean up memory-intensive resources to prevent memory leaks.
         Called after processing queries to free up memory.
         """
-        # Release reranker resources
         if self.reranker is not None:
             del self.reranker
             self.reranker = None
 
-        # Force garbage collection to reclaim memory
         gc.collect()
 
     def generate_timespans(self, starting_month_timestamp, ending_month_timestamp, time_freq):
@@ -160,7 +158,6 @@ class BaseInference(ABC):
 
         self.timespans = []
 
-        # Convert timestamps to datetime objects
         start_date = datetime.fromtimestamp(starting_month_timestamp)
         end_date = datetime.fromtimestamp(ending_month_timestamp)
 
@@ -242,7 +239,7 @@ class BaseInference(ABC):
                 else:
                     _pdf_path = "app/assets/idle_screen.pdf"
 
-                # Create placeholder metadata for GUI rendering
+                # Placeholder metadata for GUI rendering
                 placeholder_metadata = {
                     "placeholder_node": {
                         'score': 0.0,
@@ -268,7 +265,6 @@ class BaseInference(ABC):
         all_nodes = self.index.docstore.get_nodes(all_node_ids)
 
         for timespan_idx, (start_date, end_date) in enumerate(self.timespans):
-            # Create custom hybrid retriever with timespan filtering
             hybrid_retriever = HybridRetriever(
                 vector_index=self.index,
                 nodes=all_nodes,
@@ -288,7 +284,6 @@ class BaseInference(ABC):
             answer = self._synthesize_response(response_synthesizer, query_string, reranked_nodes,
                                                timespan_idx=timespan_idx)
 
-            # Process metadata with RRF scores
             metadata = {}
             for node in reranked_nodes:
                 metadata[node.id_] = {
@@ -301,7 +296,7 @@ class BaseInference(ABC):
 
         cleaned_results = self._filter_results(query_string, results)
 
-        # Keep top 3 nodes based on scores for showcasing to the user.
+        # Limit the output to the user to 3 nodes for readability. This is a heuristic.
         for i in range(len(cleaned_results)):
             metadata = cleaned_results[i][1]
             top_nodes = heapq.nlargest(3, metadata.items(), key=lambda item: item[1]['score'])

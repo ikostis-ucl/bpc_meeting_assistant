@@ -19,7 +19,6 @@ class IndexingTest:
         self.args.input_path = "data/tests/ERA-I_PV01_221006_redacted.pdf"
         self.args.storage_dir = "data/tests/vector_db_test"
 
-        # Initialize storage agent and run indexing
         self.agent = Storage(args=self.args)
         self.agent.run()
 
@@ -45,6 +44,5 @@ class IndexingFull:
             self.args.input_path = "./data/input_anonymised"
             self.args.storage_dir = "./data/vector_db_anonymised"
 
-        # Initialize storage agent and run indexing
         self.agent = Storage(args=self.args)
         self.agent.run()

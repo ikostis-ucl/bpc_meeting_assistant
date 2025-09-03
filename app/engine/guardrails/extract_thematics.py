@@ -15,7 +15,7 @@ from app.utils.app_utils import pprint_console, pprint_error, pprint_debug
 from app.utils.inference_utils import throttle_requests
 
 
-class ThematicsExtractor:
+class DomainsExtractor:
     """
     Extract domain-specific thematics from meeting documents and append all findings,
     tracking frequency of thematics across documents.
@@ -25,7 +25,6 @@ class ThematicsExtractor:
         """Initialize the thematics' extractor."""
         self.args = args
 
-        # Initialize LLM for thematic extraction
         self.extraction_llm = Groq(
             model=args.groq_model_indexing_extraction,
             api_key=args.groq_api_key,
@@ -54,36 +53,27 @@ class ThematicsExtractor:
 
         pprint_console(f"Processing {len(self.index.docstore.docs)} documents...")
 
-        # Group documents by file name
         documents_by_file = self._group_documents_by_file()
 
-        # Load existing data if file exists
         self._load_existing_data()
 
-        # Process each document
         processed_count = 0
         for file_name, nodes in tqdm(documents_by_file.items(), desc="[APPENDING_EXTR] Processing documents"):
             try:
-                # Skip if document already processed
                 if file_name in self.processed_documents:
                     pprint_console(f"Document {file_name} already processed, skipping...")
                     continue
 
-                # Combine all text from nodes of this document
                 document_text = self._combine_document_nodes(nodes)
 
-                # Extract thematics from this document
                 document_thematics = self._extract_document_thematics(document_text, file_name)
 
-                # Update frequency counters and store thematics
                 if document_thematics:
                     for thematic_name, description in document_thematics.items():
                         self.thematic_frequency[thematic_name] += 1
-                        # Keep the description (first one found or update if better)
                         if thematic_name not in self.thematics:
                             self.thematics[thematic_name] = description
 
-                    # Mark document as processed
                     self.processed_documents.add(file_name)
                     self._save_data()
 
@@ -96,7 +86,6 @@ class ThematicsExtractor:
                 pprint_error(f"Error processing document {file_name}: {e}")
                 continue
 
-        # Final save
         self._save_data()
 
         pprint_console(
@@ -146,28 +135,27 @@ class ThematicsExtractor:
         for line in lines:
             line = line.strip()
 
-            # Extract main sections (# titles)
+            # # Main sections
             if line.startswith('# '):
                 section = line[2:].strip()
                 if section and section not in structure['main_sections']:
                     structure['main_sections'].append(section)
 
-            # Extract subsections (## ### titles)
+            # ##/### Subsections
             elif line.startswith('##'):
                 subsection = re.sub(r'^#+\s*', '', line).strip()
                 if subsection and subsection not in structure['subsections']:
                     structure['subsections'].append(subsection)
 
-            # Extract dates (DD/MM/YY format)
+            # Dates
             date_matches = re.findall(r'\b\d{1,2}/\d{1,2}/\d{2,4}\b', line)
             structure['dates_found'].extend(date_matches)
 
-            # Extract potential key topics (capitalized words that might be technical terms)
+            # Capitalized terms (key topics, abbreviations, etc.)
             if len(line) > 10 and not line.startswith('#'):
                 key_words = re.findall(r'\b[A-Z][a-zàâäæéèêëïîôöùûüÿç]{3,}\b', line)
                 structure['key_topics'].extend(key_words)
 
-        # Remove duplicates and limit size
         for key in structure:
             if isinstance(structure[key], list):
                 structure[key] = list(set(structure[key]))[:10]  # Limit to 10 items
@@ -181,7 +169,6 @@ class ThematicsExtractor:
                 with open(self.args.thematics_storage_path, 'r', encoding='utf-8') as f:
                     data = json.load(f)
 
-                # Load simplified structure
                 self.thematics = data.get('thematics', {})
                 frequency_data = data.get('thematic_frequency', {})
                 self.thematic_frequency = defaultdict(int, frequency_data)
@@ -201,10 +188,8 @@ class ThematicsExtractor:
     def _extract_document_thematics(self, document_text: str, file_name: str) -> Dict[str, str]:
         """Extract thematics from a single document using LLM."""
 
-        # Analyze document structure
         doc_structure = self._analyze_document_structure(document_text)
 
-        # Prepare structure context
         structure_context = f"""
             STRUCTURE DU DOCUMENT DÉTECTÉE:
             - Sections principales: {', '.join(doc_structure['main_sections'][:5]) if doc_structure['main_sections'] else 'Aucune'}
@@ -253,7 +238,6 @@ class ThematicsExtractor:
             response = self.extraction_llm.complete(extraction_prompt)
             response_text = response.text.strip()
 
-            # Parse thematics
             document_thematics = {}
             lines = response_text.split('\n')
             current_thematic = None
@@ -262,24 +246,19 @@ class ThematicsExtractor:
             for line in lines:
                 line = line.strip()
 
-                # Check if line starts with S<number>:
                 if re.match(r'^S\d+:', line):
-                    # Save previous thematic if exists
                     if current_thematic and current_description_parts:
                         description = ' '.join(current_description_parts).strip()
                         if description:
                             document_thematics[current_thematic] = description
 
-                    # Start new thematic
                     parts = line.split(':', 1)
                     if len(parts) == 2:
                         current_thematic = parts[1].strip()
                         current_description_parts = []
                 elif line and current_thematic:
-                    # Add to description
                     current_description_parts.append(line)
 
-            # Save last thematic
             if current_thematic and current_description_parts:
                 description = ' '.join(current_description_parts).strip()
                 if description:
@@ -324,12 +303,10 @@ class ThematicsExtractor:
         summary = f"EXTRACTION COMPLÈTE - APPROCHE AJOUT\n"
         summary += "=" * 60 + "\n\n"
 
-        # Overall statistics
         summary += f"STATISTIQUES GÉNÉRALES:\n"
         summary += f"- Documents traités: {len(self.processed_documents)}\n"
         summary += f"- Thématiques uniques: {len(self.thematics)}\n\n"
 
-        # Sort thematics by frequency (most common first)
         sorted_thematics = sorted(
             self.thematics.items(),
             key=lambda x: self.thematic_frequency[x[0]],
@@ -351,13 +328,11 @@ class ThematicsExtractor:
 
         start_time = datetime.now()
 
-        # Extract thematics
         results = self.extract_thematics_from_index()
 
         end_time = datetime.now()
         duration = end_time - start_time
 
-        # Print summary
         pprint_console(f"Extraction completed in {duration}")
         pprint_debug(self.get_comprehensive_summary())
 

@@ -40,12 +40,10 @@ class GUI:
         else:
             self.idle_screen = "./app/assets/idle_screen.pdf"
 
-        # Set the timespans using the configured time_freq value
         self.conv_agent.generate_timespans(starting_month_timestamp=self.conv_agent.start_date,
                                            ending_month_timestamp=self.conv_agent.end_date,
                                            time_freq=self.args.time_freq)
 
-        # Example questions for the user interface
         self.examples = list(BENCHMARK_QUESTIONS_INDEX.values())
 
     @staticmethod
@@ -79,28 +77,22 @@ class GUI:
 
         response_metadata = {}
 
-        # Process each result and update metadata and chat history
         for answer, metadata, (_s_date, _e_date) in results:
-            # Format dates for display
             start_date_str = datetime.datetime.fromtimestamp(_s_date).strftime('%d/%m/%Y')
             end_date_str = datetime.datetime.fromtimestamp(_e_date).strftime('%d/%m/%Y')
             timespan_key = f"{start_date_str} to {end_date_str}"
 
-            # Organize metadata by timespan
             if timespan_key not in response_metadata:
                 response_metadata[timespan_key] = {}
 
-            # Process metadata for each node with enhanced structure handling
             if metadata:
                 for node_id, node_values in metadata.items():
-                    # Check if node has the required metadata fields
                     if "metadata" in node_values and isinstance(node_values["metadata"], dict):
                         node_metadata = node_values["metadata"]
                         file_name = node_metadata.get("file_name")
                         file_path = node_metadata.get("file_path")
                         page_number = node_metadata.get("page_number")
 
-                        # Only process nodes with valid citation metadata
                         if file_name and file_path and page_number is not None:
                             if file_name in response_metadata[timespan_key]:
                                 response_metadata[timespan_key][file_name]["page_numbers"].append(page_number)
@@ -110,7 +102,6 @@ class GUI:
                                     "page_numbers": [page_number]
                                 }
 
-            # Update chat history with response
             chat_history.append([None, f"Du {start_date_str} au {end_date_str}:"])
             chat_history.append([None, f"{answer}"])
             chat_history.append([None, f"-------"])
@@ -142,7 +133,6 @@ class GUI:
             </style>
             """
 
-        # Create Gradio interface
         with gr.Blocks(title="Meeting Minutes Assistant",
                        fill_height=True,
                        head=head_style,
@@ -156,7 +146,6 @@ class GUI:
             )
             render_state = gr.State(True)
 
-            # Layout definition with chat and document display
             with gr.Row():
                 with gr.Column():
                     chatbot = gr.Chatbot(
@@ -175,7 +164,6 @@ class GUI:
                         Displays relevant PDF pages in the interface.
                         """
                         if render_state:
-                            # Initial render state handling
                             pdf_info = {}
                             for node_id, node_values in metadata.items():
                                 file_name = node_values["file_name"]
@@ -187,7 +175,6 @@ class GUI:
                                 else:
                                     pdf_info[file_name]["page_numbers"].append(page_number)
 
-                            # Display PDFs in tabs
                             for pdf_name, info in pdf_info.items():
                                 pdf_path = info["file_path"]
                                 page_numbers = list(set(info["page_numbers"]))
@@ -216,7 +203,6 @@ class GUI:
                                         height=SMALL_WIN,
                                     )
                         else:
-                            # Conversation state handling
                             for timespan, files in metadata.items():
                                 with gr.Tab(label=timespan):
                                     for file_name, file_info in files.items():
@@ -247,10 +233,8 @@ class GUI:
                                                     height=SMALL_WIN,
                                                 )
 
-                        # Force garbage collection after rendering
                         gc.collect()
 
-            # Input components
             with gr.Row():
                 input_textbox = gr.Textbox(
                     placeholder="Pose-moi une question sur le projet!",
@@ -274,7 +258,6 @@ class GUI:
                 outputs=[chatbot, metadata, render_state]
             )
 
-        # Launch application with appropriate configuration
         try:
             if self.args.prod:
                 auth_pairs = os.getenv("GRADIO_AUTH_PAIRS").split(',')
@@ -285,7 +268,7 @@ class GUI:
                     server_port=9000,
                     auth=auth_users,
                     max_threads=32,
-                    favicon_path="./app/assets/bpc_logo.png"
+                    favicon_path="./app/assets/logo.png"
                 )
             else:
                 app.queue(max_size=2)
@@ -293,7 +276,7 @@ class GUI:
                     share=True,
                     inbrowser=False,
                     max_threads=8,
-                    favicon_path="./app/assets/bpc_logo.png",
+                    favicon_path="./app/assets/logo.png",
                     server_name="0.0.0.0",
                     server_port=7863
                 )

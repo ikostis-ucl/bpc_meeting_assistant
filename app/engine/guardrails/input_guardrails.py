@@ -76,7 +76,6 @@ class InputGuardrails:
                 merged_thematics[duplicate['original_title']] = duplicate['description']
                 merged_frequencies[duplicate['original_title']] = duplicate['frequency']
             else:
-                # Aggregate frequencies by summing them
                 total_frequency = sum(d['frequency'] for d in duplicates)
                 descriptions = [d['description'] for d in duplicates]
                 original_titles = [d['original_title'] for d in duplicates]
@@ -91,7 +90,6 @@ class InputGuardrails:
                     f"Merged {len(duplicates)} duplicates into '{canonical_title}' (total frequency: {total_frequency})")
                 pprint_debug(f"Original titles: {original_titles}")
 
-        # Store frequencies for Pareto calculation
         self._merged_frequencies = merged_frequencies
         return merged_thematics
 
@@ -148,14 +146,11 @@ class InputGuardrails:
         Returns:
             Dict[str, str]: Top thematics following Pareto principle
         """
-        # Use stored frequencies from merge process
         thematic_frequencies = [(title, self._merged_frequencies[title])
                                 for title in merged_thematics.keys()]
 
-        # Sort by frequency (descending)
         thematic_frequencies.sort(key=lambda x: x[1], reverse=True)
 
-        # Apply Pareto principle (top 20% of thematics)
         total_thematics = len(thematic_frequencies)
         pareto_count = max(1, int(total_thematics * 0.2))
 
@@ -201,7 +196,6 @@ class InputGuardrails:
                 with open(self.args.merged_thematics_storage_path, 'r', encoding='utf-8') as f:
                     cached_data = json.load(f)
 
-                # Extract merged thematics and frequencies from cache
                 merged_thematics = cached_data.get('merged_thematics', {})
                 self._merged_frequencies = cached_data.get('merged_frequencies', {})
 
@@ -211,7 +205,6 @@ class InputGuardrails:
                 merged_thematics = self._normalize_and_merge_thematics(thematics_data)
                 pprint_debug(f"After normalization and merging: {len(merged_thematics)} unique thematics")
 
-                # Save merged results with frequencies
                 cache_data = {
                     'merged_thematics': merged_thematics,
                     'merged_frequencies': self._merged_frequencies
@@ -220,7 +213,6 @@ class InputGuardrails:
                     json.dump(cache_data, f, indent=2, ensure_ascii=False)
                 pprint_debug(f"Saved merged thematics to {self.args.merged_thematics_storage_path}")
 
-            # Apply Pareto principle
             final_thematics = self._apply_pareto_principle(merged_thematics, thematics_data)
             pprint_debug(f"After Pareto principle: {len(final_thematics)} selected thematics")
 
@@ -307,11 +299,11 @@ class InputGuardrails:
             elif "OUI" in response_text:
                 return True, ""
             else:
-                return True, ""  # Fallback to permissive
+                return True, ""
 
         except Exception as e:
             pprint_error(f"Classification failed: {e}")
-            return True, ""  # Fallback to permissive
+            return True, ""
 
     def get_rejection_message(self, reason: str) -> str:
         """Generate rejection message using extracted thematic names."""

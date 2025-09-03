@@ -33,7 +33,6 @@ class Demo:
         """
         self.inputs()
 
-        # Process each question and display results
         for question in self.questions:
             results = self.agent.query_llm(query_string=question)
             pprint_qa(question, results)

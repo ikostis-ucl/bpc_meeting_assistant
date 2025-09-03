@@ -3,8 +3,6 @@ from typing import List
 
 from llama_index.core.schema import TransformComponent, BaseNode
 
-from app.utils.app_utils import pprint_debug
-
 CHAR_LIMITER = 40
 
 
@@ -16,8 +14,6 @@ class TitleNodeFilter(TransformComponent):
         for node in nodes:
             if not self.is_title_node(node.text):
                 filtered_nodes.append(node)
-            # else:
-            #     pprint_debug(f"Excluding title node: {repr(node.text[:100])}")
         return filtered_nodes
 
     @staticmethod
@@ -25,20 +21,20 @@ class TitleNodeFilter(TransformComponent):
         """Check if a node contains only title/header content."""
         content = content.strip()
 
-        # Filter very short content (likely titles)
+        # Very short content (likely titles)
         if len(content) < CHAR_LIMITER:
             return True
 
-        # Filter markdown headers only
+        # Markdown headers
         if re.match(r'^#+\s+.*$', content) and '\n' not in content:
             return True
 
-        # Filter content with limited sentence structure
+        # Content with limited sentence structure
         sentence_count = len(re.findall(r'[.!?]+', content))
         if sentence_count < 2 and len(content) < CHAR_LIMITER:
             return True
 
-        # Filter all caps content (common for titles)
+        # All caps (common for titles)
         if content.isupper() and len(content) < CHAR_LIMITER:
             return True
 

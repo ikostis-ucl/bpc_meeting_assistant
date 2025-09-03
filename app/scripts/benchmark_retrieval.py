@@ -27,12 +27,11 @@ class BenchmarkRetrieval(Demo):
             self.args.storage_dir = "./data/vector_db_anonymised"
 
         self.questions = list(BENCHMARK_QUESTIONS_INDEX.values())
-        self.evaluator = None  # Will be initialized after agent creation
+        self.evaluator = None
         self.agent = EvalInference(self.args, self.questions)
 
     def benchmark_eval(self, k_values: List[int]) -> Dict:
         """Run benchmark evaluation with k values that match system design."""
-        # Initialize evaluator with agent's timespan information
         if self.evaluator is None:
             self.evaluator = BenchmarkEvaluator(
                 self.args.benchmark_gt_path,

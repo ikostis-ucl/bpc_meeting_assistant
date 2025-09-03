@@ -9,13 +9,12 @@ from llama_index.core import Settings
 from llama_index.core import VectorStoreIndex
 from llama_index.core.node_parser import MarkdownNodeParser
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-from llama_index.llms.groq import Groq
 from llama_parse import LlamaParse
 from tqdm import tqdm
 
 from app.engine.data_processing.data_loaders import load_index
-from app.engine.data_processing.metadata_extraction.TitleNodeFilter import TitleNodeFilter
 from app.engine.data_processing.metadata_extraction.InvolvedPartiesExtractor import InvolvedPartiesExtractor
+from app.engine.data_processing.metadata_extraction.TitleNodeFilter import TitleNodeFilter
 from app.engine.data_processing.metadata_extraction.parse_first_page_llm import parse_first_page
 from app.utils.app_utils import pprint_console, simplify_path, empty_dir, fmt_string, Color, pprint_error
 from app.utils.data_processing_utils import datetime_to_timestamp
@@ -37,13 +36,11 @@ class Storage:
             args: Configuration arguments containing API keys, model paths, and other settings.
         """
 
-        # Apply async support and suppress warnings
         nest_asyncio.apply()
         warnings.filterwarnings("ignore", category=FutureWarning)
 
         self.args = args
 
-        # Initialize document parser with LlamaParse
         self.doc_parser = LlamaParse(api_key=self.args.llama_parse_key,
                                      result_type="markdown",
                                      verbose=False,
@@ -56,12 +53,13 @@ class Storage:
 
         self.index = None
 
-        # Initialize embedding model and language model
         self.embedding_model = HuggingFaceEmbedding(model_name=args.embeddings_model,
                                                     cache_folder=args.embeddings_cache_dir)
-        self.llm = Groq(model=args.groq_model_indexing_kw,
-                        api_key=args.groq_api_key,
-                        model_kwargs={"seed": 42}, temperature=0.0)
+        # TODO: Remove this if unnecessary
+        # from llama_index.llms.groq import Groq
+        # self.llm = Groq(model=args.groq_model_indexing_kw,
+        #                 api_key=args.groq_api_key,
+        #                 model_kwargs={"seed": 42}, temperature=0.0)
 
         self.node_parser = MarkdownNodeParser()
         self.title_filter = TitleNodeFilter()
@@ -79,7 +77,6 @@ class Storage:
             self.index, _ = load_index(args=self.args, transformations=[self.node_parser])
             return
 
-        # Check if directory is not empty and handle user choice
         if not empty_dir(self.args.storage_dir):
             while True:
                 user_input = input(fmt_string(Color.BLUE,
@@ -108,7 +105,6 @@ class Storage:
         """
         Settings.embed_model = self.embedding_model
 
-        # Get list of files to process
         if os.path.isdir(self.args.input_path):
             file_paths = [simplify_path(os.path.join(self.args.input_path, f))
                           for f in os.listdir(self.args.input_path)
@@ -120,7 +116,6 @@ class Storage:
             pprint_console("The input folder is empty. Exiting...")
             exit()
 
-        # Get already indexed document IDs if index exists
         already_indexed_files = set()
         doc_ref_ids = []
         if self.index is not None:
@@ -128,7 +123,6 @@ class Storage:
             for doc_id in doc_ref_ids:
                 already_indexed_files.add(f"{doc_id}.pdf")
 
-        # Process each file
         file_paths = tqdm(file_paths)
         for f_path in file_paths:
             fname = os.path.basename(f_path)
@@ -136,7 +130,6 @@ class Storage:
             file_paths.set_description(f"Processing file {fname_no_xt}")
             doc_id = fname_no_xt.lower().replace(" ", "_")
 
-            # Check if the file is already indexed
             if fname.lower() in already_indexed_files or doc_id in doc_ref_ids:
                 pprint_console(f"File {fname} already indexed, skipping...")
                 continue
@@ -165,7 +158,7 @@ class Storage:
                 documents = self.doc_parser.load_data(temp_pdf_path)
 
             if documents:
-                # Attach document date onto the document as metadata
+                # Attach metadata
                 for page_num, doc in enumerate(documents, start=2):
                     doc.metadata = {
                         'meeting_datetime': datetime_to_timestamp(formatted_datetime),
@@ -187,7 +180,6 @@ class Storage:
                                                                  show_progress=False)
 
                     self.index.storage_context.persist(persist_dir=self.args.storage_dir)
-                    # Update tracking information
                     doc_ref_ids.append(doc_id)
                     already_indexed_files.add(fname.lower())
 
@@ -202,11 +194,6 @@ class Storage:
         pprint_console("All documents processed and indexed.")
 
     def run(self):
-        """
-        Execute the main storage workflow.
-
-        This method coordinates the directory confirmation and document parsing process.
-        """
 
         self.directory_confirmation()
 

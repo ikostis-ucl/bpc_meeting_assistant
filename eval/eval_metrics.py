@@ -69,16 +69,11 @@ def calculate_metrics_with_normalization(retrieved_pages: List[str], relevant_pa
     recall = relevant_retrieved / len(relevant_pages)
     hit_rate = 1.0 if relevant_retrieved > 0 else 0.0
 
-    # Calculate theoretical maximum recall
+    # Normalized variants
     max_possible_recall = min(k, len(relevant_pages)) / len(relevant_pages)
+    normalized_recall = recall / min(1, max_possible_recall) if max_possible_recall > 0 else 0.0
 
-    # Normalized recall (recall relative to maximum achievable)
-    normalized_recall = recall / max_possible_recall if max_possible_recall > 0 else 0.0
-
-    # Standard F1
     f1 = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
-
-    # Normalized F1 using normalized recall
     normalized_f1 = 2 * (precision * normalized_recall) / (precision + normalized_recall) \
         if (precision + normalized_recall) > 0 else 0.0
 

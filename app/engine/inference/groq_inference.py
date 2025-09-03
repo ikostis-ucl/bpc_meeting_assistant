@@ -19,10 +19,8 @@ class GroqInference(BaseInference):
         Args:
             args: Configuration arguments for models and API settings.
         """
-        # Store TPM setting for later use
         self.model_tpm = args.groq_model_inference_tpm
 
-        # Call parent constructor - this will call _create_model
         super().__init__(args)
 
     def _create_model(self, args):

@@ -6,7 +6,7 @@ from typing import Dict
 from app.engine.inference.groq_inference import GroqInference
 from app.scripts.demo import Demo
 from app.utils.app_utils import pprint_console, pprint_debug
-from app.utils.benchmark_utils import BENCHMARK_QUESTIONS_INDEX_RG
+from app.utils.benchmark_utils import BENCHMARK_QUESTIONS_INDEX_RAG
 
 
 class BenchmarkRAG(Demo):
@@ -22,7 +22,6 @@ class BenchmarkRAG(Demo):
         super().__init__()
 
         self.args.benchmark_mode = True
-        self.args.answer_assess = True
 
         self.query_results = []
 
@@ -33,14 +32,13 @@ class BenchmarkRAG(Demo):
             self.args.input_path = "./data/input_anonymised"
             self.args.storage_dir = "./data/vector_db_anonymised"
 
-        self.questions = list(BENCHMARK_QUESTIONS_INDEX_RG.values())
+        self.questions = list(BENCHMARK_QUESTIONS_INDEX_RAG.values())
         self.agent = GroqInference(args=self.args)
 
     def run_single_query(self, query_idx: int, query: str):
         """Run a single query and store timing data."""
         result = self.agent.query_llm(query)
 
-        # Store result with query information
         self.query_results.append({
             'query_idx': query_idx,
             'query': query,
@@ -55,7 +53,6 @@ class BenchmarkRAG(Demo):
         if not hasattr(self.agent, 'timing_data'):
             return {}
 
-        # Get timings for the last query (timespans count)
         num_timespans = len(self.agent.timespans)
         timings = {}
 
@@ -77,7 +74,6 @@ class BenchmarkRAG(Demo):
             'summary_stats': {}
         }
 
-        # Per-query metrics
         for query_data in self.query_results:
             query_idx = query_data['query_idx']
             timings = query_data['timings']
@@ -150,7 +146,6 @@ class BenchmarkRAG(Demo):
 
         metrics = self._calculate_comprehensive_metrics()
 
-        # Prepare final results
         results = {
             'metadata': {
                 'timestamp': datetime.now().isoformat(),
@@ -196,7 +191,6 @@ class BenchmarkRAG(Demo):
             pprint_console(f"Processing query {i + 1}/{len(self.questions)}: {question}")
             self.run_single_query(i, question)
 
-        # Print summary and save results
         self.print_timing_summary()
         results_file = self.save_benchmark_results()
 

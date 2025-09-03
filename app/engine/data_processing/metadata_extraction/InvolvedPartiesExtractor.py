@@ -45,11 +45,9 @@ class InvolvedPartiesExtractor(BaseExtractor):
             for entity in self.entities
         }
 
-        # Process each node to find matching entities
         for node in nodes:
             _inv_parties = []
 
-            # Check for each entity pattern in the node text
             for entity, pattern in entity_patterns.items():
                 if pattern.search(node.text):
                     _inv_parties.append(entity)

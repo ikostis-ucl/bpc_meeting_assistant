@@ -19,7 +19,7 @@ To address this challenge, we propose an application designed to streamline acce
 
  - **Input guardrails using extracted domain thematics:**
     - Automatic domain discovery from indexed documents via LLM analysis.
-    - Pareto Principle (70/30) selection of most relevant thematics.
+    - Pareto Principle (80/20) selection of most relevant thematics.
     - Real-time query validation against project scope.
 
 - **Query Processing**

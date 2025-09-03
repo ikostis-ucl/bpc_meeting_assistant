@@ -21,14 +21,12 @@ def load_index(args, transformations=None):
     Raises:
         SystemExit: If the storage directory is not found.
     """
-    # Set the embedding model and cache folder
     Settings.embed_model = HuggingFaceEmbedding(model_name=args.embeddings_model,
                                                 cache_folder=args.embeddings_cache_dir)
     if transformations is not None:
         Settings.transformations = transformations
     Settings.show_progress = False
 
-    # Check if the storage directory exists
     if os.path.exists(args.storage_dir):
         with Halo(text=f"{fmt_string(Color.CYAN, '[CONSOLE] Loading index from storage...')}",
                   placement='right', animation='bounce', spinner='moon'):
@@ -36,7 +34,6 @@ def load_index(args, transformations=None):
             index = load_index_from_storage(storage_context, show_progress=False)
         pprint_console("Loaded index from storage.")
 
-        # Extract timestamps from the index
         _timestamps = [node.metadata.get('meeting_datetime') for node in index.docstore.docs.values()]
         return index, (min(_timestamps), max(_timestamps))
     else:

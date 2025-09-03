@@ -31,7 +31,6 @@ class Judge:
             args: Configuration arguments containing API keys and model settings.
         """
         self.args = args
-        # Initialize Groq model for similarity judgement
         self.model = Groq(model=args.groq_model_inference_judge,
                           api_key=args.groq_api_key,
                           model_kwargs={"seed": 42}, temperature=0.0)

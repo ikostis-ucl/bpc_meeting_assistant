@@ -11,7 +11,7 @@ BENCHMARK_QUESTIONS_INDEX = {
     "10": "Pourrais-je avoir une liste des remarques faites par le SECO ?"
 }
 
-BENCHMARK_QUESTIONS_INDEX_RG = {
+BENCHMARK_QUESTIONS_INDEX_RAG = {
     "1": "Quelle est la couleur choisie (RAL) pour les châssis ?",
     "2": "Liste des décisions prises concernant le carrelage des salles de bain (SDBs) et les dates (jour/mois/année) auxquelles elles ont été prises.",
     "3": "Quelle isolation a été choisi pour les plafonds du (sous-sol) -1 ?",

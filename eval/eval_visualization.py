@@ -1,4 +1,5 @@
 import json
+import os
 from datetime import datetime
 
 import numpy as np
@@ -233,6 +234,8 @@ def visualize_benchmark_results(json_file_path: str):
                     f'{value:.3f}', ha='center', va='bottom', fontsize=8)
 
         plt.tight_layout()
+        save_dir = os.path.dirname(json_file_path)
+        plt.savefig(os.path.join(save_dir, 'global_averages_standard.png'), dpi=300, bbox_inches='tight')
         plt.show()
 
         # 3b. Normalized metrics plot
@@ -267,4 +270,5 @@ def visualize_benchmark_results(json_file_path: str):
                     f'{value:.3f}', ha='center', va='bottom', fontsize=8)
 
         plt.tight_layout()
+        plt.savefig(os.path.join(save_dir, 'global_averages_normalized.png'), dpi=300, bbox_inches='tight')
         plt.show()
