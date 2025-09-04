@@ -25,10 +25,8 @@ def timed_operation(operation_name: str, timespan_aware: bool = False):
             result = func(self, *args, **kwargs)
             duration = time.time() - start_time
 
-            # Extract timespan_idx if this is a timespan-aware operation
             timespan_idx = kwargs.get('timespan_idx') if timespan_aware else None
 
-            # Record timing data directly
             _record_timing_data(self, operation_name, duration, timespan_idx)
             return result
 
@@ -66,7 +64,6 @@ def debug_node_scores(nodes, stage_name):
         pprint_debug(f"{stage_name}: No nodes to analyze")
         return
 
-    # Create score dictionary and extract scores
     score_dict = {node.id_: node.score for node in nodes if hasattr(node, 'score')}
     scores = list(score_dict.values())
 
@@ -74,7 +71,6 @@ def debug_node_scores(nodes, stage_name):
         pprint_debug(f"{stage_name}: No scores available")
         return
 
-    # Calculate statistics
     mean_score = statistics.mean(scores)
     std_score = statistics.stdev(scores) if len(scores) > 1 else 0.0
     min_score = min(scores)

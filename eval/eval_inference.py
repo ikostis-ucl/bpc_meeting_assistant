@@ -45,15 +45,12 @@ class EvalInference(BaseInference):
         results = []
         reranker = self._get_reranker()
 
-        # Get all nodes once for efficiency
         all_node_ids = [node.id_ for node in self.index.docstore.docs.values()]
         all_nodes = self.index.docstore.get_nodes(all_node_ids)
 
         for batch_idx, query_batch in enumerate(self.document_batches):
-            # Filter nodes by timestamp batch
             batch_nodes = self._filter_nodes_by_timestamp_batch(all_nodes, query_batch)
 
-            # Create hybrid retriever with batch-filtered nodes
             hybrid_retriever = HybridRetriever(
                 vector_index=self.index,
                 nodes=batch_nodes,
@@ -62,18 +59,14 @@ class EvalInference(BaseInference):
                 callback_manager=self.callback_manager
             )
 
-            # Create query bundle with batch information
             query_bundle = QueryBundle(query_str=query_string)
             query_bundle.query_batch = query_batch
 
-            # Retrieve using hybrid retriever
             combined_nodes = hybrid_retriever.retrieve(query_bundle)
 
-            # Apply reranking to top candidates
             top_candidates = combined_nodes[:50]
             reranked_nodes = reranker.postprocess_nodes(top_candidates, query_bundle)
 
-            # Process metadata with scores
             metadata = {}
             for node in reranked_nodes:
                 metadata[node.id_] = {
@@ -82,10 +75,8 @@ class EvalInference(BaseInference):
                     'metadata': node.metadata
                 }
 
-            # Return batch_idx and query_batch instead of start/end dates
             results.append((None, metadata, (batch_idx, query_batch)))
 
-        # Keep top 5 nodes based on scores for each result
         for i in range(len(results)):
             metadata = results[i][1]
             if metadata:

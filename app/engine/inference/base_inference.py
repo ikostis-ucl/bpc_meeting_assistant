@@ -1,8 +1,8 @@
-from typing import List
 import gc
 import heapq
 from abc import ABC, abstractmethod
 from datetime import datetime
+from typing import List
 
 from llama_index.core import PromptTemplate
 from llama_index.core import Settings
@@ -259,7 +259,6 @@ class BaseInference(ABC):
 
         results = []
         reranker = self._get_reranker()
-        # query_bundle = QueryBundle(query_str=query_string) # TODO: Remove this line if unnecessary
 
         all_node_ids = [node.id_ for node in self.index.docstore.docs.values()]
         all_nodes = self.index.docstore.get_nodes(all_node_ids)

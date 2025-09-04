@@ -19,7 +19,6 @@ def visualize_benchmark_results(json_file_path: str):
     eval_timestamp = data['timestamp']
     eval_date = datetime.fromisoformat(eval_timestamp).strftime("%Y-%m-%d %H:%M:%S")
 
-    # Extract k_values from the first query's metrics
     first_query = next(iter(data['queries'].values()))
     if first_query and 'batches' in first_query:
         first_batch = next(iter(first_query['batches'].values()))
@@ -31,17 +30,14 @@ def visualize_benchmark_results(json_file_path: str):
                     k_values.append(k)
         k_values.sort()
     else:
-        k_values = [1, 3, 5]  # fallback default
+        k_values = [1, 3, 5]
 
-    # Update metric groups and visualization logic
-    batch_metrics = ['precision', 'recall', 'normalized_recall', 'hit_rate', 'f1', 'normalized_f1']  # Changed variable name
+    batch_metrics = ['precision', 'recall', 'normalized_recall', 'hit_rate', 'f1',
+                     'normalized_f1']  # Changed variable name
 
-
-    # Separate metric groups for cleaner visualization
     standard_metrics = ['hit_rate', 'precision', 'recall', 'f1']
     normalized_metrics = ['hit_rate', 'precision', 'normalized_recall', 'normalized_f1']
 
-    # Define color mapping for metrics (base colors for standard metrics, darker shades for normalized)
     def get_metric_colors():
         """Create color mapping for metrics with darker shades for normalized versions."""
         base_colors = {
@@ -54,22 +50,18 @@ def visualize_benchmark_results(json_file_path: str):
         colors = {}
         for metric in ['precision', 'recall', 'hit_rate', 'f1']:
             base_color = base_colors[metric]
-            # Convert hex to RGB for manipulation
             rgb = tuple(int(base_color[i:i + 2], 16) for i in (1, 3, 5))
 
-            # Create intensity variations for k values (lighter to darker)
             for j, k in enumerate(k_values):
-                intensity = 0.7 + (j * 0.1)  # 0.6, 0.7, 0.8, 0.9
+                intensity = 0.7 + (j * 0.1)
                 colors[f'{metric}@{k}'] = tuple(int(c * intensity) for c in rgb)
 
-                # Darker version for normalized metrics
                 normalized_intensity = intensity * 0.65
                 colors[f'normalized_{metric}@{k}'] = tuple(int(c * normalized_intensity) for c in rgb)
 
-        # Convert RGB tuples back to hex/normalized RGB for matplotlib
         hex_colors = {}
         for key, rgb in colors.items():
-            hex_colors[key] = tuple(c / 255.0 for c in rgb)  # Normalize to 0-1 for matplotlib
+            hex_colors[key] = tuple(c / 255.0 for c in rgb)
 
         return hex_colors
 
@@ -86,7 +78,6 @@ def visualize_benchmark_results(json_file_path: str):
         if n_batches == 0:
             continue
 
-        # Create subplot grid for batch metrics - now 2x3 to accommodate normalized metrics
         fig, axes = plt.subplots(2, 3, figsize=(20, 12))
         fig.suptitle(f'Query {query_num} - Batch-level Metrics\nEval: {eval_date}\n"{query_text}"', fontsize=14)
         axes = axes.flatten()
@@ -94,16 +85,14 @@ def visualize_benchmark_results(json_file_path: str):
         for i, metric in enumerate(batch_metrics):
             ax = axes[i]
 
-            # Prepare data for this metric
             q_batch_labels = []
             metric_data = {f'@{k}': [] for k in k_values}
 
             for ts_key, ts_data in query_data['batches'].items():
-                q_batch_labels.append(ts_key.split('_')[1])  # Extract batch number
+                q_batch_labels.append(ts_key.split('_')[1])
                 for k in k_values:
                     metric_data[f'@{k}'].append(ts_data['metrics'][f'{metric}@{k}'])
 
-            # Create grouped bar plot with custom colors
             x = np.arange(len(q_batch_labels))
             width = 0.25
 
@@ -124,13 +113,12 @@ def visualize_benchmark_results(json_file_path: str):
         plt.tight_layout()
         plt.show()
 
-    # 2. Query-level averages plot - SPLIT INTO TWO PLOTS
+    # 2. Query-level averages plot
     queries = list(data['queries'].keys())
     if queries:
         # 2a. Standard metrics plot
         fig, ax = plt.subplots(1, 1, figsize=(12, 8))
 
-        # Prepare data for standard metrics
         query_data_dict = {}
         for metric in standard_metrics:
             query_data_dict[metric] = {}
@@ -138,11 +126,9 @@ def visualize_benchmark_results(json_file_path: str):
                 query_data_dict[metric][f'@{k}'] = [data['queries'][q]['query_averages'].get(f'avg_{metric}@{k}', 0)
                                                     for q in queries]
 
-        # Create grouped bar plot with custom colors
         n_queries = len(queries)
         x = np.arange(n_queries)
 
-        # Calculate total number of bars per query
         total_bars = len(k_values) * len(standard_metrics)
         width = 0.8 / total_bars
 
@@ -167,10 +153,8 @@ def visualize_benchmark_results(json_file_path: str):
         plt.tight_layout()
         plt.show()
 
-        # 2b. Normalized metrics plot
         fig, ax = plt.subplots(1, 1, figsize=(12, 8))
 
-        # Prepare data for normalized metrics
         query_data_dict_norm = {}
         for metric in normalized_metrics:
             query_data_dict_norm[metric] = {}
@@ -179,7 +163,6 @@ def visualize_benchmark_results(json_file_path: str):
                     data['queries'][q]['query_averages'].get(f'avg_{metric}@{k}', 0)
                     for q in queries]
 
-        # Create grouped bar plot with custom colors
         bar_offset = 0
 
         for metric in normalized_metrics:
@@ -201,12 +184,11 @@ def visualize_benchmark_results(json_file_path: str):
         plt.tight_layout()
         plt.show()
 
-    # 3. Global averages plot - SPLIT INTO TWO PLOTS
+    # 3. Global averages plot
     if data['global_averages']:
         # 3a. Standard metrics plot
         fig, ax = plt.subplots(1, 1, figsize=(10, 6))
 
-        # Prepare global standard metrics data
         global_metrics_std = []
         global_values_std = []
         global_colors_std = []
@@ -217,7 +199,6 @@ def visualize_benchmark_results(json_file_path: str):
                 global_values_std.append(data['global_averages'].get(f'global_avg_{metric}@{k}', 0))
                 global_colors_std.append(metric_colors[f'{metric}@{k}'])
 
-        # Create bar plot with custom colors
         bars = ax.bar(range(len(global_metrics_std)), global_values_std, color=global_colors_std)
 
         ax.set_xlabel('Metrics')
@@ -228,7 +209,6 @@ def visualize_benchmark_results(json_file_path: str):
         ax.grid(True, alpha=0.3)
         ax.set_ylim(0, 1.0)
 
-        # Add value labels on bars
         for bar, value in zip(bars, global_values_std):
             height = bar.get_height()
             ax.text(bar.get_x() + bar.get_width() / 2., height + 0.01,
@@ -242,7 +222,6 @@ def visualize_benchmark_results(json_file_path: str):
         # 3b. Normalized metrics plot
         fig, ax = plt.subplots(1, 1, figsize=(10, 6))
 
-        # Prepare global normalized metrics data
         global_metrics_norm = []
         global_values_norm = []
         global_colors_norm = []
@@ -253,7 +232,6 @@ def visualize_benchmark_results(json_file_path: str):
                 global_values_norm.append(data['global_averages'].get(f'global_avg_{metric}@{k}', 0))
                 global_colors_norm.append(metric_colors[f'{metric}@{k}'])
 
-        # Create bar plot with custom colors
         bars = ax.bar(range(len(global_metrics_norm)), global_values_norm, color=global_colors_norm)
 
         ax.set_xlabel('Metrics')

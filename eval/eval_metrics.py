@@ -86,5 +86,3 @@ def calculate_metrics_with_normalization(retrieved_pages: List[str], relevant_pa
         f'normalized_f1@{k}': normalized_f1,
         f'max_possible_recall@{k}': max_possible_recall
     }
-
-

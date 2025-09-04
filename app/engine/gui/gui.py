@@ -73,10 +73,7 @@ class GUI:
 
         response_metadata = {}
 
-        for answer, metadata, (batch_idx, timestamp_batch), (min_timestamp, max_timestamp) in results:
-            # Calculate min and max dates from timestamp batch
-            # min_timestamp = min(timestamp_batch)
-            # max_timestamp = max(timestamp_batch)
+        for answer, metadata, _, (min_timestamp, max_timestamp) in results:
 
             start_date_str = datetime.datetime.fromtimestamp(min_timestamp).strftime('%d/%m/%Y')
             end_date_str = datetime.datetime.fromtimestamp(max_timestamp).strftime('%d/%m/%Y')

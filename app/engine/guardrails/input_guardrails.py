@@ -9,7 +9,7 @@ from llama_index.core import Settings
 from llama_index.core.callbacks import TokenCountingHandler, CallbackManager
 from llama_index.llms.groq import Groq
 
-from app.utils.app_utils import pprint_error, pprint_debug
+from app.utils.app_utils import pprint_error, pprint_debug, pprint_console
 from app.utils.inference_utils import throttle_requests
 
 
@@ -158,7 +158,7 @@ class InputGuardrails:
         total_frequency = sum(freq for _, freq in thematic_frequencies)
         cumulative_frequency = 0
 
-        pprint_debug(f"Applying Pareto principle: selecting top {pareto_count} out of {total_thematics} thematics")
+        pprint_console(f"Applying Pareto principle: selecting top {pareto_count} out of {total_thematics} thematics")
 
         for i, (title, frequency) in enumerate(thematic_frequencies[:pareto_count]):
             selected_thematics[title] = merged_thematics[title]
@@ -167,7 +167,7 @@ class InputGuardrails:
             pprint_debug(f"Selected: {title} (frequency: {frequency})")
 
         coverage_percentage = (cumulative_frequency / total_frequency) * 100
-        pprint_debug(f"Pareto selection covers {coverage_percentage:.1f}% of total frequency")
+        pprint_console(f"Pareto selection covers {coverage_percentage:.1f}% of total frequency")
 
         return selected_thematics
 
@@ -189,21 +189,21 @@ class InputGuardrails:
             with open(self.args.thematics_storage_path, 'r', encoding='utf-8') as f:
                 thematics_data = json.load(f)
 
-            pprint_debug(f"Loaded {len(thematics_data['thematics'])} raw thematics")
+            pprint_console(f"Loaded {len(thematics_data['thematics'])} raw thematics")
 
             if os.path.exists(self.args.merged_thematics_storage_path):
-                pprint_debug("Loading existing merged thematics")
+                pprint_console("Loading existing merged thematics")
                 with open(self.args.merged_thematics_storage_path, 'r', encoding='utf-8') as f:
                     cached_data = json.load(f)
 
                 merged_thematics = cached_data.get('merged_thematics', {})
                 self._merged_frequencies = cached_data.get('merged_frequencies', {})
 
-                pprint_debug(f"Loaded {len(merged_thematics)} merged thematics from file")
+                pprint_console(f"Loaded {len(merged_thematics)} merged thematics from file")
             else:
-                pprint_debug("No merged thematics found, running merge procedure")
+                pprint_console("No merged thematics found, running merge procedure")
                 merged_thematics = self._normalize_and_merge_thematics(thematics_data)
-                pprint_debug(f"After normalization and merging: {len(merged_thematics)} unique thematics")
+                pprint_console(f"After normalization and merging: {len(merged_thematics)} unique thematics")
 
                 cache_data = {
                     'merged_thematics': merged_thematics,
@@ -211,10 +211,10 @@ class InputGuardrails:
                 }
                 with open(self.args.merged_thematics_storage_path, 'w', encoding='utf-8') as f:
                     json.dump(cache_data, f, indent=2, ensure_ascii=False)
-                pprint_debug(f"Saved merged thematics to {self.args.merged_thematics_storage_path}")
+                pprint_console(f"Saved merged thematics to {self.args.merged_thematics_storage_path}")
 
             final_thematics = self._apply_pareto_principle(merged_thematics, thematics_data)
-            pprint_debug(f"After Pareto principle: {len(final_thematics)} selected thematics")
+            pprint_console(f"After Pareto principle: {len(final_thematics)} selected thematics")
 
             return final_thematics
 

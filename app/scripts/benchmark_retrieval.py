@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import List, Dict
 
 from app.scripts.demo import Demo
-from app.utils.app_utils import pprint_console, pprint_debug
+from app.utils.app_utils import pprint_console
 from app.utils.benchmark_utils import BENCHMARK_QUESTIONS_INDEX
 from eval.benchmark_evaluator import BenchmarkEvaluator
 from eval.eval_inference import EvalInference
@@ -41,7 +41,7 @@ class BenchmarkRetrieval(Demo):
 
         results_dict = {}
         for query_num, question in BENCHMARK_QUESTIONS_INDEX.items():
-            pprint_debug(f"Evaluating Query {query_num}: {question}")
+            pprint_console(f"Evaluating Query {query_num}: {question}")
             results = self.agent.evaluate_retriever(question)
             results_dict[query_num] = results
 

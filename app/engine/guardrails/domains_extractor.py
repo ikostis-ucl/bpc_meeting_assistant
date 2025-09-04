@@ -11,7 +11,7 @@ from llama_index.llms.groq import Groq
 from tqdm import tqdm
 
 from app.engine.data_processing.data_loaders import load_index
-from app.utils.app_utils import pprint_console, pprint_error, pprint_debug
+from app.utils.app_utils import pprint_console, pprint_error
 from app.utils.inference_utils import throttle_requests
 
 
@@ -51,7 +51,7 @@ class DomainsExtractor:
             Dict containing thematics with frequency
         """
 
-        pprint_console(f"Processing {len(self.index.docstore.docs)} documents...")
+        pprint_console(f"Processing {len(self.index.docstore.docs)} text passages...")
 
         documents_by_file = self._group_documents_by_file()
 
@@ -334,6 +334,6 @@ class DomainsExtractor:
         duration = end_time - start_time
 
         pprint_console(f"Extraction completed in {duration}")
-        pprint_debug(self.get_comprehensive_summary())
+        pprint_console(self.get_comprehensive_summary())
 
         return results

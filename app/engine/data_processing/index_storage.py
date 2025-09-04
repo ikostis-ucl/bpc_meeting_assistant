@@ -55,11 +55,6 @@ class Storage:
 
         self.embedding_model = HuggingFaceEmbedding(model_name=args.embeddings_model,
                                                     cache_folder=args.embeddings_cache_dir)
-        # TODO: Remove this if unnecessary
-        # from llama_index.llms.groq import Groq
-        # self.llm = Groq(model=args.groq_model_indexing_kw,
-        #                 api_key=args.groq_api_key,
-        #                 model_kwargs={"seed": 42}, temperature=0.0)
 
         self.node_parser = MarkdownNodeParser()
         self.title_filter = TitleNodeFilter()

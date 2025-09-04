@@ -78,9 +78,7 @@ def pprint_qa(question, results):
     pprint_hline("-", 3)
     print(f"{Color.CYAN}Answers:{Color.END}")
 
-    for response, metadata, (batch_idx, timestamp_batch), (min_timestamp, max_timestamp) in results:
-        # min_timestamp = min(timestamp_batch)
-        # max_timestamp = max(timestamp_batch)
+    for response, metadata, _, (min_timestamp, max_timestamp) in results:
 
         start_date_str = datetime.datetime.fromtimestamp(min_timestamp).strftime('%d/%m/%Y')
         end_date_str = datetime.datetime.fromtimestamp(max_timestamp).strftime('%d/%m/%Y')
