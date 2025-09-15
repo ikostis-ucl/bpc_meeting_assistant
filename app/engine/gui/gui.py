@@ -64,8 +64,7 @@ class GUI:
     @staticmethod
     def render_timeline(timeline_data):
         """
-        Render the timeline visualization as a vertical tree with alternating branches.
-        All components fit inside the container dynamically while maintaining alignment.
+        Render the timeline visualization with a solid blue center line.
         """
         timeline_css = """
         <style>
@@ -100,7 +99,7 @@ class GUI:
             transform: translateX(-50%);
             width: 4px;
             border-radius: 4px;
-            background: var(--timeline-gradient, #2196F3);
+            background-color: var(--timeline-line-color, #1e88e5);
             opacity: 0.4;
             z-index: 0;
         }
@@ -121,11 +120,11 @@ class GUI:
 
         .timeline-side {
             flex: 1 1 50%;
-            min-width: 0; /* allow shrinking */
+            min-width: 0;
             display: flex;
             align-items: center;
             position: relative;
-            --branch-size: clamp(24px, 18%, 140px); /* relative to side width */
+            --branch-size: clamp(24px, 18%, 140px);
             --side-gap: clamp(8px, 2.2vw, 24px);
         }
 
@@ -257,7 +256,6 @@ class GUI:
             white-space: normal;
         }
 
-        /* Small screens: reduce branch, keep alignment, avoid overflow */
         @media (max-width: 900px) {
             .timeline-side { --branch-size: clamp(16px, 12%, 80px); }
             .timeline-content-box {
@@ -265,7 +263,6 @@ class GUI:
             }
         }
 
-        /* Very small screens: hide branch, let boxes fill side without overflow */
         @media (max-width: 680px) {
             .timeline-side { --branch-size: 0px; }
             .timeline-branch { display: none; }
@@ -282,7 +279,6 @@ class GUI:
         </style>
         """
 
-        # Generate gradient colors for markers
         def generate_colors(count):
             if count == 0:
                 return []
@@ -302,12 +298,10 @@ class GUI:
             return tuple(int(hex_color[i:i + 2], 16) for i in (0, 2, 4))
 
         colors = generate_colors(len(timeline_data))
-        first_color = colors[0] if colors else "#1976D2"
-        last_color = colors[-1] if colors else "#2196F3"
 
-        html = timeline_css + f'''
+        html = timeline_css + '''
         <div class="timeline-container">
-            <div class="timeline-track" style="--timeline-gradient: linear-gradient(to bottom, {first_color}, {last_color});">
+            <div class="timeline-track" style="--timeline-line-color: #1e88e5;">
                 <div class="timeline-line"></div>
         '''
 
