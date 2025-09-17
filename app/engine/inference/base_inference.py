@@ -66,8 +66,7 @@ class BaseInference(ABC):
             "Requête: {query_string}\n\n"
             "Instructions:\n"
             "- Réponse directe sans formules de politesse\n"
-            "- Citez les documents sources (nom du fichier)\n"
-            "- Si l'information est incomplète, indiquez: 'Informations limitées. Consultez [nom du document]'\n"
+            "- Si l'information est incomplète, indiquez: 'Informations limitées. Veuillez consulter les documents ci-joints.'\n"
             "- Pas de spéculation ou d'interprétation\n"
             "- Format: énumérations ou paragraphes courts\n\n"
             "Réponse:"
@@ -165,7 +164,8 @@ class BaseInference(ABC):
             nodes=reranked_nodes
         )
 
-    def _filter_nodes_by_timestamp_batch(self, nodes: List, timestamp_batch: List) -> List:
+    @staticmethod
+    def _filter_nodes_by_timestamp_batch(nodes: List, timestamp_batch: List) -> List:
         """Filter nodes based on timestamp batch."""
         timestamp_set = set(timestamp_batch)
         filtered_nodes = []

@@ -267,6 +267,9 @@ class GUI:
             overflow-wrap: anywhere;
             word-break: break-word;
             white-space: normal;
+            text-align: justify;
+            text-justify: inter-word;
+            hyphens: auto;
             transition: inherit;
         }
         @media (max-width: 900px) {
