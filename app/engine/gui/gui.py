@@ -9,6 +9,8 @@ from PIL import Image
 from app.utils.benchmark_utils import BENCHMARK_QUESTIONS_INDEX
 from app.utils.gui_utils import generate_colors, hex_to_rgb
 from app.utils.inference_utils import pprint_qa
+from html import escape
+
 
 HOME_PATH = os.path.expanduser("~")
 
@@ -298,6 +300,9 @@ class GUI:
         '''
 
         for i, (timespan, answer, metadata_info) in enumerate(timeline_data):
+
+            safe_answer = escape(answer).replace('\n', '<br>')
+
             color = colors[i] if i < len(colors) else "#1976D2"
             rgb = hex_to_rgb(color)
             is_left = i % 2 == 0
@@ -308,7 +313,7 @@ class GUI:
                     <div class="timeline-side timeline-content-left">
                         <div class="timeline-content-box timeline-content-box-left">
                             <div class="timeline-date">{timespan}</div>
-                            <div class="timeline-content">{answer}</div>
+                            <div class="timeline-content">{safe_answer}</div>
                         </div>
                         <div class="timeline-branch timeline-branch-left"></div>
                     </div>
@@ -333,7 +338,7 @@ class GUI:
                         <div class="timeline-branch timeline-branch-right"></div>
                         <div class="timeline-content-box timeline-content-box-right">
                             <div class="timeline-date">{timespan}</div>
-                            <div class="timeline-content">{answer}</div>
+                            <div class="timeline-content">{safe_answer}</div>
                         </div>
                     </div>
                 </div>
