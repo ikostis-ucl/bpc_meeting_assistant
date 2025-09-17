@@ -111,7 +111,17 @@ class GUI:
             position: relative;
             z-index: 1;
             box-sizing: border-box;
+            /* Hover scaling system */
+            --node-scale: 1;
+            transform: scale(var(--node-scale));
+            transform-origin: center;
+            transition: transform 0.35s cubic-bezier(.22,.68,.37,1), z-index 0.35s;
         }
+        .timeline-node:hover {
+            --node-scale: 1.08;
+            z-index: 10;
+        }
+
         .timeline-node:first-child { margin-top: 0; }
         .timeline-node:last-child { margin-bottom: 0; }
 
@@ -148,7 +158,8 @@ class GUI:
             border: 4px solid var(--background-fill-primary);
             box-shadow: 0 0 0 2px var(--segment-color, #2196F3),
                         0 2px 8px rgba(0, 0, 0, 0.2);
-            transition: all 0.3s ease;
+            transition: inherit;
+            transform: scale(var(--node-scale));
         }
         .timeline-marker:hover {
             transform: scale(1.2);
@@ -193,14 +204,15 @@ class GUI:
             box-sizing: border-box;
             width: clamp(220px, calc(100% - var(--branch-size) - var(--side-gap) - 12px), 520px);
             max-width: calc(100% - var(--branch-size) - var(--side-gap) - 12px);
-            padding: 16px;
+            padding: calc(16px * var(--node-scale));
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
+            transition: inherit;
             background-color: var(--background-fill-secondary);
             border: 1px solid var(--border-color-primary);
             position: relative;
             overflow: hidden;
+            font-size: calc(0.95em * var(--node-scale));
         }
         .timeline-content-box:hover {
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
@@ -228,11 +240,14 @@ class GUI:
             border-top: 8px solid transparent;
             border-bottom: 8px solid transparent;
         }
+        .timeline-node:hover .timeline-content-box {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+        }
         .timeline-date {
             font-weight: bold;
-            font-size: 1em;
-            margin: 0 0 12px 0;
-            padding: 8px 12px;
+            font-size: calc(1em * var(--node-scale));
+            margin: 0 0 calc(12px * var(--node-scale)) 0;
+            padding: calc(8px * var(--node-scale)) calc(12px * var(--node-scale));
             border-radius: 16px;
             background-color: var(--segment-color, #2196F3);
             color: white;
@@ -241,14 +256,16 @@ class GUI:
             display: inline-block;
             max-width: 100%;
             overflow-wrap: anywhere;
+            transition: inherit;
         }
         .timeline-content {
             line-height: 1.6;
             color: var(--body-text-color);
-            font-size: 0.95em;
+            font-size: 1em; /* already scaled by parent */
             overflow-wrap: anywhere;
             word-break: break-word;
             white-space: normal;
+            transition: inherit;
         }
         @media (max-width: 900px) {
             .timeline-side { --branch-size: clamp(16px, 12%, 80px); }
