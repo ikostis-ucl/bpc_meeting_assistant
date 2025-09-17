@@ -64,7 +64,7 @@ class GUI:
     @staticmethod
     def render_timeline(timeline_data):
         """
-        Render the timeline visualization with a solid blue center line.
+        Render the timeline visualization.
         """
         timeline_css = """
         <style>
@@ -81,7 +81,6 @@ class GUI:
             flex-direction: column;
             align-items: stretch;
         }
-
         .timeline-track {
             position: relative;
             width: 100%;
@@ -90,7 +89,6 @@ class GUI:
             align-items: stretch;
             padding: 0;
         }
-
         .timeline-line {
             position: absolute;
             top: 10px;
@@ -103,7 +101,6 @@ class GUI:
             opacity: 0.4;
             z-index: 0;
         }
-
         .timeline-node {
             display: flex;
             align-items: center;
@@ -127,7 +124,6 @@ class GUI:
             --branch-size: clamp(24px, 18%, 140px);
             --side-gap: clamp(8px, 2.2vw, 24px);
         }
-
         .timeline-center {
             width: 0;
             display: flex;
@@ -135,7 +131,6 @@ class GUI:
             justify-content: center;
             position: relative;
         }
-
         .timeline-marker-container {
             position: absolute;
             left: 50%;
@@ -145,7 +140,6 @@ class GUI:
             justify-content: center;
             align-items: center;
         }
-
         .timeline-marker {
             width: 20px;
             height: 20px;
@@ -156,7 +150,6 @@ class GUI:
                         0 2px 8px rgba(0, 0, 0, 0.2);
             transition: all 0.3s ease;
         }
-
         .timeline-marker:hover {
             transform: scale(1.2);
             box-shadow: 0 0 0 3px var(--segment-color, #2196F3),
@@ -167,12 +160,21 @@ class GUI:
             flex: 0 0 var(--branch-size);
             width: var(--branch-size);
             height: 2px;
+            border-radius: 2px;
+        }
+        .timeline-branch-left {
             background: linear-gradient(
                 to right,
                 var(--segment-color, #2196F3),
                 rgba(var(--segment-color-rgb, 33,150,243), 0.2)
             );
-            border-radius: 2px;
+        }
+        .timeline-branch-right {
+            background: linear-gradient(
+                to left,
+                var(--segment-color, #2196F3),
+                rgba(var(--segment-color-rgb, 33,150,243), 0.2)
+            );
         }
 
         .timeline-content-left {
@@ -181,14 +183,12 @@ class GUI:
             gap: var(--side-gap);
             padding-right: clamp(8px, 1.8vw, 24px);
         }
-
         .timeline-content-right {
             justify-content: flex-start;
             text-align: left;
             gap: var(--side-gap);
             padding-left: clamp(8px, 1.8vw, 24px);
         }
-
         .timeline-content-box {
             box-sizing: border-box;
             width: clamp(220px, calc(100% - var(--branch-size) - var(--side-gap) - 12px), 520px);
@@ -202,12 +202,10 @@ class GUI:
             position: relative;
             overflow: hidden;
         }
-
         .timeline-content-box:hover {
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
             transform: translateY(-2px);
         }
-
         .timeline-content-box-left { border-left: 6px solid var(--segment-color, #2196F3); }
         .timeline-content-box-left::after {
             content: '';
@@ -219,7 +217,6 @@ class GUI:
             border-top: 8px solid transparent;
             border-bottom: 8px solid transparent;
         }
-
         .timeline-content-box-right { border-right: 6px solid var(--segment-color, #2196F3); }
         .timeline-content-box-right::after {
             content: '';
@@ -231,7 +228,6 @@ class GUI:
             border-top: 8px solid transparent;
             border-bottom: 8px solid transparent;
         }
-
         .timeline-date {
             font-weight: bold;
             font-size: 1em;
@@ -246,7 +242,6 @@ class GUI:
             max-width: 100%;
             overflow-wrap: anywhere;
         }
-
         .timeline-content {
             line-height: 1.6;
             color: var(--body-text-color);
@@ -255,14 +250,12 @@ class GUI:
             word-break: break-word;
             white-space: normal;
         }
-
         @media (max-width: 900px) {
             .timeline-side { --branch-size: clamp(16px, 12%, 80px); }
             .timeline-content-box {
                 width: clamp(200px, calc(100% - var(--branch-size) - var(--side-gap) - 8px), 480px);
             }
         }
-
         @media (max-width: 680px) {
             .timeline-side { --branch-size: 0px; }
             .timeline-branch { display: none; }
@@ -300,7 +293,7 @@ class GUI:
                             <div class="timeline-date">{timespan}</div>
                             <div class="timeline-content">{answer}</div>
                         </div>
-                        <div class="timeline-branch"></div>
+                        <div class="timeline-branch timeline-branch-left"></div>
                     </div>
                     <div class="timeline-center">
                         <div class="timeline-marker-container">
@@ -320,7 +313,7 @@ class GUI:
                         </div>
                     </div>
                     <div class="timeline-side timeline-content-right">
-                        <div class="timeline-branch"></div>
+                        <div class="timeline-branch timeline-branch-right"></div>
                         <div class="timeline-content-box timeline-content-box-right">
                             <div class="timeline-date">{timespan}</div>
                             <div class="timeline-content">{answer}</div>
