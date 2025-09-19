@@ -114,7 +114,7 @@ class BaseInference(ABC):
         e.g. Cohere Rerank.
         """
         if self.reranker is None:
-            self.reranker = ColbertRerank(top_n=5)
+            self.reranker = ColbertRerank(top_n=self.args.top_n)
         return self.reranker
 
     def _cleanup_resources(self):
@@ -266,10 +266,12 @@ class BaseInference(ABC):
         for batch_idx, query_batch in enumerate(self.document_batches):
             batch_nodes = self._filter_nodes_by_timestamp_batch(all_nodes, query_batch)
 
+            effective_top_k = min(self.args.top_k, len(batch_nodes))
+
             hybrid_retriever = HybridRetriever(
                 vector_index=self.index,
                 nodes=batch_nodes,
-                similarity_top_k=50,
+                similarity_top_k=effective_top_k,
                 alpha=alpha,
                 callback_manager=self.callback_manager
             )
@@ -279,7 +281,7 @@ class BaseInference(ABC):
 
             combined_nodes = self._retrieve_nodes(hybrid_retriever, query_bundle, timespan_idx=batch_idx)
 
-            top_candidates = combined_nodes[:50]
+            top_candidates = combined_nodes[:effective_top_k]
             reranked_nodes = self._rerank_nodes(reranker, top_candidates, query_bundle, timespan_idx=batch_idx)
 
             response_synthesizer = get_response_synthesizer(llm=self.model)

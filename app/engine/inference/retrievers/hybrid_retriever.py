@@ -22,7 +22,7 @@ class HybridRetriever(BaseRetriever):
             self,
             vector_index,
             nodes: List,
-            similarity_top_k: int = 50,
+            similarity_top_k: int = None,
             alpha: float = 0.5,
             rrf_k: int = 60,
             callback_manager: Optional[CallbackManager] = None,
@@ -33,14 +33,14 @@ class HybridRetriever(BaseRetriever):
         Args:
             vector_index: Vector index for dense retrieval
             nodes: List of nodes for BM25 retrieval (pre-filtered by document batch)
-            similarity_top_k: Number of top results to retrieve from each method
+            similarity_top_k: Number of top results to retrieve from each method (defaults to 50 if None)
             alpha: Weight for combining scores (1.0 = only dense, 0.0 = only sparse)
             rrf_k: RRF parameter for rank fusion
             callback_manager: Callback manager for tracing
         """
         self._vector_index = vector_index
         self._nodes = nodes
-        self._similarity_top_k = similarity_top_k
+        self._similarity_top_k = similarity_top_k if similarity_top_k is not None else 50
         self._alpha = alpha
         self._rrf_k = rrf_k
 
@@ -91,9 +91,11 @@ class HybridRetriever(BaseRetriever):
             processed_node.text = self.preprocessing_fr(node.text)
             processed_nodes.append(processed_node)
 
+        effective_top_k = min(self._similarity_top_k, len(processed_nodes))
+
         return BM25Retriever.from_defaults(
             nodes=processed_nodes,
-            similarity_top_k=self._similarity_top_k
+            similarity_top_k=effective_top_k
         )
 
     def _combine_retrievers_rrf(
@@ -148,12 +150,11 @@ class HybridRetriever(BaseRetriever):
         Returns:
             List[NodeWithScore]: Retrieved and ranked nodes.
         """
+
         query_str = query_bundle.query_str
-
-        # Extract timestamp batch from query bundle custom attributes if available
         timestamp_batch = getattr(query_bundle, 'query_batch', [])
-
         metadata_filters = self._create_metadata_filters(timestamp_batch)
+
         vector_retriever = VectorIndexRetriever(
             index=self._vector_index,
             similarity_top_k=self._similarity_top_k,
@@ -167,5 +168,4 @@ class HybridRetriever(BaseRetriever):
         sparse_nodes = bm25_retriever.retrieve(processed_query)
 
         combined_nodes = self._combine_retrievers_rrf(dense_nodes, sparse_nodes)
-
         return combined_nodes

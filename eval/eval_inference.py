@@ -51,10 +51,12 @@ class EvalInference(BaseInference):
         for batch_idx, query_batch in enumerate(self.document_batches):
             batch_nodes = self._filter_nodes_by_timestamp_batch(all_nodes, query_batch)
 
+            effective_top_k = min(self.args.top_k, len(batch_nodes))
+
             hybrid_retriever = HybridRetriever(
                 vector_index=self.index,
                 nodes=batch_nodes,
-                similarity_top_k=50,
+                similarity_top_k=effective_top_k,
                 alpha=alpha,
                 callback_manager=self.callback_manager
             )
@@ -62,10 +64,10 @@ class EvalInference(BaseInference):
             query_bundle = QueryBundle(query_str=query_string)
             query_bundle.query_batch = query_batch
 
-            combined_nodes = hybrid_retriever.retrieve(query_bundle)
+            combined_nodes = self._retrieve_nodes(hybrid_retriever, query_bundle, timespan_idx=batch_idx)
 
-            top_candidates = combined_nodes[:50]
-            reranked_nodes = reranker.postprocess_nodes(top_candidates, query_bundle)
+            top_candidates = combined_nodes[:effective_top_k]
+            reranked_nodes = self._rerank_nodes(reranker, top_candidates, query_bundle, timespan_idx=batch_idx)
 
             metadata = {}
             for node in reranked_nodes:
@@ -80,7 +82,7 @@ class EvalInference(BaseInference):
         for i in range(len(results)):
             metadata = results[i][1]
             if metadata:
-                top_nodes = heapq.nlargest(5, metadata.items(), key=lambda item: item[1]['score'])
+                top_nodes = heapq.nlargest(self.args.top_n, metadata.items(), key=lambda item: item[1]['score'])
                 top_metadata = {node_id: data for node_id, data in top_nodes}
                 results[i] = (results[i][0], top_metadata, results[i][2])
 

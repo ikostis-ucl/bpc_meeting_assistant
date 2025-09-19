@@ -6,7 +6,8 @@ from typing import Dict
 from app.engine.inference.groq_inference import GroqInference
 from app.scripts.demo import Demo
 from app.utils.app_utils import pprint_console, pprint_debug
-from app.utils.benchmark_utils import BENCHMARK_QUESTIONS_INDEX_RAG
+from app.utils.benchmark_utils import BENCHMARK_QUESTIONS_INDEX_RAG as Q_SET
+# from app.utils.benchmark_utils import BENCHMARK_QUESTIONS_INDEX as Q_SET
 
 
 class BenchmarkRAG(Demo):
@@ -32,7 +33,7 @@ class BenchmarkRAG(Demo):
             self.args.input_path = "./data/input_anonymised"
             self.args.storage_dir = "./data/vector_db_anonymised"
 
-        self.questions = list(BENCHMARK_QUESTIONS_INDEX_RAG.values())
+        self.questions = list(Q_SET.values())
         self.agent = GroqInference(args=self.args)
 
     def run_single_query(self, query_idx: int, query: str):

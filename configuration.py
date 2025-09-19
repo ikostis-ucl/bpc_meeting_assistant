@@ -83,6 +83,10 @@ def config_parser():
                         help='Tokens per minute for Groq model used in guardrails.')
 
     # Retriever
+    parser.add_argument('--top_k', type=int, default=50,
+                        help='Number of top similar nodes - Retriever.')
+    parser.add_argument('--top_n', type=int, default=5,
+                        help='Number of top similar nodes - Reranker.')
     parser.add_argument('--n_batch', type=int, default=12,
                         help='Number of docs to be processed in batch.')
 
