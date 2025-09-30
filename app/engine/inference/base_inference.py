@@ -282,14 +282,14 @@ class BaseInference(ABC):
             combined_nodes = self._retrieve_nodes(hybrid_retriever, query_bundle, timespan_idx=batch_idx)
 
             top_candidates = combined_nodes[:effective_top_k]
-            reranked_nodes = self._rerank_nodes(reranker, top_candidates, query_bundle, timespan_idx=batch_idx)
+            top_candidates = self._rerank_nodes(reranker, top_candidates, query_bundle, timespan_idx=batch_idx)
 
             response_synthesizer = get_response_synthesizer(llm=self.model)
-            answer = self._synthesize_response(response_synthesizer, query_string, reranked_nodes,
+            answer = self._synthesize_response(response_synthesizer, query_string, top_candidates,
                                                timespan_idx=batch_idx)
 
             metadata = {}
-            for node in reranked_nodes:
+            for node in top_candidates:
                 metadata[node.id_] = {
                     'score': node.score,
                     'text': node.text[:200] + "..." if len(node.text) > 200 else node.text,
