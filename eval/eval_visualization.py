@@ -5,6 +5,9 @@ from datetime import datetime
 import numpy as np
 from matplotlib import pyplot as plt
 
+LABEL_FONTSIZE = 30
+TITLE_FONTSIZE = 36
+TICK_FONTSIZE = 26
 
 def visualize_benchmark_results(json_file_path: str):
     """
@@ -32,14 +35,11 @@ def visualize_benchmark_results(json_file_path: str):
     else:
         k_values = [1, 3, 5]
 
-    batch_metrics = ['precision', 'recall', 'normalized_recall', 'hit_rate', 'f1',
-                     'normalized_f1']  # Changed variable name
-
+    batch_metrics = ['precision', 'recall', 'hit_rate', 'f1']
     standard_metrics = ['hit_rate', 'precision', 'recall', 'f1']
-    normalized_metrics = ['hit_rate', 'precision', 'normalized_recall', 'normalized_f1']
 
     def get_metric_colors():
-        """Create color mapping for metrics with darker shades for normalized versions."""
+        """Create color mapping for metrics."""
         base_colors = {
             'precision': '#EB3434',  # Red
             'recall': '#07C3F2',  # Cyan/Teal
@@ -55,9 +55,6 @@ def visualize_benchmark_results(json_file_path: str):
             for j, k in enumerate(k_values):
                 intensity = 0.7 + (j * 0.1)
                 colors[f'{metric}@{k}'] = tuple(int(c * intensity) for c in rgb)
-
-                normalized_intensity = intensity * 0.65
-                colors[f'normalized_{metric}@{k}'] = tuple(int(c * normalized_intensity) for c in rgb)
 
         hex_colors = {}
         for key, rgb in colors.items():
@@ -78,7 +75,7 @@ def visualize_benchmark_results(json_file_path: str):
         if n_batches == 0:
             continue
 
-        fig, axes = plt.subplots(2, 3, figsize=(20, 12))
+        fig, axes = plt.subplots(2, 2, figsize=(16, 10))
         fig.suptitle(f'Query {query_num} - Batch-level Metrics\nEval: {eval_date}\n"{query_text}"', fontsize=14)
         axes = axes.flatten()
 
@@ -116,8 +113,7 @@ def visualize_benchmark_results(json_file_path: str):
     # 2. Query-level averages plot
     queries = list(data['queries'].keys())
     if queries:
-        # 2a. Standard metrics plot
-        fig, ax = plt.subplots(1, 1, figsize=(12, 8))
+        fig, ax = plt.subplots(1, 1, figsize=(28, 14))
 
         query_data_dict = {}
         for metric in standard_metrics:
@@ -141,53 +137,24 @@ def visualize_benchmark_results(json_file_path: str):
                        label=f'{metric.title()}@{k}', color=color)
                 bar_offset += 1
 
-        ax.set_xlabel('Query Number')
-        ax.set_ylabel('Average Score')
-        ax.set_title(f'Query-level Average Metrics (Standard)\nEval: {eval_date}')
+        ax.set_xlabel('Query Number', fontsize=LABEL_FONTSIZE)
+        ax.set_ylabel('Average Score', fontsize=LABEL_FONTSIZE)
+        ax.set_title(f'Query-level Average Metrics', fontsize=TITLE_FONTSIZE)
         ax.set_xticks(x + (total_bars - 1) * width / 2)
-        ax.set_xticklabels(queries)
-        ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+        ax.set_xticklabels(range(1, len(queries) + 1), fontsize=TICK_FONTSIZE)  # Changed to incremental integers
+        ax.tick_params(axis='y', labelsize=TICK_FONTSIZE)
+        ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=TICK_FONTSIZE)
         ax.grid(True, alpha=0.3)
         ax.set_ylim(0, 1.0)
 
         plt.tight_layout()
-        plt.show()
-
-        fig, ax = plt.subplots(1, 1, figsize=(12, 8))
-
-        query_data_dict_norm = {}
-        for metric in normalized_metrics:
-            query_data_dict_norm[metric] = {}
-            for k in k_values:
-                query_data_dict_norm[metric][f'@{k}'] = [
-                    data['queries'][q]['query_averages'].get(f'avg_{metric}@{k}', 0)
-                    for q in queries]
-
-        bar_offset = 0
-
-        for metric in normalized_metrics:
-            for j, k in enumerate(k_values):
-                color = metric_colors[f'{metric}@{k}']
-                ax.bar(x + bar_offset * width, query_data_dict_norm[metric][f'@{k}'], width,
-                       label=f'{metric.title()}@{k}', color=color)
-                bar_offset += 1
-
-        ax.set_xlabel('Query Number')
-        ax.set_ylabel('Average Score')
-        ax.set_title(f'Query-level Average Metrics (Normalized)\nEval: {eval_date}')
-        ax.set_xticks(x + (total_bars - 1) * width / 2)
-        ax.set_xticklabels(queries)
-        ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-        ax.grid(True, alpha=0.3)
-        ax.set_ylim(0, 1.0)
-
-        plt.tight_layout()
+        save_dir = os.path.dirname(json_file_path)
+        plt.savefig(os.path.join(save_dir, 'query_averages_standard.pdf'), dpi=300, bbox_inches='tight', pad_inches=1.0)
         plt.show()
 
     # 3. Global averages plot
     if data['global_averages']:
-        # 3a. Standard metrics plot
-        fig, ax = plt.subplots(1, 1, figsize=(10, 6))
+        fig, ax = plt.subplots(1, 1, figsize=(28, 14))
 
         global_metrics_std = []
         global_values_std = []
@@ -201,53 +168,21 @@ def visualize_benchmark_results(json_file_path: str):
 
         bars = ax.bar(range(len(global_metrics_std)), global_values_std, color=global_colors_std)
 
-        ax.set_xlabel('Metrics')
-        ax.set_ylabel('Global Average Score')
-        ax.set_title(f'Global Average Metrics (Standard) Across All Queries\nEval: {eval_date}')
+        ax.set_xlabel('Metrics', fontsize=LABEL_FONTSIZE)
+        ax.set_ylabel('Global Average Score', fontsize=LABEL_FONTSIZE)
+        ax.set_title(f'Global Average Metrics Across All Queries', fontsize=TITLE_FONTSIZE)
         ax.set_xticks(range(len(global_metrics_std)))
-        ax.set_xticklabels(global_metrics_std, rotation=45, ha='right')
+        ax.set_xticklabels(global_metrics_std, rotation=45, ha='right', fontsize=TICK_FONTSIZE)
+        ax.tick_params(axis='y', labelsize=TICK_FONTSIZE)
         ax.grid(True, alpha=0.3)
         ax.set_ylim(0, 1.0)
 
         for bar, value in zip(bars, global_values_std):
             height = bar.get_height()
             ax.text(bar.get_x() + bar.get_width() / 2., height + 0.01,
-                    f'{value:.3f}', ha='center', va='bottom', fontsize=8)
+                    f'{value:.3f}', ha='center', va='bottom', fontsize=TICK_FONTSIZE)
 
         plt.tight_layout()
         save_dir = os.path.dirname(json_file_path)
-        plt.savefig(os.path.join(save_dir, 'global_averages_standard.png'), dpi=300, bbox_inches='tight')
-        plt.show()
-
-        # 3b. Normalized metrics plot
-        fig, ax = plt.subplots(1, 1, figsize=(10, 6))
-
-        global_metrics_norm = []
-        global_values_norm = []
-        global_colors_norm = []
-
-        for metric in normalized_metrics:
-            for k in k_values:
-                global_metrics_norm.append(f'{metric.title()}@{k}')
-                global_values_norm.append(data['global_averages'].get(f'global_avg_{metric}@{k}', 0))
-                global_colors_norm.append(metric_colors[f'{metric}@{k}'])
-
-        bars = ax.bar(range(len(global_metrics_norm)), global_values_norm, color=global_colors_norm)
-
-        ax.set_xlabel('Metrics')
-        ax.set_ylabel('Global Average Score')
-        ax.set_title(f'Global Average Metrics (Normalized) Across All Queries\nEval: {eval_date}')
-        ax.set_xticks(range(len(global_metrics_norm)))
-        ax.set_xticklabels(global_metrics_norm, rotation=45, ha='right')
-        ax.grid(True, alpha=0.3)
-        ax.set_ylim(0, 1.0)
-
-        # Add value labels on bars
-        for bar, value in zip(bars, global_values_norm):
-            height = bar.get_height()
-            ax.text(bar.get_x() + bar.get_width() / 2., height + 0.01,
-                    f'{value:.3f}', ha='center', va='bottom', fontsize=8)
-
-        plt.tight_layout()
-        plt.savefig(os.path.join(save_dir, 'global_averages_normalized.png'), dpi=300, bbox_inches='tight')
+        plt.savefig(os.path.join(save_dir, 'global_averages_standard.pdf'), dpi=300, bbox_inches='tight', pad_inches=1.0)
         plt.show()

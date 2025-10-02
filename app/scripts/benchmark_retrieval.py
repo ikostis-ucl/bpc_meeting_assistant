@@ -5,7 +5,7 @@ from typing import List, Dict
 
 from app.scripts.demo import Demo
 from app.utils.app_utils import pprint_console
-from app.utils.benchmark_utils import BENCHMARK_QUESTIONS_INDEX
+from app.utils.benchmark_utils import BENCHMARK_QUESTIONS_INDEX as Q_SET
 from eval.benchmark_evaluator import BenchmarkEvaluator
 from eval.eval_inference import EvalInference
 from eval.eval_visualization import visualize_benchmark_results
@@ -26,7 +26,7 @@ class BenchmarkRetrieval(Demo):
             self.args.input_path = "./data/input_anonymised"
             self.args.storage_dir = "./data/vector_db_anonymised"
 
-        self.questions = list(BENCHMARK_QUESTIONS_INDEX.values())
+        self.questions = list(Q_SET.values())
         self.evaluator = None
         self.agent = EvalInference(self.args, self.questions)
 
@@ -40,7 +40,7 @@ class BenchmarkRetrieval(Demo):
             )
 
         results_dict = {}
-        for query_num, question in BENCHMARK_QUESTIONS_INDEX.items():
+        for query_num, question in Q_SET.items():
             pprint_console(f"Evaluating Query {query_num}: {question}")
             results = self.agent.evaluate_retriever(question)
             results_dict[query_num] = results
