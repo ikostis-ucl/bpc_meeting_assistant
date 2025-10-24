@@ -621,7 +621,7 @@ class GUI:
 
                 app.queue(max_size=64)
                 app.launch(
-                    server_port=9000,
+                    server_port=9002 if self.args.anon else 9000,
                     auth=None if self.args.anon else auth_users,
                     max_threads=32,
                     favicon_path="./app/assets/logo.png"
