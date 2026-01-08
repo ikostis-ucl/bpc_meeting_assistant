@@ -9,6 +9,15 @@ LABEL_FONTSIZE = 30
 TITLE_FONTSIZE = 36
 TICK_FONTSIZE = 26
 
+
+def save_figure(basename: str, out_dir: str, dpi: int = 300) -> None:
+    """Save current figure as both PDF and EPS."""
+    pdf_path = os.path.join(out_dir, f"{basename}.pdf")
+    eps_path = os.path.join(out_dir, f"{basename}.eps")
+    plt.savefig(pdf_path, dpi=dpi, bbox_inches='tight', pad_inches=1.0)
+    plt.savefig(eps_path, dpi=dpi, bbox_inches='tight', pad_inches=1.0, format='eps')
+
+
 def visualize_benchmark_results(json_file_path: str):
     """
     Create comprehensive visualizations for benchmark evaluation results.
@@ -18,6 +27,8 @@ def visualize_benchmark_results(json_file_path: str):
     """
     with open(json_file_path, 'r') as f:
         data = json.load(f)
+
+    save_dir = os.path.dirname(json_file_path)
 
     eval_timestamp = data['timestamp']
     eval_date = datetime.fromisoformat(eval_timestamp).strftime("%Y-%m-%d %H:%M:%S")
@@ -41,10 +52,10 @@ def visualize_benchmark_results(json_file_path: str):
     def get_metric_colors():
         """Create color mapping for metrics."""
         base_colors = {
-            'precision': '#EB3434',  # Red
-            'recall': '#07C3F2',  # Cyan/Teal
-            'hit_rate': '#05FF0D',  # Green
-            'f1': '#DB0FD8'  # Purple
+            'precision': '#EB3434',
+            'recall': '#07C3F2',
+            'hit_rate': '#05FF0D',
+            'f1': '#DB0FD8'
         }
 
         colors = {}
@@ -108,6 +119,7 @@ def visualize_benchmark_results(json_file_path: str):
             ax.set_ylim(0, 1.0)
 
         plt.tight_layout()
+        save_figure(f'query_{query_num}_batch_metrics', save_dir, dpi=300)
         plt.show()
 
     # 2. Query-level averages plot
@@ -141,15 +153,14 @@ def visualize_benchmark_results(json_file_path: str):
         ax.set_ylabel('Average Score', fontsize=LABEL_FONTSIZE)
         ax.set_title(f'Query-level Average Metrics', fontsize=TITLE_FONTSIZE)
         ax.set_xticks(x + (total_bars - 1) * width / 2)
-        ax.set_xticklabels(range(1, len(queries) + 1), fontsize=TICK_FONTSIZE)  # Changed to incremental integers
+        ax.set_xticklabels(range(1, len(queries) + 1), fontsize=TICK_FONTSIZE)
         ax.tick_params(axis='y', labelsize=TICK_FONTSIZE)
         ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=TICK_FONTSIZE)
         ax.grid(False)
         ax.set_ylim(0, 1.0)
 
         plt.tight_layout()
-        save_dir = os.path.dirname(json_file_path)
-        plt.savefig(os.path.join(save_dir, 'query_averages_standard.pdf'), dpi=300, bbox_inches='tight', pad_inches=1.0)
+        save_figure('query_averages_standard', save_dir, dpi=300)
         plt.show()
 
     # 3. Global averages plot
@@ -183,61 +194,5 @@ def visualize_benchmark_results(json_file_path: str):
                     f'{value:.3f}', ha='center', va='bottom', fontsize=TICK_FONTSIZE)
 
         plt.tight_layout()
-        save_dir = os.path.dirname(json_file_path)
-        plt.savefig(os.path.join(save_dir, 'global_averages_standard.pdf'), dpi=300, bbox_inches='tight', pad_inches=1.0)
+        save_figure('global_averages_standard', save_dir, dpi=300)
         plt.show()
-
-
-if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(description='Visualize benchmark evaluation results from JSON file')
-    parser.add_argument('json_file', type=str, nargs='?',
-                       help='Path to the benchmark results JSON file')
-    parser.add_argument('--latest', action='store_true',
-                       help='Use the latest results file from eval/results/retrieval/')
-
-    args = parser.parse_args()
-
-    if args.latest:
-        # Find the latest results directory
-        results_base = './eval/results/retrieval'
-        if os.path.exists(results_base):
-            subdirs = [d for d in os.listdir(results_base)
-                      if os.path.isdir(os.path.join(results_base, d))]
-            if subdirs:
-                latest_dir = max(subdirs)
-                json_path = os.path.join(results_base, latest_dir, 'benchmark_results.json')
-                if os.path.exists(json_path):
-                    print(f"Using latest results: {json_path}")
-                    visualize_benchmark_results(json_path)
-                else:
-                    print(f"No benchmark_results.json found in {os.path.join(results_base, latest_dir)}")
-            else:
-                print("No result directories found in eval/results/retrieval/")
-        else:
-            print("eval/results/retrieval/ directory not found")
-    elif args.json_file:
-        if os.path.exists(args.json_file):
-            print(f"Visualizing results from: {args.json_file}")
-            visualize_benchmark_results(args.json_file)
-        else:
-            print(f"Error: File not found: {args.json_file}")
-    else:
-        # Interactive mode - prompt user for file path
-        print("\n=== Benchmark Results Visualization ===\n")
-        json_path = input("Enter path to benchmark results JSON file: ").strip()
-
-        if json_path.startswith('"') and json_path.endswith('"'):
-            json_path = json_path[1:-1]
-        if json_path.startswith("'") and json_path.endswith("'"):
-            json_path = json_path[1:-1]
-
-        if os.path.exists(json_path):
-            print(f"\nVisualizing results from: {json_path}\n")
-            visualize_benchmark_results(json_path)
-        else:
-            print(f"Error: File not found: {json_path}")
-            print("\nExample usage:")
-            print("  python eval_visualization.py ./eval/results/retrieval/20240115_143022/benchmark_results.json")
-            print("  python eval_visualization.py --latest")
