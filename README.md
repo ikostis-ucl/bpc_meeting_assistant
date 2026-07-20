@@ -212,3 +212,19 @@ Run with production flag:
 ```bash
 python run_gui.py --prod
 ```
+
+## Citation
+
+If you find this work useful and want to build upon it, please cite our paper:
+
+```bibtex
+@misc{kostis2026chronologicalknowledgeretrievalretrievalaugmented,
+      title={Chronological Knowledge Retrieval: A Retrieval-Augmented Generation Approach to Construction Project Documentation},
+      author={Ioannis-Aris Kostis and Natalia Sanchiz and Steeve De Schryver and François Denis and Pierre Schaus},
+      year={2026},
+      eprint={2604.14169},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL},
+      url={https://arxiv.org/abs/2604.14169},
+}
+```
