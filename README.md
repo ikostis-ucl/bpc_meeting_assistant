@@ -1,5 +1,7 @@
 # Meeting Minutes Assistant
 
+[![arXiv](https://img.shields.io/badge/arXiv-2604.14169-b31b1b.svg)](https://arxiv.org/abs/2604.14169)
+
 A Python-based question answering system that processes and analyzes meeting minutes documents, providing context-aware
 responses with temporal tracking and document source references.
 
